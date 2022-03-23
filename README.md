@@ -2,4 +2,4 @@
 
 GZTime's GG OS
 
-OS Course project for practicing.
+OS course project for practicing.
