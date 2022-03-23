@@ -13,22 +13,22 @@ use uefi::proto::console::text::*;
 
 #[entry]
 fn efi_main(_image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status {
-    uefi_services::init(&mut system_table).expect_success("Failed to initialize utilities");
+    uefi_services::init(&mut system_table).expect("Failed to initialize utilities");
 
     info!("Running UEFI bootloader...");
 
-    system_table.stdout().clear().unwrap().unwrap();
+    system_table.stdout().clear().unwrap();
 
     let gop = system_table
         .boot_services()
         .locate_protocol::<GraphicsOutput>()
-        .expect_success("Failed to locate graphics output protocol");
+        .expect("Failed to locate graphics output protocol");
     let gop = unsafe { &mut *gop.get() };
 
     let input = system_table
         .boot_services()
         .locate_protocol::<Input>()
-        .expect_success("failed to get Input");
+        .expect("failed to get Input");
     let input = unsafe { &mut *input.get() };
 
     let graphics_mode = gop.current_mode_info();
@@ -51,7 +51,6 @@ fn efi_main(_image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status
         system_table
             .boot_services()
             .wait_for_event(&mut [input.wait_for_key_event().unsafe_clone()])
-            .unwrap()
             .unwrap();
     }
 
@@ -60,7 +59,6 @@ fn efi_main(_image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status
     system_table
         .stdout()
         .set_color(Color::White, Color::Black)
-        .unwrap()
         .unwrap();
 
     loop {}

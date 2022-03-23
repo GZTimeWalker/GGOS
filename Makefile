@@ -1,5 +1,5 @@
-EFI := target/x86_64-unknown-uefi/release/ggos.efi
-DEBUG_SYM := target/x86_64-unknown-uefi/debug/ggos.efi
+EFI := target/x86_64-unknown-uefi/release/ggos-boot.efi
+DEBUG_SYM := target/x86_64-unknown-uefi/debug/ggos-boot.efi
 OVMF := /usr/share/ovmf/OVMF.fd
 ESP := esp
 QEMU_ARGS := -net none
