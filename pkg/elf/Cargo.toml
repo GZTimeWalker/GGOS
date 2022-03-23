@@ -1,15 +1,11 @@
 [package]
-name = "ggos_boot"
+name = "ggos_elf"
 version = "0.1.0"
 edition = "2021"
 authors = ["GZTime <gz.time.walker@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-arrayvec = { version = "0.7.2", default-features = false }
-uefi = { version = "0.15.2", features = ["alloc"] }
-uefi-services = "0.12.1"
 log = "0.4.16"
 x86_64 = "0.14.8"
-xmas-elf = "0.8"
-elf = { package = "ggos_elf", path = "../elf" }
+xmas-elf  = "0.8"

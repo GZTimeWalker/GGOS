@@ -1,21 +1,16 @@
-EFI := target/x86_64-unknown-uefi/release/ggos-boot.efi
-DEBUG_SYM := target/x86_64-unknown-uefi/debug/ggos-boot.efi
 OVMF := /usr/share/ovmf/OVMF.fd
 ESP := esp
+BUILD_ARGS :=
 QEMU_ARGS := -net none
+MODE ?= release
 
-.PHONY: build run header asm doc debug clean launch
+ifeq (${MODE}, release)
+	BUILD_ARGS += --release
+endif
 
-build:
-	@cargo build --release
-	@mkdir -p $(ESP)/EFI/Boot
-	@cp $(EFI) $(ESP)/EFI/Boot/BootX64.efi
-
-clippy:
-	cargo clippy $(BUILD_ARGS)
-
-doc:
-	cargo doc
+.PHONY: build run debug clean launch \
+	target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi \
+	target/x86_64-unknown-none/$(MODE)/ggos_kernel
 
 run: build launch
 
@@ -28,11 +23,24 @@ launch:
 debug: build
 	@qemu-system-x86_64 -bios ${OVMF} -drive format=raw,file=fat:rw:${ESP} -s -S
 
-header:
-	@rust-objdump -h $(EFI) | less
-
-asm:
-	@rust-objdump -d $(EFI) | less
-
 clean:
 	@cargo clean
+
+build: $(ESP)
+
+$(ESP): $(ESP)/EFI/BOOT/BOOTX64.EFI $(ESP)/KERNEL.ELF $(ESP)/EFI/BOOT/boot.conf
+
+$(ESP)/EFI/BOOT/BOOTX64.EFI: target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi
+	@mkdir -p $(@D)
+	cp $< $@
+$(ESP)/EFI/BOOT/boot.conf: pkg/kernel/config/boot.conf
+	@mkdir -p $(@D)
+	cp $< $@
+$(ESP)/KERNEL.ELF: target/x86_64-unknown-none/$(MODE)/ggos_kernel
+	@mkdir -p $(@D)
+	cp $< $@
+
+target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi: pkg/boot
+	cd pkg/boot && cargo build $(BUILD_ARGS)
+target/x86_64-unknown-none/$(MODE)/ggos_kernel: pkg/kernel
+	cd pkg/kernel && cargo build $(BUILD_ARGS)

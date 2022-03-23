@@ -1,4 +1,6 @@
 [workspace]
 members = [
-    "pkg/boot"
+    "pkg/boot",
+    "pkg/elf",
+    "pkg/kernel"
 ]

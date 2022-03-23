@@ -1,3 +1,12 @@
+//! Simple ELF OS Loader on UEFI @ 2022.03.23
+//!
+//! 1. Load config from "\EFI\Boot\rboot.conf"
+//! 2. Load kernel ELF file
+//! 3. Map ELF segments to virtual memory
+//! 4. Map kernel stack and all physical memory
+//! 5. Startup all processors
+//! 6. Exit boot and jump to ELF entry
+
 #![no_std]
 #![no_main]
 #![feature(abi_efiapi)]
@@ -7,67 +16,205 @@
 extern crate log;
 extern crate alloc;
 
+use alloc::boxed::Box;
+use alloc::vec;
+use x86_64::{VirtAddr, PhysAddr};
+use core::arch::asm;
+use ggos_boot::{BootInfo, GraphicInfo};
 use uefi::prelude::*;
 use uefi::proto::console::gop::GraphicsOutput;
-use uefi::proto::console::text::*;
+use uefi::proto::media::file::*;
+use uefi::proto::media::fs::SimpleFileSystem;
+use uefi::table::boot::*;
+use x86_64::structures::paging::*;
+use x86_64::registers::control::*;
+use x86_64::registers::model_specific::EferFlags;
+use xmas_elf::ElfFile;
+
+mod config;
+
+const CONFIG_PATH: &str = "\\EFI\\BOOT\\boot.conf";
 
 #[entry]
-fn efi_main(_image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status {
+fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status {
     uefi_services::init(&mut system_table).expect("Failed to initialize utilities");
 
     info!("Running UEFI bootloader...");
 
-    system_table.stdout().clear().unwrap();
+    let bs = system_table.boot_services();
+    let config = {
+        let mut file = open_file(bs, CONFIG_PATH);
+        let buf = load_file(bs, &mut file);
+        config::Config::parse(buf)
+    };
 
-    let gop = system_table
+    let graphic_info = init_graphic(bs);
+    info!("config: {:#x?}", config);
+
+    let elf = {
+        let mut file = open_file(bs, config.kernel_path);
+        let buf = load_file(bs, &mut file);
+        ElfFile::new(buf).expect("failed to parse ELF")
+    };
+    unsafe {
+        ENTRY = elf.header.pt2.entry_point() as usize;
+    }
+
+    let max_mmap_size = system_table.boot_services().memory_map_size();
+    let mmap_storage = Box::leak(
+        vec![0; max_mmap_size.map_size + 10 * max_mmap_size.entry_size].into_boxed_slice()
+    );
+    let mmap_iter = system_table
         .boot_services()
-        .locate_protocol::<GraphicsOutput>()
-        .expect("Failed to locate graphics output protocol");
-    let gop = unsafe { &mut *gop.get() };
+        .memory_map(mmap_storage)
+        .expect("Failed to get memory map")
+        .1;
+    let max_phys_addr = mmap_iter
+        .map(|m| m.phys_start + m.page_count * 0x1000)
+        .max()
+        .unwrap()
+        .max(0x1_0000_0000); // include IOAPIC MMIO area
 
-    let input = system_table
-        .boot_services()
-        .locate_protocol::<Input>()
-        .expect("failed to get Input");
-    let input = unsafe { &mut *input.get() };
+    let mut page_table = current_page_table();
+    // root page table is readonly
+    // disable write protect
+    unsafe {
+        Cr0::update(|f| f.remove(Cr0Flags::WRITE_PROTECT));
+        Efer::update(|f| f.insert(EferFlags::NO_EXECUTE_ENABLE));
+    }
+    elf::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs))
+        .expect("Failed to map ELF");
+        elf::map_stack(
+        config.kernel_stack_address,
+        config.kernel_stack_size,
+        &mut page_table,
+        &mut UEFIFrameAllocator(bs),
+    )
+    .expect("Failed to map stack");
+    elf::map_physical_memory(
+        config.physical_memory_offset,
+        max_phys_addr,
+        &mut page_table,
+        &mut UEFIFrameAllocator(bs),
+    );
+    // recover write protect
+    unsafe {
+        Cr0::update(|f| f.insert(Cr0Flags::WRITE_PROTECT));
+    }
 
-    let graphics_mode = gop.current_mode_info();
-    let (width, height) = graphics_mode.resolution();
-
-    info!("Current graphics resolution: {}x{}", width, height);
-
-    let fb_addr = gop.frame_buffer().as_mut_ptr() as *mut u32;
-    let fb_size = gop.frame_buffer().size();
-
-    info!("Frame buffer address: {:p}", fb_addr);
-    info!("Frame buffer size: {}", fb_size);
+    // FIXME: multi-core
+    //  All application processors will be shutdown after ExitBootService.
+    //  Disable now.
+    // start_aps(bs);
 
     for i in 0..5 {
         info!("Waiting for next stage... {}", 5 - i);
-        system_table.boot_services().stall(200_000);
+        system_table.boot_services().stall(1000_000);
     }
+
+    info!("Exiting boot services...");
+
+    let (rt, mmap_iter) = system_table
+        .exit_boot_services(image, mmap_storage)
+        .expect("Failed to exit boot services");
+    // NOTE: alloc & log can no longer be used
+
+    // construct BootInfo
+    let bootinfo = BootInfo {
+        memory_map: mmap_iter.copied().collect(),
+        physical_memory_offset: config.physical_memory_offset,
+        graphic_info,
+        system_table: rt,
+    };
+    let stacktop = config.kernel_stack_address + config.kernel_stack_size * 0x1000;
 
     unsafe {
-        system_table
-            .boot_services()
-            .wait_for_event(&mut [input.wait_for_key_event().unsafe_clone()])
-            .unwrap();
+        jump_to_entry(&bootinfo, stacktop);
     }
-
-    clear(fb_addr, width, height);
-
-    system_table
-        .stdout()
-        .set_color(Color::White, Color::Black)
-        .unwrap();
-
-    loop {}
 }
 
-fn clear(fb_addr: *mut u32, width: usize, height: usize) {
-    for i in 0..width * height {
-        unsafe {
-            *fb_addr.offset(i as isize) = 0x0;
-        }
+/// If `resolution` is some, then set graphic mode matching the resolution.
+/// Return information of the final graphic mode.
+fn init_graphic(bs: &BootServices) -> GraphicInfo {
+    let gop = bs
+        .locate_protocol::<GraphicsOutput>()
+        .expect("Failed to get GraphicsOutput");
+    let gop = unsafe { &mut *gop.get() };
+    GraphicInfo {
+        mode: gop.current_mode_info(),
+        fb_addr: gop.frame_buffer().as_mut_ptr() as u64,
+        fb_size: gop.frame_buffer().size() as u64,
     }
+}
+
+/// Get current page table from CR3
+fn current_page_table() -> OffsetPageTable<'static> {
+    let p4_table_addr = Cr3::read().0.start_address().as_u64();
+    let p4_table = unsafe { &mut *(p4_table_addr as *mut PageTable) };
+    unsafe { OffsetPageTable::new(p4_table, VirtAddr::new(0)) }
+}
+
+/// Use `BootServices::allocate_pages()` as frame allocator
+struct UEFIFrameAllocator<'a>(&'a BootServices);
+
+unsafe impl FrameAllocator<Size4KiB> for UEFIFrameAllocator<'_> {
+    fn allocate_frame(&mut self) -> Option<PhysFrame> {
+        let addr = self
+            .0
+            .allocate_pages(AllocateType::AnyPages, MemoryType::LOADER_DATA, 1)
+            .expect("failed to allocate frame");
+        let frame = PhysFrame::containing_address(PhysAddr::new(addr));
+        Some(frame)
+    }
+}
+
+/// Open file at `path`
+fn open_file(bs: &BootServices, path: &str) -> RegularFile {
+    info!("opening file: {}", path);
+
+    let mut buf = [0; 64];
+
+    let cstr_path = uefi::CStr16::from_str_with_buf(path, &mut buf).unwrap();
+
+    // FIXME: use LoadedImageProtocol to get the FileSystem of this image
+    let fs = bs
+        .locate_protocol::<SimpleFileSystem>()
+        .expect("failed to get FileSystem");
+    let fs = unsafe { &mut *fs.get() };
+
+    let mut root = fs.open_volume().expect("failed to open volume");
+    let handle = root
+        .open(cstr_path, FileMode::Read, FileAttribute::empty())
+        .expect("failed to open file");
+
+    match handle.into_type().expect("failed to into_type") {
+        FileType::Regular(regular) => regular,
+        _ => panic!("Invalid file type"),
+    }
+}
+
+/// Load file to new allocated pages
+fn load_file(bs: &BootServices, file: &mut RegularFile) -> &'static mut [u8] {
+    info!("loading file to memory");
+    let mut info_buf = [0u8; 0x100];
+    let info = file
+        .get_info::<FileInfo>(&mut info_buf)
+        .expect("failed to get file info");
+    let pages = info.file_size() as usize / 0x1000 + 1;
+    let mem_start = bs
+        .allocate_pages(AllocateType::AnyPages, MemoryType::LOADER_DATA, pages)
+        .expect("failed to allocate pages");
+    let buf = unsafe { core::slice::from_raw_parts_mut(mem_start as *mut u8, pages * 0x1000) };
+    let len = file.read(buf).expect("failed to read file");
+    info!("file size={}", len);
+    &mut buf[..len]
+}
+
+/// The entry point of kernel, set by BSP.
+static mut ENTRY: usize = 0;
+
+/// Jump to ELF entry according to global variable `ENTRY`
+unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
+    asm!("mov rsp, {1}; call {}", in(reg) ENTRY, in(reg) stacktop, in("rdi") bootinfo);
+    loop {}
 }
