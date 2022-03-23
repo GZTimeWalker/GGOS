@@ -49,7 +49,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     };
 
     let graphic_info = init_graphic(bs);
-    info!("config: {:#x?}", config);
+    // info!("config: {:#x?}", config);
 
     let elf = {
         let mut file = open_file(bs, config.kernel_path);
@@ -109,7 +109,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     for i in 0..5 {
         info!("Waiting for next stage... {}", 5 - i);
-        system_table.boot_services().stall(1000_000);
+        system_table.boot_services().stall(100_000);
     }
 
     info!("Exiting boot services...");
