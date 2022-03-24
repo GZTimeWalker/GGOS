@@ -35,7 +35,7 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
 
     let style = MonoTextStyle::new(&FONT_9X18, Rgb888::WHITE);
 
-    let next = Text::with_alignment(
+    Text::with_alignment(
         "Hello GGOS in Rust!",
         Point::new(display_x / 2, display_y / 2),
         style,

@@ -109,7 +109,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     for i in 0..5 {
         info!("Waiting for next stage... {}", 5 - i);
-        system_table.boot_services().stall(100_000);
+        bs.stall(100_000);
     }
 
     info!("Exiting boot services...");
@@ -162,7 +162,7 @@ unsafe impl FrameAllocator<Size4KiB> for UEFIFrameAllocator<'_> {
         let addr = self
             .0
             .allocate_pages(AllocateType::AnyPages, MemoryType::LOADER_DATA, 1)
-            .expect("failed to allocate frame");
+            .expect("Failed to allocate frame");
         let frame = PhysFrame::containing_address(PhysAddr::new(addr));
         Some(frame)
     }
@@ -170,7 +170,7 @@ unsafe impl FrameAllocator<Size4KiB> for UEFIFrameAllocator<'_> {
 
 /// Open file at `path`
 fn open_file(bs: &BootServices, path: &str) -> RegularFile {
-    info!("opening file: {}", path);
+    info!("Opening file: {}", path);
 
     let mut buf = [0; 64];
 
@@ -179,15 +179,15 @@ fn open_file(bs: &BootServices, path: &str) -> RegularFile {
     // FIXME: use LoadedImageProtocol to get the FileSystem of this image
     let fs = bs
         .locate_protocol::<SimpleFileSystem>()
-        .expect("failed to get FileSystem");
+        .expect("Failed to get FileSystem");
     let fs = unsafe { &mut *fs.get() };
 
-    let mut root = fs.open_volume().expect("failed to open volume");
+    let mut root = fs.open_volume().expect("Failed to open volume");
     let handle = root
         .open(cstr_path, FileMode::Read, FileAttribute::empty())
-        .expect("failed to open file");
+        .expect("Failed to open file");
 
-    match handle.into_type().expect("failed to into_type") {
+    match handle.into_type().expect("Failed to into_type") {
         FileType::Regular(regular) => regular,
         _ => panic!("Invalid file type"),
     }
@@ -195,18 +195,18 @@ fn open_file(bs: &BootServices, path: &str) -> RegularFile {
 
 /// Load file to new allocated pages
 fn load_file(bs: &BootServices, file: &mut RegularFile) -> &'static mut [u8] {
-    info!("loading file to memory");
+    info!("Loading file to memory");
     let mut info_buf = [0u8; 0x100];
     let info = file
         .get_info::<FileInfo>(&mut info_buf)
-        .expect("failed to get file info");
+        .expect("Failed to get file info");
     let pages = info.file_size() as usize / 0x1000 + 1;
     let mem_start = bs
         .allocate_pages(AllocateType::AnyPages, MemoryType::LOADER_DATA, pages)
-        .expect("failed to allocate pages");
+        .expect("Failed to allocate pages");
     let buf = unsafe { core::slice::from_raw_parts_mut(mem_start as *mut u8, pages * 0x1000) };
-    let len = file.read(buf).expect("failed to read file");
-    info!("file size={}", len);
+    let len = file.read(buf).expect("Failed to read file");
+    info!("File size={}", len);
     &mut buf[..len]
 }
 
@@ -215,6 +215,6 @@ static mut ENTRY: usize = 0;
 
 /// Jump to ELF entry according to global variable `ENTRY`
 unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
-    asm!("mov rsp, {1}; call {}", in(reg) ENTRY, in(reg) stacktop, in("rdi") bootinfo);
+    asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
     loop {}
 }
