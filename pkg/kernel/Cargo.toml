@@ -8,3 +8,6 @@ authors = ["GZTime <gz.time.walker@gmail.com>"]
 [dependencies]
 embedded-graphics = { version = "0.7.1", features = ['fixed_point'] }
 boot = { path = "../boot", package = "ggos_boot" }
+paste = "1.0.7"
+spin = "0.9.2"
+x86_64 = "0.14.8"

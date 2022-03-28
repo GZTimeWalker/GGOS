@@ -82,21 +82,24 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         Cr0::update(|f| f.remove(Cr0Flags::WRITE_PROTECT));
         Efer::update(|f| f.insert(EferFlags::NO_EXECUTE_ENABLE));
     }
+
     elf::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs))
         .expect("Failed to map ELF");
-        elf::map_stack(
+
+    elf::map_stack(
         config.kernel_stack_address,
         config.kernel_stack_size,
         &mut page_table,
         &mut UEFIFrameAllocator(bs),
-    )
-    .expect("Failed to map stack");
+    ).expect("Failed to map stack");
+
     elf::map_physical_memory(
         config.physical_memory_offset,
         max_phys_addr,
         &mut page_table,
         &mut UEFIFrameAllocator(bs),
     );
+    
     // recover write protect
     unsafe {
         Cr0::update(|f| f.insert(Cr0Flags::WRITE_PROTECT));

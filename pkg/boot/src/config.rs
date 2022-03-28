@@ -23,7 +23,7 @@ const DEFAULT_CONFIG: Config = Config {
     kernel_stack_address: 0xFFFF_FF01_0000_0000,
     kernel_stack_size: 512,
     physical_memory_offset: 0xFFFF_8000_0000_0000,
-    kernel_path: "\\EFI\\rCore\\kernel.elf",
+    kernel_path: "\\KERNEL.ELF",
     resolution: None,
     initramfs: None,
     cmdline: "",
