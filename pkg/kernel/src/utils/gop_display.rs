@@ -31,7 +31,7 @@ impl<'a> DrawTarget for GOPDisplay<'a> {
         I: IntoIterator<Item = Pixel<Self::Color>>,
     {
         for Pixel(coord, color) in pixels {
-            self.draw_pixel(coord, color);
+            self.draw_pixel(coord, color).unwrap();
         }
         Ok(())
     }

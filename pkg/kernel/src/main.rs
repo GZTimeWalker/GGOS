@@ -2,16 +2,19 @@
 #![no_main]
 
 use core::arch::asm;
-
 use boot::BootInfo;
 
+#[macro_use]
+extern crate log;
 
 #[macro_use]
 mod macros;
+#[macro_use]
+mod console;
 
 mod utils;
 mod display;
-mod console;
+mod logger;
 
 boot::entry_point!(kernal_main);
 
@@ -22,13 +25,16 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     display::get_display_for_sure().clear(None);
 
     console::initialize();
-    println!("Console Initialized.");
+    println!("[+] Console Initialized.");
 
-    println!("CharSetTest: !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz~?");
+    logger::initialize();
+    info!("Logger Initialized.");
 
-    for i in 0..100 {
-        println!("Testing...{}", i);
-        for _ in 0..5000_0000 {
+    warn!("Warn Testing...");
+
+    for i in 0..5 {
+        info!("Testing...{}", i);
+        for _ in 0..5000000 {
             unsafe {
                 asm!("nop");
             }
@@ -36,4 +42,6 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     }
 
     panic!("Exit!!");
+
+    loop{}
 }

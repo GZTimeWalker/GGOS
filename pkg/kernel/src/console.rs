@@ -1,7 +1,6 @@
 use crate::display::get_display_for_sure;
 use crate::utils::JBMONO;
 use core::fmt::*;
-use embedded_graphics::pixelcolor::Rgb555;
 use embedded_graphics::{
     mono_font::{MonoTextStyle, MonoFont},
     pixelcolor::Rgb888,
@@ -20,6 +19,7 @@ const SPACING: u8 = FONT.character_spacing as u8;
 
 pub fn initialize() {
     init_CONSOLE(Console::new());
+    get_console_for_sure().clear();
 }
 
 guard_access_fn!(pub get_console(CONSOLE: Console));
@@ -36,8 +36,8 @@ impl Console {
         Self {
             x_pos: 0,
             y_pos: 1,
-            frontground: Rgb888::WHITE,
-            background: Rgb888::BLACK
+            frontground: Rgb888::new(0xef, 0xef, 0xef),
+            background: Rgb888::new(0x20, 0x20, 0x20)
         }
     }
 }
@@ -68,8 +68,8 @@ impl Console {
         }
     }
 
-    pub fn scroll(&mut self) {
-        get_display_for_sure().scrollup(None, FONT_Y);
+    pub fn scroll(&self) {
+        get_display_for_sure().scrollup(Some(self.background), FONT_Y);
     }
 
     pub fn write_char_at(&mut self, x: usize, y: usize, c: char) {
@@ -111,7 +111,7 @@ impl Console {
             Point::new(cx as i32, cy as i32),
             Point::new(cx as i32, cy as i32 + FONT_Y as i32 - 1),
         ).into_styled(
-            PrimitiveStyle::with_stroke(Rgb888::GREEN, 1)
+            PrimitiveStyle::with_stroke(Rgb888::GREEN, 5)
         ).draw(&mut *get_display_for_sure())
         .unwrap();
     }
@@ -123,6 +123,10 @@ impl Console {
         if let Some(color) = back {
             self.background = color;
         }
+    }
+
+    pub fn clear(&self) {
+        get_display_for_sure().clear(Some(self.background));
     }
 }
 
@@ -148,8 +152,15 @@ macro_rules! print_warn {
 #[macro_export]
 macro_rules! println {
     () => ($crate::print!("\n"));
-    ($($arg:tt)*) => ($crate::print!("[+] {}\n", format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }
+
+#[macro_export]
+macro_rules! println_warn {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print_warn!("{}\n", format_args!($($arg)*)));
+}
+
 
 #[doc(hidden)]
 pub fn print_internal(args: Arguments) {
@@ -166,7 +177,6 @@ pub fn print_warn_internal(args: Arguments) {
 
     interrupts::without_interrupts(|| {
         let mut console = get_console_for_sure();
-        console.draw_hint();
         console.set_color(Some(Rgb888::RED), None);
         console.write_fmt(args);
         console.set_color(Some(Rgb888::WHITE), None);
