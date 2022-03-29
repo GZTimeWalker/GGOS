@@ -1,8 +1,8 @@
 mod font;
-mod gop_display;
+mod gop;
 mod math;
 
 pub mod colors;
 pub use font::JBMONO;
-pub use gop_display::GOPDisplay;
+pub use gop::GOPDisplay;
 pub use math::*;
