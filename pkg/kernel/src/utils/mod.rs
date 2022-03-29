@@ -1,8 +1,8 @@
-mod font;
 mod gop;
 mod math;
 
 pub mod colors;
-pub use font::JBMONO;
+pub mod font;
 pub use gop::GOPDisplay;
-pub use math::*;
+
+pub static VERSION: &str = "> GGOS v0.3.1";

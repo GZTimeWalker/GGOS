@@ -2,19 +2,19 @@
 
 use crate::utils::colors;
 use crate::display::get_display_for_sure;
-use crate::utils::JBMONO;
+use crate::utils::font;
 use core::fmt::*;
 use embedded_graphics::{
     mono_font::{MonoTextStyle, MonoFont},
     pixelcolor::Rgb888,
     prelude::*,
-    text::{Text, renderer::CharacterStyle},
+    text::{Text, renderer::CharacterStyle, Baseline},
     primitives::{Line, PrimitiveStyle}
 };
 
 once_mutex!(pub CONSOLE: Console);
 
-const FONT: &MonoFont = &JBMONO;
+const FONT: &MonoFont = &font::JBMONO;
 
 const FONT_X: u8 = FONT.character_size.width as u8;
 const FONT_Y: u8 = FONT.character_size.height as u8;
@@ -24,7 +24,9 @@ const TOP_PAD_LINE_NUM: usize = 3;
 
 pub fn initialize() {
     init_CONSOLE(Console::new());
-    get_console_for_sure().clear();
+    let console = get_console_for_sure();
+    console.clear();
+    console.header();
 }
 
 guard_access_fn!(pub get_console(CONSOLE: Console));
@@ -145,6 +147,18 @@ impl Console {
             Some(self.background),
             FONT_Y as usize * TOP_PAD_LINE_NUM
         );
+    }
+
+    pub fn header(&self) {
+        let mut style = MonoTextStyle::new(&font::JBMONO_TITLE, colors::BLUE);
+        CharacterStyle::set_background_color(&mut style, Some(colors::BACKGROUND));
+        Text::with_baseline(
+            crate::utils::VERSION,
+            Point::new(6, 6),
+            style,
+            Baseline::Top
+        ).draw(&mut *get_display_for_sure())
+        .expect("Drawing Error!");
     }
 }
 

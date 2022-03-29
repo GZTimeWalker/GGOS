@@ -66,7 +66,7 @@ impl <'a> GOPDisplay <'a> {
 
         let color = color.into_storage();
 
-        let index = (y + dy) * size.0 + x + dx;
+        let index = y * size.0 + x;
         self.buffer[index] = color;
 
         Ok(())

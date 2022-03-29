@@ -50,9 +50,9 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     info!("Interrupts Enabled.");
 
     let alpha = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-    for _ in 0..500 {
+    for _ in 0..100 {
         print!("{}", alpha);
-        for _ in 0..500_0000 {
+        for _ in 0..50_0000 {
             unsafe {
                 core::arch::asm!("nop");
             }
