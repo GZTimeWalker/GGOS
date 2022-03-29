@@ -153,7 +153,7 @@ impl Console {
         let mut style = MonoTextStyle::new(&font::JBMONO_TITLE, colors::BLUE);
         CharacterStyle::set_background_color(&mut style, Some(colors::BACKGROUND));
         Text::with_baseline(
-            crate::utils::VERSION,
+            crate::utils::HEADER,
             Point::new(6, 6),
             style,
             Baseline::Top
