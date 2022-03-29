@@ -8,6 +8,8 @@ Currently under development, the project is progressing along with the course pr
 
 Using `JetBrainsMono` as console font.
 
+`/usr/share/ovmf/OVMF.fd` is required for booting this OS.
+
 ## Reference
 
 1. [rCore](https://github.com/rcore-os/rCore)
