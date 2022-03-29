@@ -1,24 +1,34 @@
 #![no_std]
 #![no_main]
+#![feature(abi_x86_interrupt)]
+#![feature(core_intrinsics)]
 
-use core::arch::asm;
 use boot::BootInfo;
+use core::arch::asm;
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate bitflags;
 
 #[macro_use]
 mod macros;
 #[macro_use]
 mod console;
 
-mod utils;
 mod display;
+mod gdt;
+mod interrupts;
 mod logger;
+mod memory;
+mod utils;
 
 boot::entry_point!(kernal_main);
 
 pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
+    gdt::init();
 
     let graphic_info = &boot_info.graphic_info;
     display::initialize(graphic_info);
@@ -30,18 +40,10 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     logger::initialize();
     info!("Logger Initialized.");
 
-    warn!("Warn Testing...");
-
-    for i in 0..5 {
-        info!("Testing...{}", i);
-        for _ in 0..5000000 {
-            unsafe {
-                asm!("nop");
-            }
-        }
+    unsafe {
+        interrupts::init();
     }
+    info!("Interrupts Initialized.");
 
-    panic!("Exit!!");
-
-    loop{}
+    loop {}
 }

@@ -178,7 +178,7 @@ pub fn print_warn_internal(args: Arguments) {
     interrupts::without_interrupts(|| {
         let mut console = get_console_for_sure();
         console.set_color(Some(Rgb888::RED), None);
-        console.write_fmt(args);
+        console.write_fmt(args).unwrap();
         console.set_color(Some(Rgb888::WHITE), None);
     });
 }
