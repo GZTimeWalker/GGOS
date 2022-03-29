@@ -49,19 +49,22 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
-    trace!("Trace?");
-    debug!("Debug Test.");
-    warn!("Warning Test.");
-    error!("ERROR!!!");
-
-    for i in 0..500 {
-        info!("Testing...{}", i);
-        for _ in 0..5000_0000 {
+    let alpha = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+    for _ in 0..500 {
+        print!("{}", alpha);
+        for _ in 0..500_0000 {
             unsafe {
                 core::arch::asm!("nop");
             }
         }
     }
+
+    println!();
+    trace!("Trace?");
+    debug!("Debug Test.");
+    warn!("Warning Test.");
+    error!("ERROR!!!");
+    print!("Hello, world!");
 
     loop {}
 }

@@ -30,7 +30,7 @@ pub struct Registers {
     rbp: usize,
 }
 
-pub extern "x86-interrupt" fn clock_handler(sf: &mut InterruptStackFrame) {
+pub extern "x86-interrupt" fn clock_handler(_sf: &mut InterruptStackFrame) {
     //crate::process::switch_first_ready_process(sf, regs);
     clock_draw();
     super::ack(consts::Interrupts::IRQ0 as u8);
@@ -59,7 +59,7 @@ fn clock_draw() {
 
         if let Some(mut display) = crate::display::get_display() {
 
-            let len = 16i32;
+            let len = 24i32;
             let (cx, _) = display.resolution();
             let (cx, cy) = (cx as i32 - len - 8, len + 8);
 

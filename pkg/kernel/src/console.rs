@@ -71,7 +71,7 @@ impl Console {
 
     pub fn next_char(&mut self) {
         self.x_pos += 1;
-        if self.x_pos > self.size().0 {
+        if self.x_pos >= self.size().0 {
             self.next_row()
         }
     }
