@@ -6,6 +6,8 @@ OS course project.
 
 Currently under development, the project is progressing along with the course progress.
 
+Using `JetBrainsMono` as console font.
+
 ## Reference
 
 1. [rCore](https://github.com/rcore-os/rCore)
