@@ -1,17 +1,20 @@
 extern crate libm;
 
-macro_rules! no_mangle {
+/// export functions in libm for float calculate
+///
+/// ref: https://github.com/rust-lang/compiler-builtins/blob/master/src/math.rs
+macro_rules! libm_export {
     ($(fn $fun:ident($($iid:ident : $ity:ty),+) -> $oty:ty;)+) => {
         $(
             #[no_mangle]
             pub extern "C" fn $fun($($iid: $ity),+) -> $oty {
-                self::libm::$fun($($iid),+)
+                libm::$fun($($iid),+)
             }
         )+
     }
 }
 
-no_mangle! {
+libm_export! {
     fn acos(x: f64) -> f64;
     fn asin(x: f64) -> f64;
     fn cbrt(x: f64) -> f64;

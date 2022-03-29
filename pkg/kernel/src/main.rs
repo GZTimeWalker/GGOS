@@ -48,5 +48,10 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
+    trace!("Trace?");
+    debug!("Debug Test.");
+    warn!("Warning Test.");
+    error!("ERROR!!!");
+
     loop {}
 }
