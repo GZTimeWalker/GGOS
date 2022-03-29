@@ -10,14 +10,12 @@ pub struct XApic {
 
 impl XApic {
     unsafe fn read(&self, reg: u32) -> u32 {
-        unsafe { read_volatile((self.addr + reg as usize) as *const u32) }
+        read_volatile((self.addr + reg as usize) as *const u32)
     }
 
     unsafe fn write(&mut self, reg: u32, value: u32) {
-        unsafe {
-            write_volatile((self.addr + reg as usize) as *mut u32, value);
-            self.read(0x20);
-        } // wait for write to finish, by reading
+        write_volatile((self.addr + reg as usize) as *mut u32, value);
+        self.read(0x20);
     }
 }
 

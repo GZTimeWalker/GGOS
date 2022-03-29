@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::display::get_display_for_sure;
 use crate::utils::JBMONO;
 use core::fmt::*;
@@ -111,7 +113,7 @@ impl Console {
             Point::new(cx as i32, cy as i32),
             Point::new(cx as i32, cy as i32 + FONT_Y as i32 - 1),
         ).into_styled(
-            PrimitiveStyle::with_stroke(Rgb888::GREEN, 5)
+            PrimitiveStyle::with_stroke(Rgb888::WHITE, 2)
         ).draw(&mut *get_display_for_sure())
         .unwrap();
     }

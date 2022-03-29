@@ -1,15 +1,13 @@
 use super::consts;
 use x86_64::structures::idt::{
     InterruptDescriptorTable,
-    InterruptStackFrame,
-    PageFaultErrorCode
+    InterruptStackFrame
 };
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
-        .set_handler_fn(unsafe {
-            core::mem::transmute(clock_handler as *mut fn())
-        }).set_stack_index(crate::gdt::CONTEXT_SWITCH);
+        .set_handler_fn(core::mem::transmute(clock_handler as *mut fn()))
+        .set_stack_index(crate::gdt::CONTEXT_SWITCH);
 }
 
 #[repr(align(8), C)]
@@ -32,7 +30,7 @@ pub struct Registers {
     rbp: usize,
 }
 
-pub extern "x86-interrupt" fn clock_handler(sf: &mut InterruptStackFrame, regs: &mut Registers) {
+pub extern "x86-interrupt" fn clock_handler(sf: &mut InterruptStackFrame) {
     //crate::process::switch_first_ready_process(sf, regs);
     clock_draw();
     super::ack(consts::Interrupts::IRQ0 as u8);
@@ -59,26 +57,29 @@ fn clock_draw() {
             value = 0.0;
         }
 
-        let (cx, cy) = (8 * 79, 16 * 24);
-        let len = 16u32;
-
-        #[allow(unused_imports)]
-        use micromath::F32Ext;
-        let (dx, dy) = (
-            (len as f32 * value.cos()) as i32,
-            (len as f32 * value.sin()) as i32,
-        );
-
         if let Some(mut display) = crate::display::get_display() {
-            Circle::new(Point::new(cx, cy), len)
-                .into_styled(PrimitiveStyle::with_fill(Rgb888::WHITE))
-                .draw(&mut *display)
-                .unwrap(); // FIXME: report error later
 
-            Line::new(Point::new(cx, cy), Point::new(cx - dx, cy - dy))
-                .into_styled(PrimitiveStyle::with_stroke(Rgb888::BLACK, 3))
-                .draw(&mut *display)
-                .unwrap(); // FIXME: report error later
+            let len = 16i32;
+            let (cx, cy) = display.resolution();
+            let (cx, cy) = (cx as i32 - len - 8, cy as i32 - len - 8);
+
+            #[allow(unused_imports)]
+            use micromath::F32Ext;
+            let (dx, dy) = (
+                (len as f32 * value.cos()) as i32,
+                (len as f32 * value.sin()) as i32,
+            );
+
+            Circle::new(Point::new(cx - len, cy - len), 2 * len as u32)
+                .into_styled(
+                    PrimitiveStyle::with_fill(Rgb888::new(0xef, 0xef, 0xef))
+                ).draw(&mut *display).unwrap();
+
+            Line::new(Point::new(cx - dx, cy - dy), Point::new(cx + dx, cy + dy))
+                .into_styled(
+                    PrimitiveStyle::with_stroke(
+                    Rgb888::new(0x20, 0x20, 0x20), 2)
+                ).draw(&mut *display).unwrap();
         }
     })
 }

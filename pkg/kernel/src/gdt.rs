@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use lazy_static::lazy_static;
 use x86_64::structures::gdt::{Descriptor, GlobalDescriptorTable, SegmentSelector};
 use x86_64::structures::tss::TaskStateSegment;
@@ -25,8 +27,8 @@ lazy_static! {
         let mut gdt = GlobalDescriptorTable::new();
         let code_selector = gdt.add_entry(Descriptor::kernel_code_segment());
         let tss_selector = gdt.add_entry(Descriptor::tss_segment(&TSS));
-        let user_code_selector = gdt.add_entry(Descriptor::user_code_segment());
-        let user_data_selector = gdt.add_entry(Descriptor::user_data_segment());
+        // let user_code_selector = gdt.add_entry(Descriptor::user_code_segment());
+        // let user_data_selector = gdt.add_entry(Descriptor::user_data_segment());
         (
             gdt,
             Selectors {
@@ -43,18 +45,18 @@ struct Selectors {
 }
 
 pub fn init() {
-    use x86_64::instructions::segmentation::{load_ds, load_es, load_fs, load_gs, load_ss, set_cs};
+    use x86_64::instructions::segmentation::{Segment, CS, DS, ES, FS, GS, SS};
     use x86_64::instructions::tables::load_tss;
     use x86_64::PrivilegeLevel;
 
     GDT.0.load();
     unsafe {
-        set_cs(GDT.1.code_selector);
-        load_ds(SegmentSelector::new(0, PrivilegeLevel::Ring0));
-        load_ss(SegmentSelector::new(0, PrivilegeLevel::Ring0));
-        load_es(SegmentSelector::new(0, PrivilegeLevel::Ring0));
-        load_fs(SegmentSelector::new(0, PrivilegeLevel::Ring0));
-        load_gs(SegmentSelector::new(0, PrivilegeLevel::Ring0));
+        CS::set_reg(GDT.1.code_selector);
+        DS::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
+        SS::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
+        ES::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
+        FS::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
+        GS::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
         load_tss(GDT.1.tss_selector);
     }
 }
