@@ -6,8 +6,6 @@ use core::intrinsics::{
     volatile_set_memory
 };
 
-const PIXEL_LEN: usize = 1;
-
 #[derive(Debug)]
 pub enum DisplayError {
     OutOfBounds(usize, usize),
@@ -21,7 +19,7 @@ pub struct GOPDisplay<'a>{
 impl <'a> OriginDimensions for GOPDisplay<'a> {
     fn size(&self) -> Size {
         let (x, y) = self.info.mode.resolution();
-        Size::new((x / PIXEL_LEN) as u32, (y / PIXEL_LEN) as u32)
+        Size::new(x as u32, y as u32)
     }
 }
 
@@ -68,12 +66,8 @@ impl <'a> GOPDisplay <'a> {
 
         let color = color.into_storage();
 
-        for dx in 0..PIXEL_LEN {
-            for dy in 0..PIXEL_LEN {
-                let index = (y + dy) * size.0 + x + dx;
-                self.buffer[index] = color;
-            }
-        }
+        let index = (y + dy) * size.0 + x + dx;
+        self.buffer[index] = color;
 
         Ok(())
     }
