@@ -41,9 +41,9 @@ fn clock_draw() {
     const ANGLE_INCR: u16 = 15;
 
     x86_64::instructions::interrupts::without_interrupts(|| {
-        use embedded_graphics::pixelcolor::*;
         use embedded_graphics::prelude::*;
         use embedded_graphics::primitives::*;
+        use crate::utils::colors;
 
         let value;
         // 自增
@@ -60,8 +60,8 @@ fn clock_draw() {
         if let Some(mut display) = crate::display::get_display() {
 
             let len = 16i32;
-            let (cx, cy) = display.resolution();
-            let (cx, cy) = (cx as i32 - len - 8, cy as i32 - len - 8);
+            let (cx, _) = display.resolution();
+            let (cx, cy) = (cx as i32 - len - 8, len + 8);
 
             #[allow(unused_imports)]
             use micromath::F32Ext;
@@ -72,13 +72,12 @@ fn clock_draw() {
 
             Circle::new(Point::new(cx - len, cy - len), 2 * len as u32)
                 .into_styled(
-                    PrimitiveStyle::with_fill(Rgb888::new(0xef, 0xef, 0xef))
+                    PrimitiveStyle::with_fill(colors::FRONTGROUND)
                 ).draw(&mut *display).unwrap();
 
             Line::new(Point::new(cx - dx, cy - dy), Point::new(cx + dx, cy + dy))
                 .into_styled(
-                    PrimitiveStyle::with_stroke(
-                    Rgb888::new(0x20, 0x20, 0x20), 2)
+                    PrimitiveStyle::with_stroke(colors::GREEN, 3)
                 ).draw(&mut *display).unwrap();
         }
     })

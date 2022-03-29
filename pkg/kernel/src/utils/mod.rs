@@ -2,6 +2,7 @@ mod font;
 mod gop_display;
 mod math;
 
+pub mod colors;
 pub use font::JBMONO;
 pub use gop_display::GOPDisplay;
 pub use math::*;

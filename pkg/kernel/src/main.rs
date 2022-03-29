@@ -4,7 +4,7 @@
 #![feature(core_intrinsics)]
 
 use boot::BootInfo;
-use core::arch::asm;
+// use core::arch::asm;
 
 #[macro_use]
 extern crate log;
@@ -32,7 +32,8 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
 
     let graphic_info = &boot_info.graphic_info;
     display::initialize(graphic_info);
-    display::get_display_for_sure().clear(None);
+
+    display::get_display_for_sure().clear(Some(utils::colors::BACKGROUND), 0);
 
     console::initialize();
     println!("[+] Console Initialized.");

@@ -78,20 +78,20 @@ impl <'a> GOPDisplay <'a> {
         self.info.mode.resolution()
     }
 
-    pub fn clear(&mut self, color: Option<<GOPDisplay<'a> as DrawTarget>::Color>) {
+    pub fn clear(&mut self, color: Option<<GOPDisplay<'a> as DrawTarget>::Color>, base: usize) {
         let size = self.resolution();
         let color = color.unwrap_or_default().into_storage();
 
-        for index in 0..(size.0 * size.1) {
+        for index in (size.0 * base)..(size.0 * size.1) {
             self.buffer[index] = color;
         }
     }
 
-    pub fn scrollup(&mut self, color: Option<<GOPDisplay<'a> as DrawTarget>::Color>, n: u8) {
+    pub fn scrollup(&mut self, color: Option<<GOPDisplay<'a> as DrawTarget>::Color>, n: u8, base: usize) {
         let size = self.resolution();
         let color = color.unwrap_or_default().into_storage();
 
-        for y in 0..size.1 {
+        for y in base..size.1 {
             for x in 0..size.0 {
                 let index = (y * size.0 + x) as usize;
                 let index_up = (y as isize - n as isize) * size.0 as isize + x as isize;
