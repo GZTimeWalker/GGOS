@@ -54,5 +54,14 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     warn!("Warning Test.");
     error!("ERROR!!!");
 
+    for i in 0..500 {
+        info!("Testing...{}", i);
+        for _ in 0..5000_0000 {
+            unsafe {
+                core::arch::asm!("nop");
+            }
+        }
+    }
+
     loop {}
 }

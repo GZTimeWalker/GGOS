@@ -62,16 +62,16 @@ impl Console {
 
     pub fn next_row(&mut self) {
         self.y_pos += 1;
-        if self.y_pos >= self.size().1 {
+        if self.y_pos > self.size().1 {
             self.scroll();
-            self.y_pos = self.size().1 - 1;
+            self.y_pos = self.size().1;
         }
         self.x_pos = 0;
     }
 
     pub fn next_char(&mut self) {
         self.x_pos += 1;
-        if self.x_pos >= self.size().0 {
+        if self.x_pos > self.size().0 {
             self.next_row()
         }
     }
@@ -80,7 +80,7 @@ impl Console {
         get_display_for_sure().scrollup(
             Some(self.background),
             FONT_Y,
-            FONT_Y as usize * TOP_PAD_LINE_NUM
+            FONT_Y as usize * (TOP_PAD_LINE_NUM - 1)
         );
     }
 

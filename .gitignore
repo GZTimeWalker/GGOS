@@ -1,3 +1,4 @@
 /.vscode
 /target
 /esp
+**/.gdb_history

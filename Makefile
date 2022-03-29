@@ -21,7 +21,10 @@ launch:
 		$(QEMU_ARGS)
 
 debug: build
-	@qemu-system-x86_64 -bios ${OVMF} -drive format=raw,file=fat:rw:${ESP} -s -S
+	@qemu-system-x86_64 \
+		-bios ${OVMF} \
+		-drive format=raw,file=fat:rw:${ESP} \
+		-s -S
 
 clean:
 	@cargo clean
