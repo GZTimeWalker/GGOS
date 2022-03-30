@@ -23,16 +23,11 @@ impl log::Log for Logger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             match record.level() {
-                log::Level::Error
-                    => println_warn!("[E] {}", record.args()),
-                log::Level::Warn
-                    => println_warn!("[!] {}", record.args()),
-                log::Level::Info
-                    => println!("[+] {}", record.args()),
-                log::Level::Debug
-                    => println!("[D] {}", record.args()),
-                log::Level::Trace
-                    => println!("[T] {}", record.args()),
+                log::Level::Error => println_warn!("[E] {}", record.args()),
+                log::Level::Warn => println_warn!("[!] {}", record.args()),
+                log::Level::Info => println!("[+] {}", record.args()),
+                log::Level::Debug => println!("[D] {}", record.args()),
+                log::Level::Trace => println!("[T] {}", record.args()),
             }
         }
     }

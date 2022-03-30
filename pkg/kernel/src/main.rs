@@ -49,8 +49,27 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
+    trace!("Trace?");
+    debug!("Debug Test.");
+    warn!("Warning Test.");
+    error!("ERROR!!!");
+
+    for i in 0..10 {
+        print!("[>] Waiting [{}] ", i);
+        for _ in 0..50 {
+            for _ in 0..200_0000 {
+                unsafe {
+                    core::arch::asm!("nop");
+                }
+            }
+            print!(">");
+        }
+        println!();
+    }
+
     let alpha = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-    for _ in 0..100 {
+    print!("[>] Fuzzing buffer... ");
+    for _ in 0..10 {
         print!("{}", alpha);
         for _ in 0..50_0000 {
             unsafe {
@@ -58,13 +77,6 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
             }
         }
     }
-
-    println!();
-    trace!("Trace?");
-    debug!("Debug Test.");
-    warn!("Warning Test.");
-    error!("ERROR!!!");
-    print!("Hello, world!");
 
     loop {}
 }

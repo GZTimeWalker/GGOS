@@ -1,15 +1,15 @@
 #![allow(dead_code)]
 
-use crate::utils::colors;
 use crate::display::get_display_for_sure;
+use crate::utils::colors;
 use crate::utils::font;
 use core::fmt::*;
 use embedded_graphics::{
-    mono_font::{MonoTextStyle, MonoFont},
+    mono_font::{MonoFont, MonoTextStyle},
     pixelcolor::Rgb888,
     prelude::*,
-    text::{Text, renderer::CharacterStyle, Baseline},
-    primitives::{Line, PrimitiveStyle}
+    primitives::{Line, PrimitiveStyle},
+    text::{renderer::CharacterStyle, Baseline, Text},
 };
 
 once_mutex!(pub CONSOLE: Console);
@@ -35,7 +35,7 @@ pub struct Console {
     x_pos: usize,
     y_pos: usize,
     frontground: Rgb888,
-    background: Rgb888
+    background: Rgb888,
 }
 
 impl Console {
@@ -44,7 +44,7 @@ impl Console {
             x_pos: 0,
             y_pos: 0,
             frontground: colors::FRONTGROUND,
-            background: colors::BACKGROUND
+            background: colors::BACKGROUND,
         }
     }
 }
@@ -54,12 +54,15 @@ impl Console {
         let size: Size = get_display_for_sure().size();
         (
             size.width as usize / (FONT_X + SPACING) as usize,
-            size.height as usize / FONT_Y as usize - TOP_PAD_LINE_NUM
+            size.height as usize / FONT_Y as usize - TOP_PAD_LINE_NUM,
         )
     }
 
     fn get_char_pos(&self, x: usize, y: usize) -> (usize, usize) {
-        (x * FONT_X as usize, (y + TOP_PAD_LINE_NUM) * FONT_Y as usize)
+        (
+            x * FONT_X as usize,
+            (y + TOP_PAD_LINE_NUM) * FONT_Y as usize,
+        )
     }
 
     pub fn next_row(&mut self) {
@@ -82,7 +85,7 @@ impl Console {
         get_display_for_sure().scrollup(
             Some(self.background),
             FONT_Y,
-            FONT_Y as usize * (TOP_PAD_LINE_NUM - 1)
+            FONT_Y as usize * (TOP_PAD_LINE_NUM - 1),
         );
     }
 
@@ -91,13 +94,13 @@ impl Console {
         let str_c = c.encode_utf8(&mut buf);
         let pos = Point::new(
             x as i32 * (FONT_X + SPACING) as i32,
-            (y + TOP_PAD_LINE_NUM) as i32 * FONT_Y as i32
+            (y + TOP_PAD_LINE_NUM) as i32 * FONT_Y as i32,
         );
         let mut style = MonoTextStyle::new(FONT, self.frontground);
         CharacterStyle::set_background_color(&mut style, Some(self.background));
-        Text::new( str_c, pos, style)
-        .draw(&mut *get_display_for_sure())
-        .expect("Writing Error!");
+        Text::new(str_c, pos, style)
+            .draw(&mut *get_display_for_sure())
+            .expect("Writing Error!");
     }
 
     pub fn write(&mut self, s: &str) {
@@ -105,7 +108,7 @@ impl Console {
             match c {
                 '\n' => {
                     self.next_row();
-                },
+                }
                 '\r' => self.x_pos = 0,
                 '\x08' => self.x_pos -= 1,
                 _ => {
@@ -127,9 +130,9 @@ impl Console {
         Line::new(
             Point::new(cx as i32, cy as i32),
             Point::new(cx as i32, cy as i32 + FONT_Y as i32 - 1),
-        ).into_styled(
-            PrimitiveStyle::with_stroke(colors::FRONTGROUND, 2)
-        ).draw(&mut *get_display_for_sure())
+        )
+        .into_styled(PrimitiveStyle::with_stroke(colors::FRONTGROUND, 2))
+        .draw(&mut *get_display_for_sure())
         .expect("Hint Drawing Error!");
     }
 
@@ -143,22 +146,15 @@ impl Console {
     }
 
     pub fn clear(&self) {
-        get_display_for_sure().clear(
-            Some(self.background),
-            FONT_Y as usize * TOP_PAD_LINE_NUM
-        );
+        get_display_for_sure().clear(Some(self.background), FONT_Y as usize * TOP_PAD_LINE_NUM);
     }
 
     pub fn header(&self) {
         let mut style = MonoTextStyle::new(&font::JBMONO_TITLE, colors::BLUE);
         CharacterStyle::set_background_color(&mut style, Some(colors::BACKGROUND));
-        Text::with_baseline(
-            crate::utils::HEADER,
-            Point::new(6, 6),
-            style,
-            Baseline::Top
-        ).draw(&mut *get_display_for_sure())
-        .expect("Drawing Error!");
+        Text::with_baseline(crate::utils::HEADER, Point::new(6, 6), style, Baseline::Top)
+            .draw(&mut *get_display_for_sure())
+            .expect("Drawing Error!");
     }
 }
 
@@ -192,7 +188,6 @@ macro_rules! println_warn {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print_warn!("{}\n", format_args!($($arg)*)));
 }
-
 
 #[doc(hidden)]
 pub fn print_internal(args: Arguments) {

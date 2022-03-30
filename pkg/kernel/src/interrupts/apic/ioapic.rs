@@ -23,12 +23,12 @@ impl IoApic {
         }
     }
     unsafe fn read(&mut self, reg: u8) -> u32 {
-            self.reg.write_volatile(reg as u32);
-            self.data.read_volatile()
+        self.reg.write_volatile(reg as u32);
+        self.data.read_volatile()
     }
     unsafe fn write(&mut self, reg: u8, data: u32) {
-            self.reg.write_volatile(reg as u32);
-            self.data.write_volatile(data);
+        self.reg.write_volatile(reg as u32);
+        self.data.write_volatile(data);
     }
     fn write_irq(&mut self, irq: u8, flags: RedirectionEntry, dest: u8) {
         unsafe {
