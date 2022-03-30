@@ -46,9 +46,6 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     }
     info!("Interrupts Initialized.");
 
-    x86_64::instructions::interrupts::enable();
-    info!("Interrupts Enabled.");
-
     trace!("Trace?");
     debug!("Debug Test.");
     warn!("Warning Test.");
@@ -67,16 +64,8 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
         println!();
     }
 
-    let alpha = " !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-    print!("[>] Fuzzing buffer... ");
-    for _ in 0..10 {
-        print!("{}", alpha);
-        for _ in 0..50_0000 {
-            unsafe {
-                core::arch::asm!("nop");
-            }
-        }
-    }
+    x86_64::instructions::interrupts::enable();
+    info!("Interrupts Enabled.");
 
     loop {}
 }
