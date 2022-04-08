@@ -51,6 +51,7 @@ fn clock_draw() {
             }
             value = *angle_locked as f32 / 180f32 * core::f32::consts::PI;
             print!("[>] Angle = {:>3}\r", *angle_locked);
+            //println!("[>] Testing......{:>3}", *angle_locked);
         } else {
             value = 0.0;
         }

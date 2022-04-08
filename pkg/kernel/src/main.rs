@@ -52,7 +52,7 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     error!("ERROR!!!");
 
     for i in 0..10 {
-        print!("[>] Waiting [{}] ", i);
+        print!("[>] Waiting [{:>2}] ", i);
         for _ in 0..50 {
             for _ in 0..200_0000 {
                 unsafe {
