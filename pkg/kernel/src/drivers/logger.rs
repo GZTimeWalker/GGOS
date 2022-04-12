@@ -26,8 +26,8 @@ impl log::Log for Logger {
                 log::Level::Error => println_warn!("[E] {}", record.args()),
                 log::Level::Warn => println_warn!("[!] {}", record.args()),
                 log::Level::Info => println!("[+] {}", record.args()),
-                log::Level::Debug => println!("[D] {}", record.args()),
-                log::Level::Trace => println!("[T] {}", record.args()),
+                log::Level::Debug => println_serial!("[D] {}", record.args()),
+                log::Level::Trace => println_serial!("[T] {}", record.args()),
             }
         }
     }

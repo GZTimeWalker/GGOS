@@ -71,7 +71,8 @@ impl Console {
             self.scroll();
             self.y_pos = self.size().1;
         }
-        self.x_pos = 0;
+        // self.x_pos = 0;
+        // let '\r' to do this
     }
 
     pub fn next_char(&mut self) {
