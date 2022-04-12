@@ -3,7 +3,9 @@
 #![feature(abi_x86_interrupt)]
 #![feature(core_intrinsics)]
 #![feature(type_alias_impl_trait)]
+#![feature(alloc_error_handler)]
 
+extern crate alloc;
 #[macro_use]
 extern crate log;
 #[macro_use]
@@ -19,6 +21,7 @@ mod interrupts;
 mod memory;
 
 use drivers::*;
+use memory::allocator;
 use boot::BootInfo;
 use x86_64::VirtAddr;
 // use core::arch::asm;
@@ -52,11 +55,18 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     }
     info!("Interrupts Initialized.");
 
+    // init frame allocator
     unsafe {
         memory::init(
             VirtAddr::new_truncate(memory::PHYSICAL_OFFSET as u64),
             &boot_info.memory_map);
     }
+
+    allocator::init_heap(
+        &mut *memory::get_page_table_for_sure(),
+        &mut *memory::get_frame_alloc_for_sure(),
+    ).expect("Heap Initialization Failed.");
+    info!("Heap Initialized.");
 
     trace!("Trace?");
     debug!("Debug Test.");

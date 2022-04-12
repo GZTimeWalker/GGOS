@@ -4,7 +4,7 @@ use boot::MemoryMap;
 mod address;
 mod frames;
 mod paging;
-mod allocator;
+pub mod allocator;
 
 pub use frames::*;
 pub use paging::*;

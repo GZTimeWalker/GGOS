@@ -7,9 +7,13 @@ authors = ["GZTime <gz.time.walker@gmail.com>"]
 
 [dependencies]
 arrayvec = { version = "0.7.2", default-features = false }
-uefi = { version = "0.15.2", features = ["alloc"] }
-uefi-services = "0.12.1"
+uefi = "0.15.2"
+uefi-services = { version = "0.12.1", optional = true}
 log = "0.4.16"
 x86_64 = "0.14.8"
 xmas-elf = "0.8"
 elf = { package = "ggos_elf", path = "../elf" }
+
+[features]
+boot = ["uefi/alloc", "uefi-services"]
+default = ["boot"]
