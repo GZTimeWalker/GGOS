@@ -19,6 +19,7 @@ mod drivers;
 mod gdt;
 mod interrupts;
 mod memory;
+mod process;
 
 use drivers::*;
 use memory::allocator;
@@ -67,6 +68,9 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
         &mut *memory::get_frame_alloc_for_sure(),
     ).expect("Heap Initialization Failed.");
     info!("Heap Initialized.");
+
+    process::init();
+    info!("Process Manager Initialized.");
 
     trace!("Trace?");
     debug!("Debug Test.");

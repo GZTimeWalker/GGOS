@@ -5,8 +5,6 @@ mod handlers;
 use apic::*;
 use x86_64::structures::idt::InterruptDescriptorTable;
 
-pub use handlers::Registers;
-
 lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
         let mut idt = InterruptDescriptorTable::new();

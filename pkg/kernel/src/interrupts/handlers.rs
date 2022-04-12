@@ -7,26 +7,6 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
         .set_stack_index(crate::gdt::CONTEXT_SWITCH);
 }
 
-#[repr(align(8), C)]
-#[derive(Debug, Clone, Default)]
-pub struct Registers {
-    r15: usize,
-    r14: usize,
-    r13: usize,
-    r12: usize,
-    r11: usize,
-    r10: usize,
-    r9: usize,
-    r8: usize,
-    rdi: usize,
-    rsi: usize,
-    rdx: usize,
-    rcx: usize,
-    rbx: usize,
-    rax: usize,
-    rbp: usize,
-}
-
 pub extern "x86-interrupt" fn clock_handler(_sf: &mut InterruptStackFrame) {
     clock_draw();
     super::ack(consts::Interrupts::IRQ0 as u8);
