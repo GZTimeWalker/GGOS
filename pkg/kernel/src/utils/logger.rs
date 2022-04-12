@@ -1,6 +1,6 @@
 use log::{LevelFilter, Metadata, Record};
 
-pub fn initialize() {
+pub fn init() {
     static LOGGER: Logger = Logger;
     log::set_logger(&LOGGER).unwrap();
     log::set_max_level(match option_env!("LOG_LEVEL") {

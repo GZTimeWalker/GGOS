@@ -22,7 +22,7 @@ const SPACING: u8 = FONT.character_spacing as u8;
 
 const TOP_PAD_LINE_NUM: usize = 3;
 
-pub fn initialize() {
+pub fn init() {
     init_CONSOLE(Console::new());
     let console = get_console_for_sure();
     console.clear();
@@ -56,6 +56,10 @@ impl Console {
             size.width as usize / (FONT_X + SPACING) as usize,
             size.height as usize / FONT_Y as usize - TOP_PAD_LINE_NUM,
         )
+    }
+
+    pub fn get_pos(&self) -> (usize, usize) {
+        (self.x_pos, self.y_pos)
     }
 
     fn get_char_pos(&self, x: usize, y: usize) -> (usize, usize) {
@@ -164,4 +168,11 @@ impl Write for Console {
         self.write(s);
         Ok(())
     }
+}
+
+pub fn backspace() {
+    let mut console = get_console_for_sure();
+    let (x, y) = console.get_pos();
+    console.move_cursor(-1, 0);
+    console.write_char_at(x, y, ' ');
 }

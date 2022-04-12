@@ -3,7 +3,7 @@ use boot::GraphicInfo;
 
 once_mutex!(pub DISPLAY: GOPDisplay<'static>);
 
-pub fn initialize(graphic: &'static GraphicInfo) {
+pub fn init(graphic: &'static GraphicInfo) {
     init_DISPLAY(GOPDisplay::new(graphic));
 }
 

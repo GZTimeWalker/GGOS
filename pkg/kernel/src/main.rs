@@ -34,20 +34,20 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
 
     // init serial output driver
     unsafe {
-        serial::initialize();
+        serial::init();
     }
 
     // init display driver
     let graphic_info = &boot_info.graphic_info;
-    display::initialize(graphic_info);
+    display::init(graphic_info);
     display::get_display_for_sure().clear(Some(utils::colors::BACKGROUND), 0);
 
     // init graphic console
-    console::initialize();
+    console::init();
     println!("[+] Console Initialized.");
 
     // init log system
-    utils::logger::initialize();
+    utils::logger::init();
     info!("Logger Initialized.");
 
     // init interrupts
@@ -71,6 +71,9 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
 
     process::init();
     info!("Process Manager Initialized.");
+
+    keyboard::init();
+    info!("Keyboard Initialized.");
 
     trace!("Trace?");
     debug!("Debug Test.");
