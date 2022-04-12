@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 #![feature(core_intrinsics)]
+#![feature(type_alias_impl_trait)]
 
 #[macro_use]
 extern crate log;
@@ -19,6 +20,7 @@ mod memory;
 
 use drivers::*;
 use boot::BootInfo;
+use x86_64::VirtAddr;
 // use core::arch::asm;
 
 boot::entry_point!(kernal_main);
@@ -26,25 +28,35 @@ boot::entry_point!(kernal_main);
 pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     gdt::init();
 
+    // init serial output driver
     unsafe {
         serial::initialize();
     }
 
+    // init display driver
     let graphic_info = &boot_info.graphic_info;
     display::initialize(graphic_info);
-
     display::get_display_for_sure().clear(Some(utils::colors::BACKGROUND), 0);
 
+    // init graphic console
     console::initialize();
     println!("[+] Console Initialized.");
 
+    // init log system
     logger::initialize();
     info!("Logger Initialized.");
 
+    // init interrupts
     unsafe {
         interrupts::init();
     }
     info!("Interrupts Initialized.");
+
+    unsafe {
+        memory::init(
+            VirtAddr::new_truncate(memory::PHYSICAL_OFFSET as u64),
+            &boot_info.memory_map);
+    }
 
     trace!("Trace?");
     debug!("Debug Test.");
@@ -64,6 +76,7 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
         println!();
     }
 
+    // enable interrupts
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 

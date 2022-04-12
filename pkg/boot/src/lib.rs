@@ -1,4 +1,5 @@
 #![no_std]
+#[allow(dead_code)]
 
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
@@ -26,6 +27,8 @@ pub struct BootInfo {
     /// UEFI SystemTable
     pub system_table: SystemTable<Runtime>,
 }
+
+pub type MemoryMap = ArrayVec<MemoryDescriptor, 256>;
 
 /// Graphic output information
 #[derive(Debug, Copy, Clone)]
