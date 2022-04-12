@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::display::get_display_for_sure;
+use crate::output::display::get_display_for_sure;
 use crate::utils::colors;
 use crate::utils::font;
 use core::fmt::*;
@@ -168,13 +168,13 @@ impl Write for Console {
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => (
-        $crate::console::print_internal(format_args!($($arg)*))
+        $crate::output::console::print_internal(format_args!($($arg)*))
     );
 }
 
 #[macro_export]
 macro_rules! print_warn {
-    ($($arg:tt)*) => ($crate::console::print_warn_internal(format_args!($($arg)*)));
+    ($($arg:tt)*) => ($crate::output::console::print_warn_internal(format_args!($($arg)*)));
 }
 
 #[macro_export]

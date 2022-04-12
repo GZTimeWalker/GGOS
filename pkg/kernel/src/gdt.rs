@@ -27,8 +27,6 @@ lazy_static! {
         let mut gdt = GlobalDescriptorTable::new();
         let code_selector = gdt.add_entry(Descriptor::kernel_code_segment());
         let tss_selector = gdt.add_entry(Descriptor::tss_segment(&TSS));
-        // let user_code_selector = gdt.add_entry(Descriptor::user_code_segment());
-        // let user_data_selector = gdt.add_entry(Descriptor::user_data_segment());
         (
             gdt,
             Selectors {

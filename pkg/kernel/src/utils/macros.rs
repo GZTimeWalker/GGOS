@@ -1,3 +1,4 @@
+/// Use spin mutex to control variable access
 #[macro_export]
 macro_rules! guard_access_fn {
     ($(#[$meta:meta])* $v:vis $fn:ident ($mutex:path : $ty:ty)) => {
@@ -20,6 +21,7 @@ macro_rules! guard_access_fn {
     };
 }
 
+#[macro_export]
 macro_rules! once_mutex {
     ($i:vis $v:ident: $t:ty) => {
         $i static $v: spin::Once<spin::Mutex<$t>> = spin::Once::new();

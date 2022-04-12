@@ -3,27 +3,23 @@
 #![feature(abi_x86_interrupt)]
 #![feature(core_intrinsics)]
 
-use boot::BootInfo;
-// use core::arch::asm;
-
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate bitflags;
-
 #[macro_use]
-mod macros;
+mod utils;
 #[macro_use]
-mod console;
-
-mod display;
+mod output;
 mod gdt;
 mod interrupts;
-mod logger;
 mod memory;
-mod utils;
+
+use output::*;
+use boot::BootInfo;
+// use core::arch::asm;
 
 boot::entry_point!(kernal_main);
 
