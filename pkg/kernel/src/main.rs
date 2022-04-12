@@ -75,27 +75,14 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     keyboard::init();
     info!("Keyboard Initialized.");
 
-    trace!("Trace?");
-    debug!("Debug Test.");
-    warn!("Warning Test.");
-    error!("ERROR!!!");
-
-    for i in 0..10 {
-        print!("[>] Waiting [{:>2}] ", i);
-        for _ in 0..50 {
-            for _ in 0..200_0000 {
-                unsafe {
-                    core::arch::asm!("nop");
-                }
-            }
-            print!(">");
-        }
-        println!();
-    }
-
     // enable interrupts
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
-    loop {}
+    loop {
+        print!(">>> ");
+
+        let something = drivers::keyboard::get_line();
+        info!("Input: {}", something);
+    }
 }

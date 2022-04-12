@@ -38,7 +38,7 @@ pub fn receive() -> Option<DecodedKey> {
 pub extern "x86-interrupt" fn interrupt_handler(_st: InterruptStackFrame) {
     super::ack(super::consts::IRQ::Keyboard as u8);
     if let Some(key) = receive() {
-        trace!("key readed {:?}", key);
+        // trace!("key readed {:?}", key);
         get_key_buf_for_sure().push(key).unwrap();
     }
 }

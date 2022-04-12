@@ -42,7 +42,7 @@ pub fn get_key() -> DecodedKey {
     }
 }
 
-pub fn getline() -> String {
+pub fn get_line() -> String {
     let mut s = String::with_capacity(DEFAULT_BUF_SIZE);
     while let DecodedKey::Unicode(k) = get_key() {
         match k {
