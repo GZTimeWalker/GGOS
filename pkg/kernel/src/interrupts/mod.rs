@@ -18,7 +18,7 @@ lazy_static! {
 /// 初始化中断及硬件系统；不会打开中断
 pub unsafe fn init() {
     IDT.load();
-    info!("XApic support = {}", apic::XApic::support());
+    debug!("XApic support = {}", apic::XApic::support());
     let mut xapic = XApic::new(crate::memory::physical_to_virtual(0xfee00000));
     xapic.cpu_init();
 }

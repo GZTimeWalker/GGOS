@@ -39,6 +39,7 @@ impl Process {
         // 1. alloc a page table for process
         let page_table_addr = frame_alloc.allocate_frame()
             .expect("Cannot alloc page table for new process.");
+        trace!("Alloc page table for new process: {:?}", page_table_addr);
 
         // 2. copy current page table to new page table
         unsafe {
@@ -75,6 +76,8 @@ impl Process {
         let regs = Registers::default();
         let ticks = priority * 10;
         let ticks_passed = 0;
+
+        debug!("New process {}#{} created.", name, pid);
 
         // 3. create process object
         Self {

@@ -25,6 +25,9 @@ pub fn init_heap(
         Page::range_inclusive(heap_start_page, heap_end_page)
     };
 
+    debug!("Page start: {:?}", page_range.start);
+    debug!("Page end  : {:?}", page_range.end);
+
     for page in page_range {
         let frame = frame_allocator
             .allocate_frame()
@@ -43,5 +46,5 @@ pub fn init_heap(
 #[cfg(not(test))]
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
-    panic!("allocation error: {:?}", layout)
+    panic!("Allocation error: {:?}", layout)
 }

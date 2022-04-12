@@ -1,6 +1,7 @@
 mod gop;
 mod math;
 
+pub mod draw;
 pub mod colors;
 pub mod font;
 pub use gop::GOPDisplay;
