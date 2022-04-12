@@ -3,7 +3,7 @@ use log::{LevelFilter, Metadata, Record};
 pub fn initialize() {
     static LOGGER: Logger = Logger;
     log::set_logger(&LOGGER).unwrap();
-    log::set_max_level(match option_env!("LOG") {
+    log::set_max_level(match option_env!("LOG_LEVEL") {
         Some("error") => LevelFilter::Error,
         Some("warn") => LevelFilter::Warn,
         Some("info") => LevelFilter::Info,

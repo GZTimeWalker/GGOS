@@ -47,7 +47,7 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     println!("[+] Console Initialized.");
 
     // init log system
-    logger::initialize();
+    utils::logger::initialize();
     info!("Logger Initialized.");
 
     // init interrupts

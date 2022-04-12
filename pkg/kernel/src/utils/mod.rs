@@ -1,12 +1,14 @@
 mod gop;
 mod math;
+#[macro_use]
+mod macros;
 
 pub mod draw;
-pub mod colors;
 pub mod font;
+pub mod colors;
+pub mod logger;
 pub use gop::GOPDisplay;
-#[macro_use]
-pub mod macros;
+pub use macros::*;
 
 pub static HEADER: &str = ">>> GGOS v0.3.1";
 
