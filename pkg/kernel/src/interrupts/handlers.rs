@@ -56,7 +56,7 @@ fn clock_draw() {
             value = 0.0;
         }
 
-        if let Some(mut display) = crate::output::display::get_display() {
+        if let Some(mut display) = crate::drivers::display::get_display() {
             let len = 24i32;
             let (cx, _) = display.resolution();
             let (cx, cy) = (cx as i32 - len - 10, len + 8);

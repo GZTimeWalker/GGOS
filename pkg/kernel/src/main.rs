@@ -12,12 +12,12 @@ extern crate bitflags;
 #[macro_use]
 mod utils;
 #[macro_use]
-mod output;
+mod drivers;
 mod gdt;
 mod interrupts;
 mod memory;
 
-use output::*;
+use drivers::*;
 use boot::BootInfo;
 // use core::arch::asm;
 
@@ -25,6 +25,10 @@ boot::entry_point!(kernal_main);
 
 pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     gdt::init();
+
+    unsafe {
+        serial::initialize();
+    }
 
     let graphic_info = &boot_info.graphic_info;
     display::initialize(graphic_info);
