@@ -17,6 +17,7 @@ run: build launch
 launch:
 	@qemu-system-x86_64 \
 		-bios ${OVMF} \
+		-serial stdio \
 		-drive format=raw,file=fat:rw:${ESP} \
 		$(QEMU_ARGS)
 

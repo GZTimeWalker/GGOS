@@ -59,6 +59,7 @@ pub fn get_line() -> String {
                 s.push(c)
             }
         }
+        console::get_console_for_sure().draw_hint();
     }
     println!();
     s

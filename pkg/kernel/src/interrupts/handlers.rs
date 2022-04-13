@@ -7,8 +7,7 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
         .set_stack_index(crate::gdt::CONTEXT_SWITCH);
 }
 
-pub extern "x86-interrupt" fn clock_handler(
-    _sf: InterruptStackFrame) {
+pub extern "x86-interrupt" fn clock_handler(_sf: InterruptStackFrame) {
     crate::utils::draw::clock();
     // manager::switch_process(sf, regs);
     super::ack(consts::Interrupts::IRQ0 as u8);

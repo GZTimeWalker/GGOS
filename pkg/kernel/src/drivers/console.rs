@@ -20,7 +20,7 @@ const FONT_X: u8 = FONT.character_size.width as u8;
 const FONT_Y: u8 = FONT.character_size.height as u8;
 const SPACING: u8 = FONT.character_spacing as u8;
 
-const TOP_PAD_LINE_NUM: usize = 3;
+const TOP_PAD_LINE_NUM: isize = 3;
 
 pub fn init() {
     init_CONSOLE(Console::new());
@@ -32,8 +32,8 @@ pub fn init() {
 guard_access_fn!(pub get_console(CONSOLE: Console));
 
 pub struct Console {
-    x_pos: usize,
-    y_pos: usize,
+    x_pos: isize,
+    y_pos: isize,
     frontground: Rgb888,
     background: Rgb888,
 }
@@ -50,22 +50,22 @@ impl Console {
 }
 
 impl Console {
-    pub fn size(&self) -> (usize, usize) {
+    pub fn size(&self) -> (isize, isize) {
         let size: Size = get_display_for_sure().size();
         (
-            size.width as usize / (FONT_X + SPACING) as usize,
-            size.height as usize / FONT_Y as usize - TOP_PAD_LINE_NUM,
+            size.width as isize / (FONT_X + SPACING) as isize,
+            size.height as isize / FONT_Y as isize - TOP_PAD_LINE_NUM,
         )
     }
 
-    pub fn get_pos(&self) -> (usize, usize) {
+    pub fn get_pos(&self) -> (isize, isize) {
         (self.x_pos, self.y_pos)
     }
 
-    fn get_char_pos(&self, x: usize, y: usize) -> (usize, usize) {
+    fn get_char_pos(&self, x: isize, y: isize) -> (isize, isize) {
         (
-            x * FONT_X as usize,
-            (y + TOP_PAD_LINE_NUM) * FONT_Y as usize,
+            x * FONT_X as isize,
+            (y + TOP_PAD_LINE_NUM) * FONT_Y as isize,
         )
     }
 
@@ -75,8 +75,7 @@ impl Console {
             self.scroll();
             self.y_pos = self.size().1;
         }
-        // self.x_pos = 0;
-        // let '\r' to do this
+        self.x_pos = 0;
     }
 
     pub fn next_char(&mut self) {
@@ -86,15 +85,23 @@ impl Console {
         }
     }
 
+    pub fn prev_char(&mut self) {
+        self.x_pos -= 1;
+        if self.x_pos < 0 {
+            self.x_pos = self.size().0 - 1;
+            self.y_pos -= 1;
+        }
+    }
+
     pub fn scroll(&self) {
         get_display_for_sure().scrollup(
             Some(self.background),
             FONT_Y,
-            FONT_Y as usize * (TOP_PAD_LINE_NUM - 1),
+            (FONT_Y as isize * (TOP_PAD_LINE_NUM - 1)) as usize,
         );
     }
 
-    pub fn write_char_at(&mut self, x: usize, y: usize, c: char) {
+    pub fn write_char_at(&mut self, x: isize, y: isize, c: char) {
         let mut buf = [0u8; 2];
         let str_c = c.encode_utf8(&mut buf);
         let pos = Point::new(
@@ -108,37 +115,39 @@ impl Console {
             .expect("Writing Error!");
     }
 
+    pub fn write_char(&mut self, c: char) {
+        self.write_char_at(self.x_pos, self.y_pos, c);
+        self.next_char();
+    }
+
     pub fn write(&mut self, s: &str) {
         for c in s.chars() {
             match c {
-                '\n' => {
-                    self.next_row();
-                }
+                '\n' => self.next_row(),
                 '\r' => self.x_pos = 0,
-                '\x08' => self.x_pos -= 1,
-                _ => {
-                    self.write_char_at(self.x_pos, self.y_pos, c);
-                    self.next_char()
-                }
+                '\x08' => backspace(),
+                _ => self.write_char(c)
             }
         }
     }
 
     pub fn move_cursor(&mut self, dx: isize, dy: isize) {
-        self.x_pos = (self.x_pos as isize + dx) as usize;
-        self.y_pos = (self.y_pos as isize + dy) as usize;
+        self.x_pos = self.x_pos as isize + dx;
+        self.y_pos = self.y_pos as isize + dy;
     }
 
     pub fn draw_hint(&mut self) {
-        let (x, y) = (self.x_pos, self.y_pos);
-        let (cx, cy) = self.get_char_pos(x, y);
-        Line::new(
-            Point::new(cx as i32, cy as i32),
-            Point::new(cx as i32, cy as i32 + FONT_Y as i32 - 1),
-        )
-        .into_styled(PrimitiveStyle::with_stroke(colors::FRONTGROUND, 2))
-        .draw(&mut *get_display_for_sure())
-        .expect("Hint Drawing Error!");
+        let mut buf = [0u8; 2];
+        let str_c = '_'.encode_utf8(&mut buf);
+        let pos = Point::new(
+            self.x_pos as i32 * (FONT_X + SPACING) as i32,
+            (self.y_pos + TOP_PAD_LINE_NUM) as i32 * FONT_Y as i32,
+        );
+        let mut style = MonoTextStyle::new(FONT, colors::GREY);
+        CharacterStyle::set_background_color(&mut style, Some(self.background));
+        Text::new(str_c, pos, style)
+            .draw(&mut *get_display_for_sure())
+            .expect("Writing Error!");
     }
 
     pub fn set_color(&mut self, front: Option<Rgb888>, back: Option<Rgb888>) {
@@ -151,7 +160,10 @@ impl Console {
     }
 
     pub fn clear(&self) {
-        get_display_for_sure().clear(Some(self.background), FONT_Y as usize * TOP_PAD_LINE_NUM);
+        get_display_for_sure().clear(
+            Some(self.background),
+            FONT_Y as usize * TOP_PAD_LINE_NUM as usize
+        );
     }
 
     pub fn header(&self) {
@@ -172,7 +184,7 @@ impl Write for Console {
 
 pub fn backspace() {
     let mut console = get_console_for_sure();
-    let (x, y) = console.get_pos();
-    console.move_cursor(-1, 0);
-    console.write_char_at(x, y, ' ');
+    console.prev_char();
+    console.write_char(' ');
+    console.prev_char();
 }

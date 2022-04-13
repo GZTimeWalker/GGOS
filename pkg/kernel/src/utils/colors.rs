@@ -28,5 +28,10 @@ pub const GREEN: Rgb888 = Rgb888::new(0x32, 0x8e, 0x2e);
 /// #3887fe
 pub const BLUE: Rgb888 = Rgb888::new(0x38, 0x87, 0xfe);
 
+/// default grey color
+///
+/// #555555
+pub const GREY: Rgb888 = Rgb888::new(0x55, 0x55, 0x55);
+
 pub const WHITE: Rgb888 = Rgb888::WHITE;
 pub const BLACK: Rgb888 = Rgb888::BLACK;
