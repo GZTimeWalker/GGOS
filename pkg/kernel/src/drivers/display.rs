@@ -8,6 +8,5 @@ pub fn init(graphic: &'static GraphicInfo) {
 }
 
 guard_access_fn! {
-    #[doc = "基于GOP的显示器"]
     pub get_display(DISPLAY: GOPDisplay<'static>)
 }

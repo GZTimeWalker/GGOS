@@ -1,8 +1,8 @@
 #[warn(dead_code)]
 
-use uart_16550::SerialPort;
+use super::uart16550::SerialPort;
 
-const SERIAL_IO_PORT: u16 = 0x3F8;
+const SERIAL_IO_PORT: u16 = 0x3F8; // COM1
 
 once_mutex!(pub SERIAL: SerialPort);
 
@@ -13,8 +13,5 @@ pub unsafe fn init() {
 guard_access_fn!(pub get_serial(SERIAL: SerialPort));
 
 pub fn backspace() {
-    let mut serial = get_serial_for_sure();
-    serial.send(b'\x08');
-    serial.send(b' ');
-    serial.send(b'\x08');
+    get_serial_for_sure().send(8);
 }

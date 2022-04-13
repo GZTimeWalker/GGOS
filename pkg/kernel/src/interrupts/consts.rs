@@ -30,6 +30,8 @@ pub enum Interrupts {
     Syscall = 0x80,
 }
 
+/// https://www.computerhope.com/jargon/i/irq.htm
+/// https://wiki.osdev.org/IRQ
 #[repr(u8)]
 pub enum IRQ {
     Timer = 0,

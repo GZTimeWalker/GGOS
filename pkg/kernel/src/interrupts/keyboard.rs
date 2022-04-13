@@ -4,7 +4,7 @@ use x86_64::{
     structures::idt::{InterruptDescriptorTable, InterruptStackFrame},
 };
 use pc_keyboard::DecodedKey;
-use crate::keyboard::{get_key_buf_for_sure, get_keyboard_for_sure};
+use crate::{keyboard::get_keyboard_for_sure, drivers::input::get_input_buf_for_sure};
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Keyboard as u8) as usize]
@@ -12,8 +12,7 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
 }
 
 pub fn init() {
-    use super::enable_irq;
-    enable_irq(consts::IRQ::Keyboard as u8);
+    super::enable_irq(consts::IRQ::Keyboard as u8);
     debug!("Keyboard IRQ enabled");
 }
 
@@ -32,13 +31,13 @@ pub fn receive() -> Option<DecodedKey> {
             return keyboard.process_keyevent(key_event);
         }
     }
+
     None
 }
 
 pub extern "x86-interrupt" fn interrupt_handler(_st: InterruptStackFrame) {
     super::ack(super::consts::IRQ::Keyboard as u8);
     if let Some(key) = receive() {
-        // trace!("key readed {:?}", key);
-        get_key_buf_for_sure().push(key).unwrap();
+        get_input_buf_for_sure().push(key).unwrap();
     }
 }

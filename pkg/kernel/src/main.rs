@@ -32,10 +32,7 @@ boot::entry_point!(kernal_main);
 pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     gdt::init();
 
-    // init serial output driver
-    unsafe {
-        serial::init();
-    }
+    unsafe { drivers::serial::init(); }
 
     // init display driver
     let graphic_info = &boot_info.graphic_info;
@@ -72,17 +69,22 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     process::init();
     info!("Process Manager Initialized.");
 
-    keyboard::init();
+    drivers::keyboard::init();
     info!("Keyboard Initialized.");
+
+    drivers::input::init();
+    info!("Input Initialized.");
 
     // enable interrupts
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
+    error!("ERROR TEST");
+
     loop {
         print!(">>> ");
 
-        let something = drivers::keyboard::get_line();
+        let something = drivers::input::get_line();
         info!("Input: {}", something);
     }
 }

@@ -59,6 +59,11 @@ macro_rules! print_serial {
 }
 
 #[macro_export]
+macro_rules! print_console {
+    ($($arg:tt)*) => ($crate::utils::print_console_internal(format_args!($($arg)*)));
+}
+
+#[macro_export]
 macro_rules! println {
     () => ($crate::print!("\n\r"));
     ($($arg:tt)*) => ($crate::print!("{}\n\r", format_args!($($arg)*)));
@@ -75,6 +80,13 @@ macro_rules! println_serial {
     () => ($crate::print_serial!("\n\r"));
     ($($arg:tt)*) => ($crate::print_serial!("{}\n\r", format_args!($($arg)*)));
 }
+
+#[macro_export]
+macro_rules! println_console {
+    () => ($crate::print_console!("\n\r"));
+    ($($arg:tt)*) => ($crate::print_console!("{}\n\r", format_args!($($arg)*)));
+}
+
 
 #[doc(hidden)]
 pub fn print_internal(args: Arguments) {
@@ -102,6 +114,13 @@ pub fn print_warn_internal(args: Arguments) {
 pub fn print_serial_internal(args: Arguments) {
     interrupts::without_interrupts(|| {
         get_serial_for_sure().write_fmt(args).unwrap();
+    });
+}
+
+#[doc(hidden)]
+pub fn print_console_internal(args: Arguments) {
+    interrupts::without_interrupts(|| {
+        get_console_for_sure().write_fmt(args).unwrap();
     });
 }
 

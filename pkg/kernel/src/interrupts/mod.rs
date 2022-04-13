@@ -2,6 +2,7 @@ mod apic;
 mod consts;
 mod handlers;
 mod keyboard;
+mod serial;
 
 use apic::*;
 use x86_64::structures::idt::InterruptDescriptorTable;
@@ -12,6 +13,7 @@ lazy_static! {
         unsafe {
             handlers::reg_idt(&mut idt);
             keyboard::reg_idt(&mut idt);
+            serial::reg_idt(&mut idt);
         }
         idt
     };
@@ -24,6 +26,7 @@ pub unsafe fn init() {
     let mut xapic = XApic::new(crate::memory::physical_to_virtual(0xfee00000));
     xapic.cpu_init();
     keyboard::init();
+    serial::init();
 }
 
 #[inline(always)]

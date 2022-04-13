@@ -8,7 +8,6 @@ use embedded_graphics::{
     mono_font::{MonoFont, MonoTextStyle},
     pixelcolor::Rgb888,
     prelude::*,
-    primitives::{Line, PrimitiveStyle},
     text::{renderer::CharacterStyle, Baseline, Text},
 };
 
@@ -185,6 +184,7 @@ impl Write for Console {
 pub fn backspace() {
     let mut console = get_console_for_sure();
     console.prev_char();
-    console.write_char(' ');
+    console.write("  ");
+    console.prev_char();
     console.prev_char();
 }
