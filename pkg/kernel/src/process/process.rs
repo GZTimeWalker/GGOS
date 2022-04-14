@@ -8,28 +8,49 @@ use x86_64::structures::idt::InterruptStackFrameValue;
 use x86_64::structures::paging::FrameAllocator;
 use x86_64::registers::control::{Cr3, Cr3Flags};
 use alloc::string::String;
-use alloc::vec::Vec;
 use x86_64::VirtAddr;
-
-once_mutex!(pub PROCESSES: Vec<Process>);
-guard_access_fn! {
-    pub get_processes(PROCESSES: Vec<Process>)
-}
 
 #[derive(Debug)]
 pub struct Process {
-    pub pid: usize,
-    pub name: String,
-    pub status: ProgramStatus,
-    pub priority: usize,
-    pub ticks: usize,
-    pub ticks_passed: usize,
-    pub stack_frame: InterruptStackFrameValue,
-    pub regs: Registers,
-    pub page_table_addr: (PhysFrame, Cr3Flags),
-    pub page_table: Option<OffsetPageTable<'static>>
+    pid: usize,
+    regs: Registers,
+    name: String,
+    status: ProgramStatus,
+    priority: usize,
+    ticks: usize,
+    ticks_passed: usize,
+    stack_frame: InterruptStackFrameValue,
+    page_table_addr: (PhysFrame, Cr3Flags),
+    page_table: Option<OffsetPageTable<'static>>
 }
 
+impl Process {
+    pub fn pid(&self) -> usize {
+        self.pid
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_str()
+    }
+
+    pub fn tick(&mut self) -> bool {
+        self.ticks -= 1;
+        self.ticks_passed += 1;
+        self.ticks > 0
+    }
+
+    pub fn pause(&mut self) {
+        self.status = ProgramStatus::Ready;
+    }
+
+    pub fn resume(&mut self) {
+        self.status = ProgramStatus::Running;
+    }
+
+    pub fn set_page_table_with_cr3(&mut self) {
+        self.page_table_addr = Cr3::read();
+    }
+}
 
 impl Process {
     pub fn new(
@@ -39,7 +60,7 @@ impl Process {
         // 1. alloc a page table for process
         let page_table_addr = frame_alloc.allocate_frame()
             .expect("Cannot alloc page table for new process.");
-        trace!("Alloc page table for new process: {:?}", page_table_addr);
+        trace!("Alloc page table for {}: {:?}", name, page_table_addr);
 
         // 2. copy current page table to new page table
         unsafe {
@@ -65,7 +86,7 @@ impl Process {
         };
 
         // 4. create context
-        let status = ProgramStatus::Creating;
+        let status = ProgramStatus::Created;
         let stack_frame = InterruptStackFrameValue {
             instruction_pointer: VirtAddr::new_truncate(0),
             code_segment: 0,

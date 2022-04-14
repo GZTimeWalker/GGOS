@@ -1,9 +1,11 @@
 #![no_std]
 #![no_main]
-#![feature(abi_x86_interrupt)]
+#![feature(asm_sym)]
 #![feature(core_intrinsics)]
-#![feature(type_alias_impl_trait)]
+#![feature(naked_functions)]
+#![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
+#![feature(type_alias_impl_trait)]
 
 extern crate alloc;
 #[macro_use]
@@ -25,7 +27,6 @@ use drivers::*;
 use memory::allocator;
 use boot::BootInfo;
 use x86_64::VirtAddr;
-// use core::arch::asm;
 
 boot::entry_point!(kernal_main);
 
@@ -51,9 +52,7 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     info!("Logger Initialized.");
 
     // init interrupts
-    unsafe {
-        interrupts::init();
-    }
+    unsafe { interrupts::init(); }
     info!("Interrupts Initialized.");
 
     // init frame allocator
@@ -66,7 +65,7 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     allocator::init_heap(
         &mut *memory::get_page_table_for_sure(),
         &mut *memory::get_frame_alloc_for_sure(),
-    ).expect("Heap Initialization Failed.");
+        ).expect("Heap Initialization Failed.");
     info!("Heap Initialized.");
 
     process::init();
@@ -84,7 +83,6 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
 
     loop {
         print!(">>> ");
-
         let something = drivers::input::get_line();
         println!("[-] {}", something);
     }

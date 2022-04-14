@@ -13,7 +13,6 @@ pub use uefi::Status as UefiStatus;
 use arrayvec::ArrayVec;
 
 /// This structure represents the information that the bootloader passes to the kernel.
-#[repr(C)]
 pub struct BootInfo {
     /// The memory map
     pub memory_map: ArrayVec<MemoryDescriptor, 256>,
