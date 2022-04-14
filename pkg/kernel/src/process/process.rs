@@ -68,6 +68,7 @@ impl Process {
         unsafe {
             regs.as_mut().write(self.regs);
             sf.as_mut().write(self.stack_frame);
+            Cr3::write(self.page_table_addr.0, self.page_table_addr.1)
         }
         self.ticks = self.priority * PRIORITY_FACTOR;
         self.status = ProgramStatus::Running;
@@ -135,5 +136,11 @@ impl Process {
             page_table_addr: (page_table_addr, Cr3::read().1),
             page_table: Some(page_table),
         }
+    }
+}
+
+impl Drop for Process {
+    fn drop(&mut self) {
+        // TODO: deallocate memory
     }
 }
