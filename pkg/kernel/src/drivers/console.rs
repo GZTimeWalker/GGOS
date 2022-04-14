@@ -108,11 +108,11 @@ impl Console {
     }
 
     pub fn write_char(&mut self, c: char) {
+        self.write_char_at(self.x_pos, self.y_pos, c);
+        self.x_pos += 1;
         if self.x_pos >= self.size().0 {
             self.next_row()
         }
-        self.write_char_at(self.x_pos, self.y_pos, c);
-        self.x_pos += 1;
     }
 
     pub fn write(&mut self, s: &str) {
@@ -164,7 +164,7 @@ impl Console {
     pub fn header(&self) {
         let mut style = MonoTextStyle::new(&font::JBMONO_TITLE, colors::BLUE);
         CharacterStyle::set_background_color(&mut style, Some(colors::BACKGROUND));
-        Text::with_baseline(crate::utils::HEADER, Point::new(6, 6), style, Baseline::Top)
+        Text::with_baseline(crate::utils::get_header(), Point::new(6, 6), style, Baseline::Top)
             .draw(&mut *get_display_for_sure())
             .expect("Drawing Error!");
     }

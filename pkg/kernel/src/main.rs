@@ -34,6 +34,9 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
 
     unsafe { drivers::serial::init(); }
 
+    println!("{}",utils::get_ascii_header());
+    println!("[+] Serial Initialized.");
+
     // init display driver
     let graphic_info = &boot_info.graphic_info;
     display::init(graphic_info);
@@ -41,7 +44,6 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
 
     // init graphic console
     console::init();
-    println!("=========================== KERNEL START ===========================");
     println!("[+] Console Initialized.");
 
     // init log system
@@ -84,6 +86,6 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
         print!(">>> ");
 
         let something = drivers::input::get_line();
-        info!("Input: {}", something);
+        println!("[-] {}", something);
     }
 }

@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 use core::fmt::*;
-use crate::console::{get_console, get_console_for_sure};
-use crate::serial::get_serial_for_sure;
+use crate::console::get_console;
+use crate::serial::get_serial;
 use crate::utils::colors;
 use x86_64::instructions::interrupts;
 
@@ -61,11 +61,6 @@ macro_rules! print_serial {
 }
 
 #[macro_export]
-macro_rules! print_console {
-    ($($arg:tt)*) => ($crate::utils::print_console_internal(format_args!($($arg)*)));
-}
-
-#[macro_export]
 macro_rules! println {
     () => ($crate::print!("\n\r"));
     ($($arg:tt)*) => ($crate::print!("{}\n\r", format_args!($($arg)*)));
@@ -83,28 +78,28 @@ macro_rules! println_serial {
     ($($arg:tt)*) => ($crate::print_serial!("{}\n\r", format_args!($($arg)*)));
 }
 
-#[macro_export]
-macro_rules! println_console {
-    () => ($crate::print_console!("\n\r"));
-    ($($arg:tt)*) => ($crate::print_console!("{}\n\r", format_args!($($arg)*)));
-}
-
 
 #[doc(hidden)]
 pub fn print_internal(args: Arguments) {
     interrupts::without_interrupts(|| {
-        get_console_for_sure().write_fmt(args).unwrap();
-        get_serial_for_sure().write_fmt(args).unwrap();
+        if let Some(mut serial) = get_serial() {
+            serial.write_fmt(args).unwrap();
+        }
+
+        if let Some(mut console) = get_console() {
+            console.write_fmt(args).unwrap();
+        }
     });
 }
 
 #[doc(hidden)]
 pub fn print_warn_internal(args: Arguments) {
     interrupts::without_interrupts(|| {
-        get_serial_for_sure().write_fmt(args).unwrap();
+        if let Some(mut serial) = get_serial() {
+            serial.write_fmt(args).unwrap();
+        }
 
-        if let Some(mut console) = get_console()
-        {
+        if let Some(mut console) = get_console() {
             console.set_color(Some(colors::RED), None);
             console.write_fmt(args).unwrap();
             console.set_color(Some(colors::FRONTGROUND), None);
@@ -115,14 +110,9 @@ pub fn print_warn_internal(args: Arguments) {
 #[doc(hidden)]
 pub fn print_serial_internal(args: Arguments) {
     interrupts::without_interrupts(|| {
-        get_serial_for_sure().write_fmt(args).unwrap();
-    });
-}
-
-#[doc(hidden)]
-pub fn print_console_internal(args: Arguments) {
-    interrupts::without_interrupts(|| {
-        get_console_for_sure().write_fmt(args).unwrap();
+        if let Some(mut serial) = get_serial() {
+            serial.write_fmt(args).unwrap();
+        }
     });
 }
 
