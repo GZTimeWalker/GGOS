@@ -19,16 +19,15 @@ pub fn init() {
 /// Receive character from uart 16550
 /// Should be called on every interrupt
 pub fn receive() -> Option<DecodedKey> {
-
     if let Some(scancode) = get_serial_for_sure().receive_no_wait() {
-        return match scancode {
+        match scancode {
             127 => Some(DecodedKey::Unicode('\x08')),
             13 => Some(DecodedKey::Unicode('\n')),
             c => Some(DecodedKey::Unicode(c as char))
-        };
+        }
+    } else {
+        None
     }
-
-    None
 }
 
 pub extern "x86-interrupt" fn interrupt_handler(_st: InterruptStackFrame) {

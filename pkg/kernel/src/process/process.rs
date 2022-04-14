@@ -1,10 +1,10 @@
 use super::ProgramStatus;
 use crate::memory::BootInfoFrameAllocator;
-use crate::utils::Registers;
+use crate::utils::{Registers, RegistersValue};
 use crate::memory::physical_to_virtual;
 use core::intrinsics::copy_nonoverlapping;
 use x86_64::structures::paging::{OffsetPageTable, PhysFrame, PageTable};
-use x86_64::structures::idt::InterruptStackFrameValue;
+use x86_64::structures::idt::{InterruptStackFrameValue, InterruptStackFrame};
 use x86_64::structures::paging::FrameAllocator;
 use x86_64::registers::control::{Cr3, Cr3Flags};
 use alloc::string::String;
@@ -12,8 +12,8 @@ use x86_64::VirtAddr;
 
 #[derive(Debug)]
 pub struct Process {
-    pid: usize,
-    regs: Registers,
+    pid: u16,
+    regs: RegistersValue,
     name: String,
     status: ProgramStatus,
     priority: usize,
@@ -24,8 +24,10 @@ pub struct Process {
     page_table: Option<OffsetPageTable<'static>>
 }
 
+const PRIORITY_FACTOR: usize = 5;
+
 impl Process {
-    pub fn pid(&self) -> usize {
+    pub fn pid(&self) -> u16 {
         self.pid
     }
 
@@ -44,18 +46,38 @@ impl Process {
     }
 
     pub fn resume(&mut self) {
+        self.ticks = self.priority * PRIORITY_FACTOR;
         self.status = ProgramStatus::Running;
     }
 
     pub fn set_page_table_with_cr3(&mut self) {
         self.page_table_addr = Cr3::read();
     }
+
+    pub fn is_running(&self) -> bool {
+        self.status == ProgramStatus::Running
+    }
+
+    pub fn save(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
+        self.regs = unsafe{ regs.as_mut().read().clone() };
+        self.stack_frame = unsafe{ sf.as_mut().read().clone() };
+        self.status = ProgramStatus::Ready;
+    }
+
+    pub fn restore(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
+        unsafe {
+            regs.as_mut().write(self.regs);
+            sf.as_mut().write(self.stack_frame);
+        }
+        self.ticks = self.priority * PRIORITY_FACTOR;
+        self.status = ProgramStatus::Running;
+    }
 }
 
 impl Process {
     pub fn new(
         frame_alloc: &mut BootInfoFrameAllocator,
-        pid: usize, name: String, priority: usize
+        pid: u16, name: String, priority: usize
     ) -> Self {
         // 1. alloc a page table for process
         let page_table_addr = frame_alloc.allocate_frame()
@@ -94,8 +116,8 @@ impl Process {
             stack_pointer: VirtAddr::new_truncate(0),
             stack_segment: 0,
         };
-        let regs = Registers::default();
-        let ticks = priority * 10;
+        let regs = RegistersValue::default();
+        let ticks = priority * PRIORITY_FACTOR;
         let ticks_passed = 0;
 
         debug!("New process {}#{} created.", name, pid);

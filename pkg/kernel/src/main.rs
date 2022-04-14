@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![allow(dead_code)]
 #![feature(asm_sym)]
 #![feature(core_intrinsics)]
 #![feature(naked_functions)]

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::RgbColor;
 

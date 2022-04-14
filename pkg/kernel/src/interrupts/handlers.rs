@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::utils::Registers;
 use super::consts;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
@@ -11,9 +9,8 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
 }
 
 pub extern "C" fn clock(mut regs: Registers, mut sf: InterruptStackFrame ) {
-
     crate::process::switch( &mut regs, &mut sf);
-    // crate::utils::draw::clock();
+    crate::utils::draw::clock();
     super::ack(consts::Interrupts::IRQ0 as u8);
 }
 

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 /// reference: https://docs.rs/uart_16550
 /// reference: http://byterunner.com/16550.html
 /// reference: http://www.larvierinehart.com/serial/serialadc/serial.htm

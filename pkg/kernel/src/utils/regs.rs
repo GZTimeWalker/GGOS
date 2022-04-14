@@ -1,6 +1,10 @@
+use core::fmt;
+use core::ops::Deref;
+use volatile::Volatile;
+
 #[repr(align(8), C)]
-#[derive(Debug, Clone, Default)]
-pub struct Registers {
+#[derive(Debug, Clone, Default, Copy)]
+pub struct RegistersValue {
     r15: usize,
     r14: usize,
     r13: usize,
@@ -17,6 +21,35 @@ pub struct Registers {
     rax: usize,
     rbp: usize
 }
+
+#[repr(C)]
+pub struct  Registers {
+    value: RegistersValue
+}
+
+impl Registers {
+    #[inline]
+    pub unsafe fn as_mut(&mut self) -> Volatile<&mut RegistersValue> {
+        Volatile::new(&mut self.value)
+    }
+}
+
+impl Deref for Registers {
+    type Target = RegistersValue;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl fmt::Debug for Registers {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.value.fmt(f)
+    }
+}
+
 
 #[macro_export]
 macro_rules! as_handler {

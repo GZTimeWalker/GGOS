@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use core::fmt::Write;
 use crate::utils::font;
 use crate::utils::colors;

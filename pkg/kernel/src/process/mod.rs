@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 mod process;
 mod manager;
 mod scheduler;
@@ -30,7 +28,7 @@ pub fn init() {
         &mut *alloc,
         0,
         String::from("kernel"),
-        10);
+        5);
     kproc.resume();
     kproc.set_page_table_with_cr3();
     init_PROCESS_MANAGER(ProcessManager::new(kproc));
