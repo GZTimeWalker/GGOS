@@ -15,6 +15,7 @@ impl IoApic {
             data: (addr + 0x10) as *mut u32,
         }
     }
+
     pub fn disable_all(&mut self) {
         // Mark all interrupts edge-triggered, active high, disabled,
         // and not routed to any CPUs.
@@ -22,35 +23,44 @@ impl IoApic {
             self.write_irq(i, RedirectionEntry::DISABLED, 0);
         }
     }
+
     unsafe fn read(&mut self, reg: u8) -> u32 {
         self.reg.write_volatile(reg as u32);
         self.data.read_volatile()
     }
+
     unsafe fn write(&mut self, reg: u8, data: u32) {
         self.reg.write_volatile(reg as u32);
         self.data.write_volatile(data);
     }
+
     fn write_irq(&mut self, irq: u8, flags: RedirectionEntry, dest: u8) {
         unsafe {
             self.write(REG_TABLE + 2 * irq, (T_IRQ0 + irq) as u32 | flags.bits());
             self.write(REG_TABLE + 2 * irq + 1, (dest as u32) << 24);
         }
     }
+
     pub fn enable(&mut self, irq: u8, cpunum: u8) {
         // Mark interrupt edge-triggered, active high,
         // enabled, and routed to the given cpunum,
         // which happens to be that cpu's APIC ID.
         self.write_irq(irq, RedirectionEntry::NONE, cpunum);
+        trace!("IOApic::enable: IRQ={}, CPU={}", irq, cpunum);
     }
+
     pub fn disable(&mut self, irq: u8) {
         self.write_irq(irq, RedirectionEntry::DISABLED, 0);
     }
+
     pub fn id(&mut self) -> u8 {
         unsafe { self.read(REG_ID).get_bits(24..28) as u8 }
     }
+
     pub fn version(&mut self) -> u8 {
         unsafe { self.read(REG_VER).get_bits(0..8) as u8 }
     }
+
     pub fn maxintr(&mut self) -> u8 {
         unsafe { self.read(REG_VER).get_bits(16..24) as u8 }
     }

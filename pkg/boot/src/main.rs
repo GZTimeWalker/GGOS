@@ -26,6 +26,7 @@ use uefi::proto::console::gop::GraphicsOutput;
 use uefi::proto::media::file::*;
 use uefi::proto::media::fs::SimpleFileSystem;
 use uefi::table::boot::*;
+use uefi::table::cfg::ACPI2_GUID;
 use x86_64::structures::paging::*;
 use x86_64::registers::control::*;
 use x86_64::registers::model_specific::EferFlags;
@@ -50,6 +51,14 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     let graphic_info = init_graphic(bs);
     // info!("config: {:#x?}", config);
+
+    let acpi2_addr = system_table
+        .config_table()
+        .iter()
+        .find(|entry| entry.guid == ACPI2_GUID)
+        .expect("failed to find ACPI 2 RSDP")
+        .address;
+    info!("ACPI2: {:?}", acpi2_addr);
 
     let elf = {
         let mut file = open_file(bs, config.kernel_path);
@@ -99,7 +108,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         &mut page_table,
         &mut UEFIFrameAllocator(bs),
     );
-    
+
     // recover write protect
     unsafe {
         Cr0::update(|f| f.insert(Cr0Flags::WRITE_PROTECT));
@@ -110,10 +119,10 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     //  Disable now.
     // start_aps(bs);
 
-    for i in 0..5 {
-        info!("Waiting for next stage... {}", 5 - i);
-        bs.stall(100_000);
-    }
+    // for i in 0..5 {
+    //     info!("Waiting for next stage... {}", 5 - i);
+    //     bs.stall(100_000);
+    // }
 
     info!("Exiting boot services...");
 

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use core::fmt::*;
 use crate::console::{get_console, get_console_for_sure};
 use crate::serial::get_serial_for_sure;

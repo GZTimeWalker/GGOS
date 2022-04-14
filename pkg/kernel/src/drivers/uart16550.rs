@@ -2,6 +2,8 @@
 
 /// reference: https://docs.rs/uart_16550
 /// reference: http://byterunner.com/16550.html
+/// reference: http://www.larvierinehart.com/serial/serialadc/serial.htm
+/// reference: https://wiki.osdev.org/Serial_Ports
 
 use core::fmt;
 use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
@@ -75,22 +77,24 @@ impl SerialPort {
             self.line_ctrl.write(0x80);
 
             // Set maximum speed to 38400 bps by configuring DLL and DLM
-            self.data.write(0x03);
-            self.int_en.write(0x00);
+            // > LSB of Divisor Latch when Enabled
+            self.data.write(0b00000011);
+            // > MSB of Divisor Latch when Enabled
+            self.int_en.write(0b00000000);
 
             // Disable DLAB and set data word length to 8 bits
-            self.line_ctrl.write(0x03);
+            self.line_ctrl.write(0b00000011);
 
             // Enable FIFO, clear TX/RX queues and
-            // set interrupt watermark at 14 bytes
-            self.fifo_ctrl.write(0b11000111);
+            // set interrupt watermark at 1 bytes
+            self.fifo_ctrl.write(0b00000111);
 
             // Mark data terminal ready, signal request to send
             // and enable auxilliary output #2 (used as interrupt line for CPU)
-            self.modem_ctrl.write(0x0B);
+            self.modem_ctrl.write(0b00001011);
 
             // Enable interrupts
-            self.int_en.write(0b00000101);
+            self.int_en.write(0b00000001);
         }
     }
 

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use pc_keyboard::{layouts, HandleControl, Keyboard, ScancodeSet1};
 pub type DefaultKeyBoard = Keyboard<layouts::Us104Key, ScancodeSet1>;
 

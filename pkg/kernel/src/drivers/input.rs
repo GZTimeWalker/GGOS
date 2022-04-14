@@ -33,19 +33,22 @@ pub fn get_key() -> DecodedKey {
 
 pub fn get_line() -> String {
     let mut s = String::with_capacity(DEFAULT_BUF_SIZE);
-    while let DecodedKey::Unicode(k) = get_key() {
-        match k {
-            '\n' => break,
-            '\x08' => {
-                if !s.is_empty() {
-                    console::backspace();
-                    serial::backspace();
-                    s.pop(); // remove previous char
+    loop {
+        let key = get_key();
+        if let DecodedKey::Unicode(k) = key {
+            match k {
+                '\n' => break,
+                '\x08' => {
+                    if !s.is_empty() {
+                        console::backspace();
+                        serial::backspace();
+                        s.pop(); // remove previous char
+                    }
                 }
-            }
-            c => {
-                print!("{}", k);
-                s.push(c)
+                c => {
+                    print!("{}", k);
+                    s.push(c)
+                }
             }
         }
         console::get_console_for_sure().draw_hint();

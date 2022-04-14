@@ -13,7 +13,7 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
 
 pub fn init() {
     super::enable_irq(consts::IRQ::Keyboard as u8);
-    debug!("Keyboard IRQ enabled");
+    debug!("Keyboard IRQ enabled.");
 }
 
 /// Receive character from keyboard

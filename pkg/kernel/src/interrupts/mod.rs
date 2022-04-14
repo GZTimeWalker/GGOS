@@ -22,7 +22,7 @@ lazy_static! {
 /// init intrupts system
 pub unsafe fn init() {
     IDT.load();
-    debug!("XApic support = {}", apic::XApic::support());
+    debug!("XApic support = {}.", apic::XApic::support());
     let mut xapic = XApic::new(crate::memory::physical_to_virtual(0xfee00000));
     xapic.cpu_init();
     keyboard::init();

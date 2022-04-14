@@ -32,13 +32,18 @@ pub enum Interrupts {
 
 /// https://www.computerhope.com/jargon/i/irq.htm
 /// https://wiki.osdev.org/IRQ
+/// https://github.com/qemu/qemu/blob/aab8cfd4c3614a049b60333a3747aedffbd04150/include/hw/i386/microvm.h#L30-L50
 #[repr(u8)]
 pub enum IRQ {
     Timer = 0,
     Keyboard = 1,
-    COM2 = 3,
-    COM1 = 4,
-    IDE = 14,
+    Serial1 = 3,
+    Serial0 = 4,
+    Floppy = 6,
+    Parallel = 7,
+    RealTimeClock = 8,
+    Ide0 = 14,
+    Ide1 = 15,
     Error = 19,
     Spurious = 31,
 }

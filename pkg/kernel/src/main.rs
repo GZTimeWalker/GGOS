@@ -41,6 +41,7 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
 
     // init graphic console
     console::init();
+    println!("=========================== KERNEL START ===========================");
     println!("[+] Console Initialized.");
 
     // init log system
@@ -78,8 +79,6 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     // enable interrupts
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
-
-    error!("ERROR TEST");
 
     loop {
         print!(">>> ");

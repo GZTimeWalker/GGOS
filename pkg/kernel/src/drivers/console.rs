@@ -77,13 +77,6 @@ impl Console {
         self.x_pos = 0;
     }
 
-    pub fn next_char(&mut self) {
-        self.x_pos += 1;
-        if self.x_pos >= self.size().0 {
-            self.next_row()
-        }
-    }
-
     pub fn prev_char(&mut self) {
         self.x_pos -= 1;
         if self.x_pos < 0 {
@@ -115,8 +108,11 @@ impl Console {
     }
 
     pub fn write_char(&mut self, c: char) {
+        if self.x_pos >= self.size().0 {
+            self.next_row()
+        }
         self.write_char_at(self.x_pos, self.y_pos, c);
-        self.next_char();
+        self.x_pos += 1;
     }
 
     pub fn write(&mut self, s: &str) {
