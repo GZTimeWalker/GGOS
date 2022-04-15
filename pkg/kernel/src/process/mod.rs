@@ -8,7 +8,6 @@ use manager::*;
 pub use scheduler::*;
 
 use alloc::string::String;
-
 use self::manager::init_PROCESS_MANAGER;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -24,11 +23,7 @@ pub enum ProgramStatus {
 pub fn init() {
     let mut alloc = crate::memory::get_frame_alloc_for_sure();
     // kernel process
-    let mut kproc = Process::new(
-        &mut *alloc,
-        0,
-        String::from("kernel"),
-        5);
+    let mut kproc = Process::new( &mut *alloc, 0, String::from("kernel"), 5, 0);
     kproc.resume();
     kproc.set_page_table_with_cr3();
     init_PROCESS_MANAGER(ProcessManager::new(kproc));

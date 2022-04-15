@@ -7,6 +7,7 @@
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
 #![feature(type_alias_impl_trait)]
+#![feature(panic_info_message)]
 
 extern crate alloc;
 #[macro_use]
@@ -81,6 +82,10 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     // enable interrupts
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
+
+    unsafe {
+        *(0xdead0000beef as *mut u64) = 42;
+    };
 
     loop {
         print!(">>> ");

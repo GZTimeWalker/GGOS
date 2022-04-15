@@ -1,6 +1,7 @@
 use super::*;
 use alloc::vec::Vec;
 use crate::utils::Registers;
+use x86_64::VirtAddr;
 use x86_64::structures::idt::InterruptStackFrame;
 
 once_mutex!(pub PROCESS_MANAGER: ProcessManager);
@@ -40,7 +41,7 @@ impl ProcessManager {
         if current.is_running() {
             current.save(regs, sf);
         }
-        // trace!("Paused process#{}", self.cur_pid);
+        // trace!("Paused process #{}", self.cur_pid);
     }
 
     fn get_next_pos(&self) -> usize {
@@ -57,7 +58,7 @@ impl ProcessManager {
         let pos = self.get_next_pos();
         let p = &mut self.processes[pos];
 
-        // trace!("Next process#{}", p.pid());
+        // trace!("Next process {}#{}", p.name(), p.pid());
         if p.pid() == self.cur_pid {
             // the next process to be resumed is the same as the current one
             p.resume();
@@ -66,5 +67,23 @@ impl ProcessManager {
             p.restore(regs, sf);
             self.cur_pid = p.pid();
         }
+    }
+
+    pub fn spawn(&mut self, entry: VirtAddr, stack_top: VirtAddr,
+            name: String, priority: usize, parent: u16) -> u16{
+        let mut p = Process::new(
+            &mut *crate::memory::get_frame_alloc_for_sure(),
+            self.next_pid, name, priority, parent
+        );
+        p.pause();
+        p.init_stack_frame(entry, stack_top);
+        let pid = p.pid();
+        self.processes.push(p);
+        self.next_pid += 1; // TODO: recycle PID
+        pid
+    }
+
+    pub fn kill(&mut self) {
+        self.processes.retain(|p| !p.is_running());
     }
 }

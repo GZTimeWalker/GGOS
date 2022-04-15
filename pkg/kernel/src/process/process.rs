@@ -7,7 +7,9 @@ use x86_64::structures::paging::{OffsetPageTable, PhysFrame, PageTable};
 use x86_64::structures::idt::{InterruptStackFrameValue, InterruptStackFrame};
 use x86_64::structures::paging::FrameAllocator;
 use x86_64::registers::control::{Cr3, Cr3Flags};
+use x86_64::registers::rflags::RFlags;
 use alloc::string::String;
+use alloc::vec::Vec;
 use x86_64::VirtAddr;
 
 #[derive(Debug)]
@@ -15,10 +17,12 @@ pub struct Process {
     pid: u16,
     regs: RegistersValue,
     name: String,
+    parent: u16,
     status: ProgramStatus,
     priority: usize,
     ticks: usize,
     ticks_passed: usize,
+    children: Vec::<u16>,
     stack_frame: InterruptStackFrameValue,
     page_table_addr: (PhysFrame, Cr3Flags),
     page_table: Option<OffsetPageTable<'static>>
@@ -73,12 +77,18 @@ impl Process {
         self.ticks = self.priority * PRIORITY_FACTOR;
         self.status = ProgramStatus::Running;
     }
+
+    pub fn init_stack_frame(&mut self, entry: VirtAddr, stack_top: VirtAddr) {
+        self.stack_frame.stack_pointer = stack_top;
+        self.stack_frame.instruction_pointer = entry;
+        self.stack_frame.cpu_flags = (RFlags::IOPL_HIGH | RFlags::IOPL_LOW | RFlags::INTERRUPT_FLAG).bits();
+    }
 }
 
 impl Process {
     pub fn new(
         frame_alloc: &mut BootInfoFrameAllocator,
-        pid: u16, name: String, priority: usize
+        pid: u16, name: String, priority: usize, parent: u16
     ) -> Self {
         // 1. alloc a page table for process
         let page_table_addr = frame_alloc.allocate_frame()
@@ -127,6 +137,7 @@ impl Process {
         Self {
             pid,
             name,
+            parent,
             priority,
             status,
             ticks,
@@ -135,6 +146,7 @@ impl Process {
             regs,
             page_table_addr: (page_table_addr, Cr3::read().1),
             page_table: Some(page_table),
+            children: Vec::new()
         }
     }
 }

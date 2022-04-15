@@ -2,6 +2,7 @@ use core::fmt::*;
 use crate::console::get_console;
 use crate::serial::get_serial;
 use crate::utils::colors;
+use alloc::string::ToString;
 use x86_64::instructions::interrupts;
 
 /// Use spin mutex to control variable access
@@ -115,9 +116,18 @@ pub fn print_serial_internal(args: Arguments) {
 }
 
 /// This function is called on panic.
-#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    error!("\n\n\rERROR: {}", info);
+    let location = if let Some(location) = info.location() {
+        alloc::format!("{}@{}:{}", location.file(), location.line(), location.column())
+    } else {
+        "Unknown location".to_string()
+    };
+    let msg = if let Some(msg) = info.message() {
+        alloc::format!("{:#?}", msg)
+    } else {
+        "No more message...".to_string()
+    };
+    error!("\n\n\rERROR: panicked at {}\n\n\r{}", location, msg);
     loop {}
 }
