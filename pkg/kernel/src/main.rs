@@ -24,6 +24,7 @@ mod gdt;
 mod interrupts;
 mod memory;
 mod process;
+mod media;
 
 use drivers::*;
 use memory::allocator;
@@ -83,9 +84,6 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
-    unsafe {
-        *(0xdead0000beef as *mut u64) = 42;
-    };
 
     loop {
         print!(">>> ");
