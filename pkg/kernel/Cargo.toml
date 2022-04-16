@@ -2,7 +2,7 @@
 name = "ggos_kernel"
 version = "0.5.1"
 edition = "2021"
-authors = ["GZTime <gz.time.walker@gmail.com>"]
+authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

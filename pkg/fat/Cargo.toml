@@ -1,11 +1,9 @@
 [package]
-name = "ggos_elf"
+name = "ggos_fat"
 version = "0.1.0"
 edition = "2021"
 authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4.16"
-x86_64 = "0.14.8"
-xmas-elf  = "0.8"
+hex-literal = "0.3.4"

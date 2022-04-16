@@ -24,6 +24,17 @@ class FontCfg:
         self.CHAR_SIZE = 48
         self.SIZE = (self.WIDTH * 16, self.HEIGHT * 6)
 
+    # def as_pixel(self):
+    #     self.NAME = 'FUSION_PIXEL'
+    #     self.FONT = 'fusion-pixel.ttf'
+    #     self.SIZE = 28
+    #     self.WIDTH = int(self.SIZE / 16 * 9) + 1
+    #     self.HEIGHT = self.SIZE + 4
+    #     self.X_PAD = 0
+    #     self.Y_PAD = 0
+    #     self.CHAR_SIZE = 30
+    #     self.SIZE = (self.WIDTH * 16, self.HEIGHT * 6)
+
     def __repr__(self):
         return f'{self.NAME}: {self.SIZE} ({self.WIDTH},{self.HEIGHT})'
 
@@ -79,3 +90,5 @@ if __name__ == "__main__":
     gen(cfg)
     cfg.as_title()
     gen(cfg)
+    # cfg.as_pixel()
+    # gen(cfg)
