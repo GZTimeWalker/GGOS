@@ -1,4 +1,4 @@
-use ggos_fat::structs::direntry::*;
+use ggos_fat::structs::dir_entry::*;
 use chrono::{Utc, TimeZone};
 
 #[cfg(test)]
