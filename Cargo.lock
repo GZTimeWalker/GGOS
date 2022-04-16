@@ -141,7 +141,10 @@ dependencies = [
 name = "ggos_fat"
 version = "0.1.0"
 dependencies = [
+ "bitflags",
+ "chrono",
  "hex-literal",
+ "paste",
 ]
 
 [[package]]

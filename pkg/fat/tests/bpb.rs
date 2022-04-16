@@ -58,6 +58,7 @@ fn test_fat16_bpb_2() {
     let bpb = FAT16Bpb::create_from_bytes(BPB_EXAMPLE).unwrap();
 
     assert_eq!(bpb.oem_name(), b"MSWIN4.1");
+    assert_eq!(bpb.oem_name_str(), "MSWIN4.1");
     assert_eq!(bpb.bytes_per_sector(), 512);
     assert_eq!(bpb.sectors_per_cluster(), 16);
     assert_eq!(bpb.reserved_sector_count(), 1);
@@ -75,7 +76,9 @@ fn test_fat16_bpb_2() {
     assert_eq!(bpb.boot_signature(), 0x29);
     assert_eq!(bpb.volume_id(), 0xfabe1afd);
     assert_eq!(bpb.volume_label(), b"QEMU VVFAT ");
+    assert_eq!(bpb.volume_label_str(), "QEMU VVFAT ");
     assert_eq!(bpb.system_identifier(), b"FAT16   ");
+    assert_eq!(bpb.system_identifier_str(), "FAT16   ");
 
     assert_eq!(bpb.total_sectors(), 0xfbfc1);
 }

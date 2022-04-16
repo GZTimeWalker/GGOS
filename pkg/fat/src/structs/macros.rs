@@ -25,5 +25,12 @@ macro_rules! define_field {
         pub fn $name(&self) -> &[u8; $len] {
             (&self.data[$offset..$offset+$len]).try_into().unwrap_or(&[0; $len])
         }
+
+        paste::item! {
+            /// Get the &str from the $name field
+            pub fn [<$name _str>](&self) -> &str {
+                core::str::from_utf8(&self.data[$offset..$offset+$len]).unwrap_or("")
+            }
+        }
     };
 }
