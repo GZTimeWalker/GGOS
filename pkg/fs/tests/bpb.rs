@@ -1,6 +1,6 @@
 #![feature(concat_bytes)]
 
-use ggos_fat::structs::bpb::*;
+use ggfs::structs::bpb::*;
 
 #[cfg(test)]
 #[test]

@@ -9,7 +9,7 @@ impl Device for Random {
         if let Some(rng) = RdRand::new() {
             for i in 0..size {
                 if let Some(num) = rng.get_u16() {
-                    buf[i] = num as u8;
+                    buf[offset + i] = num as u8;
                 } else {
                     return Err(BlockError::Unknown);
                 }
@@ -25,16 +25,12 @@ impl Device for Random {
     }
 }
 
-rand!(u64);
-rand!(u32);
-rand!(u16);
-
 macro_rules! rand {
     ($ty:ty) => {
         paste::item! {
             pub fn [<rand_ $ty>]() -> $ty {
                 if let Some(rdrand) = RdRand::new() {
-                    if let Some(rand) = rdrand.get_$ty() {
+                    if let Some(rand) = rdrand.[<get_ $ty>]() {
                         return rand;
                     }
                 }
@@ -42,4 +38,14 @@ macro_rules! rand {
             }
         }
     }
+}
+
+impl Random {
+    pub fn new() -> Self {
+        Self
+    }
+
+    rand!(u64);
+    rand!(u32);
+    rand!(u16);
 }

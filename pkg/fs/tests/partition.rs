@@ -1,4 +1,4 @@
-use ggos_fat::structs::partition::*;
+use ggfs::structs::partition::*;
 
 #[cfg(test)]
 #[test]

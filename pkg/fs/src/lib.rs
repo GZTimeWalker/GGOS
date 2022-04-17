@@ -2,3 +2,5 @@
 
 pub mod device;
 pub mod structs;
+
+pub use structs::*;

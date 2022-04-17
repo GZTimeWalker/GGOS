@@ -1,4 +1,4 @@
-use ggos_fat::structs::dir_entry::*;
+use ggfs::structs::dir_entry::*;
 use chrono::{Utc, TimeZone};
 
 #[cfg(test)]
@@ -13,7 +13,7 @@ fn test_dir_entry() {
     assert_eq!(&res.filename.name, b"KERNEL  ");
     assert_eq!(&res.filename.ext,  b"ELF");
     assert_eq!(res.attributes,    Attributes::ARCHIVE);
-    assert_eq!(res.cluster,       2);
+    assert_eq!(res.cluster,       Cluster(2));
     assert_eq!(res.size,          0xee4f0);
     assert_eq!(res.created_time, Utc.ymd(2020, 6, 16).and_hms(23, 48, 30));
     assert_eq!(res.moditified_time, Utc.ymd(2020, 6, 16).and_hms(23, 48, 30));

@@ -1,5 +1,3 @@
-use crate::structs::*;
-
 mod random;
 mod disk;
 

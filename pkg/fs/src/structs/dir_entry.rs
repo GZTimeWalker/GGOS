@@ -19,7 +19,7 @@ pub struct DirEntry {
     pub size: u32,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Cluster(pub u32);
 
 bitflags! {
@@ -107,7 +107,7 @@ impl DirEntry {
             moditified_time,
             created_time,
             accessed_time,
-            cluster,
+            cluster: Cluster(cluster),
             attributes,
             size,
         })
@@ -266,6 +266,17 @@ impl core::ops::AddAssign<Cluster> for Cluster {
     }
 }
 
+impl core::fmt::Display for Cluster {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "0x{:08X}", self.0)
+    }
+}
+
+impl core::fmt::Debug for Cluster {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "0x{:08X}", self.0)
+    }
+}
 
 /// Various filename related errors that can occur.
 #[derive(Debug, Clone)]
