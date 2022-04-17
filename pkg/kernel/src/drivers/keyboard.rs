@@ -13,4 +13,5 @@ pub fn init() {
             HandleControl::Ignore
         )
     );
+    info!("Keyboard Initialized.");
 }

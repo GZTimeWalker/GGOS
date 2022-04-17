@@ -12,6 +12,7 @@ guard_access_fn!(pub get_input_buf(INPUT_BUF: ArrayQueue<DecodedKey>));
 
 pub fn init() {
     init_INPUT_BUF(ArrayQueue::new(DEFAULT_BUF_SIZE));
+    info!("Input Initialized.");
 }
 
 pub fn try_get_key() -> Option<DecodedKey> {

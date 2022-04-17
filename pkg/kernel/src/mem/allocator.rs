@@ -12,6 +12,11 @@ pub const HEAP_SIZE: usize = 1024 * 1024; // 1 MiB
 #[global_allocator]
 pub static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
+pub fn init() {
+    init_heap().expect("Heap Initialization Failed.");
+    info!("Heap Initialized.");
+}
+
 pub fn init_heap() -> Result<(), MapToError<Size4KiB>> {
 
     let mapper = &mut *super::get_page_table_for_sure();

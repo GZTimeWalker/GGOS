@@ -55,4 +55,5 @@ pub fn init() {
         GS::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
         load_tss(GDT.1.tss_selector);
     }
+    info!("GDT Initialized.");
 }

@@ -25,58 +25,26 @@ pub mod drivers;
 pub use drivers::*;
 
 pub mod gdt;
-pub mod memory;
+pub mod mem;
 pub mod process;
-pub mod interrupts;
+pub mod interrupt;
 
-use memory::allocator;
+use mem::allocator;
 use boot::BootInfo;
 
 pub fn init(boot_info: &'static BootInfo) {
-    // init serial output
-    serial::init();
-    println!("[+] Serial Initialized.");
+    serial::init();             // init serial output
+    logger::init();             // init logger system
+    gdt::init();                // init gdt
+    display::init(boot_info);   // init vga display
+    console::init();            // init graphic console
+    interrupt::init();          // init interrupts
+    mem::init(boot_info);       // init memory manager
+    allocator::init();          // init heap allocator
+    process::init();            // init process manager
+    keyboard::init();           // init keyboard
+    input::init();              // init input manager
 
-    // init display driver
-    display::init(boot_info);
-    println!("[+] VGA Display Initialized.");
-
-    // init GDT
-    gdt::init();
-    println!("[+] GDT Initialized.");
-
-    // init graphic console
-    console::init();
-    println!("[+] Console Initialized.");
-
-    // init log system
-    logger::init();
-    info!("Logger Initialized.");
-
-    // init interrupts
-    interrupts::init();
-    info!("Interrupts Initialized.");
-
-    // init frame allocator
-    memory::init(boot_info);
-
-    // init heap allocator
-    allocator::init_heap().expect("Heap Initialization Failed.");
-    info!("Heap Initialized.");
-
-    // init process manager
-    process::init();
-    info!("Process Manager Initialized.");
-
-    // init keyboard
-    keyboard::init();
-    info!("Keyboard Initialized.");
-
-    // init input manager
-    input::init();
-    info!("Input Initialized.");
-
-    // enable interrupts
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 

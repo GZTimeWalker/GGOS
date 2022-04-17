@@ -24,6 +24,8 @@ pub fn init() {
     let console = get_console_for_sure();
     console.clear();
     console.header();
+
+    info!("Console Initialized.");
 }
 
 guard_access_fn!(pub get_console(CONSOLE: Console));

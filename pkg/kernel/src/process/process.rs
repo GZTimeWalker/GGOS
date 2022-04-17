@@ -1,7 +1,7 @@
 use super::ProgramStatus;
-use crate::memory::BootInfoFrameAllocator;
+use crate::mem::BootInfoFrameAllocator;
 use crate::utils::{Registers, RegistersValue};
-use crate::memory::physical_to_virtual;
+use crate::mem::physical_to_virtual;
 use core::intrinsics::copy_nonoverlapping;
 use x86_64::structures::paging::{OffsetPageTable, PhysFrame, PageTable};
 use x86_64::structures::idt::{InterruptStackFrameValue, InterruptStackFrame};
@@ -114,7 +114,7 @@ impl Process {
         let page_table = unsafe {
             OffsetPageTable::new(
                 page_table_raw,
-                VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET as u64),
+                VirtAddr::new_truncate(crate::mem::PHYSICAL_OFFSET as u64),
             )
         };
 

@@ -21,10 +21,12 @@ pub enum ProgramStatus {
 
 /// init process manager
 pub fn init() {
-    let mut alloc = crate::memory::get_frame_alloc_for_sure();
+    let mut alloc = crate::mem::get_frame_alloc_for_sure();
     // kernel process
     let mut kproc = Process::new( &mut *alloc, 0, String::from("kernel"), 5, 0);
     kproc.resume();
     kproc.set_page_table_with_cr3();
     init_PROCESS_MANAGER(ProcessManager::new(kproc));
+
+    info!("Process Manager Initialized.");
 }
