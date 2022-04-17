@@ -17,10 +17,10 @@ impl<'a> PartitionMetaData<'a> {
 
     define_field!( u8, 0x00, status);
     define_field!( u8, 0x01, begin_head);
-    define_field!(u16, 0x02, begin_pos);
+    // 0x02 - 0x03 begin sector & begin cylinder
     define_field!( u8, 0x04, filesystem_flag);
     define_field!( u8, 0x05, end_head);
-    define_field!(u16, 0x06, end_pos);
+    // 0x06 - 0x07 end sector & edn cylinder
     define_field!(u32, 0x08, begin_lba);
     define_field!(u32, 0x0c, total_lba);
 
@@ -32,22 +32,20 @@ impl<'a> PartitionMetaData<'a> {
         self.filesystem_flag() == 0x05
     }
 
-    pub fn begin_sector(&self) -> u16 {
-        self.begin_pos() & 0x3f
+    pub fn begin_sector(&self) -> u8 {
+        self.data[2] & 0x3f
     }
 
     pub fn begin_cylinder(&self) -> u16 {
-        println!("begin_pos: {:04x}", self.begin_pos());
-        self.begin_pos() >> 6
+        (self.data[2] as u16 & 0xc0) << 2 | (self.data[3] as u16)
     }
 
-    pub fn end_sector(&self) -> u16 {
-        self.end_pos() & 0x3f
+    pub fn end_sector(&self) -> u8 {
+        self.data[6] & 0x3f
     }
 
     pub fn end_cylinder(&self) -> u16 {
-        println!("end_pos: {:04x}", self.end_pos());
-        self.end_pos() >> 6
+        (self.data[6] as u16 & 0xc0) << 2 | (self.data[7] as u16)
     }
 }
 
