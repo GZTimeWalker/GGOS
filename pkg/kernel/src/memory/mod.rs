@@ -3,6 +3,7 @@ mod frames;
 mod paging;
 pub mod allocator;
 
+pub mod gdt;
 pub use frames::*;
 pub use paging::*;
 pub use address::*;

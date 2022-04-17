@@ -24,12 +24,13 @@ pub use utils::*;
 pub mod drivers;
 pub use drivers::*;
 
-pub mod gdt;
-pub mod mem;
+pub mod memory;
+use memory::gdt;
+use memory::allocator;
+
 pub mod process;
 pub mod interrupt;
 
-use mem::allocator;
 use boot::BootInfo;
 
 pub fn init(boot_info: &'static BootInfo) {
@@ -40,7 +41,7 @@ pub fn init(boot_info: &'static BootInfo) {
     console::init();            // init graphic console
     clock::init(boot_info);     // init clock (uefi service)
     interrupt::init();          // init interrupts
-    mem::init(boot_info);       // init memory manager
+    memory::init(boot_info);    // init memory manager
     allocator::init();          // init heap allocator
     process::init();            // init process manager
     keyboard::init();           // init keyboard

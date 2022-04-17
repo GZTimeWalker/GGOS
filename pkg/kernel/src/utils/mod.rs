@@ -11,7 +11,6 @@ pub mod draw;
 pub mod font;
 pub mod colors;
 pub mod logger;
-
 pub mod clock;
 
 pub use gop::GOPDisplay;

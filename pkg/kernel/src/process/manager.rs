@@ -72,7 +72,7 @@ impl ProcessManager {
     pub fn spawn(&mut self, entry: VirtAddr, stack_top: VirtAddr,
             name: String, priority: usize, parent: u16) -> u16{
         let mut p = Process::new(
-            &mut *crate::mem::get_frame_alloc_for_sure(),
+            &mut *crate::memory::get_frame_alloc_for_sure(),
             self.next_pid, name, priority, parent
         );
         p.pause();

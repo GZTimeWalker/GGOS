@@ -23,7 +23,7 @@ lazy_static! {
 pub fn init() {
     IDT.load();
     debug!("XApic support = {}.", apic::XApic::support());
-    let mut lapic = unsafe { XApic::new(crate::mem::physical_to_virtual(LAPIC_ADDR)) };
+    let mut lapic = unsafe { XApic::new(crate::memory::physical_to_virtual(LAPIC_ADDR)) };
     lapic.cpu_init();
     keyboard::init();
     serial::init();
@@ -34,12 +34,12 @@ pub fn init() {
 #[inline(always)]
 pub fn enable_irq(irq: u8) {
     let mut ioapic =
-        unsafe { IoApic::new(crate::mem::physical_to_virtual(IOAPIC_ADDR as usize)) };
+        unsafe { IoApic::new(crate::memory::physical_to_virtual(IOAPIC_ADDR as usize)) };
     ioapic.enable(irq, 0);
 }
 
 #[inline(always)]
 pub fn ack(_irq: u8) {
-    let mut lapic = unsafe { XApic::new(crate::mem::physical_to_virtual(LAPIC_ADDR)) };
+    let mut lapic = unsafe { XApic::new(crate::memory::physical_to_virtual(LAPIC_ADDR)) };
     lapic.eoi();
 }
