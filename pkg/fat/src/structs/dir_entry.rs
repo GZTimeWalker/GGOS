@@ -202,36 +202,24 @@ impl core::fmt::Debug for ShortFileName {
         if self.ext == [0, 0, 0] {
             write!(f, "{}", self.basename())
         } else {
-            write!(f, "{}.{}", self.basename(), self.extension())
+            write!(f, "{}.{}", self.basename().trim_end(), self.extension())
         }
     }
 }
 
 impl core::fmt::Display for ShortFileName {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        let mut length = 1;
-        for &c in self.name.iter() {
-            if c != b' ' && c != 0 {
-                write!(f, "{}", c as char)?;
-                length += 1;
-            }
+        if self.ext == [0, 0, 0] {
+            write!(f, "{}", self.basename())
+        } else {
+            write!(f, "{}.{}", self.basename().trim_end(), self.extension())
         }
-        write!(f, ".")?;
-        for &c in self.ext.iter() {
-            if c != b' ' && c != 0 {
-                write!(f, "{}", c as char)?;
-                length += 1;
-            }
-        }
-        if let Some(mut width) = f.width() {
-            if width > length {
-                width -= length;
-                for _ in 0..width {
-                    write!(f, "{}", f.fill())?;
-                }
-            }
-        }
-        Ok(())
+    }
+}
+
+impl  core::fmt::Display for DirEntry {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "{}", self.filename)
     }
 }
 

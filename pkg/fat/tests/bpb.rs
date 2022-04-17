@@ -43,6 +43,8 @@ fn test_fat16_bpb_1() {
     assert_eq!(bpb.system_identifier(), b"FAT16   ");
 
     assert_eq!(bpb.total_sectors(), 0x1e000);
+
+    println!("{:?}", bpb);
 }
 
 #[cfg(test)]
@@ -81,4 +83,6 @@ fn test_fat16_bpb_2() {
     assert_eq!(bpb.system_identifier_str(), "FAT16   ");
 
     assert_eq!(bpb.total_sectors(), 0xfbfc1);
+
+    println!("{:?}", bpb);
 }

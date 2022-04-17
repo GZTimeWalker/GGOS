@@ -83,9 +83,6 @@ pub fn kernal_main(boot_info: &'static BootInfo) -> ! {
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
-    #[cfg(test)]
-    test_main();
-
     loop {
         print!(">>> ");
         let something = drivers::input::get_line();

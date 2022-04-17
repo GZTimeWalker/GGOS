@@ -3,7 +3,7 @@ use core::ops::Range;
 
 pub struct FAT16Table<'a> {
     data: &'a [u8],
-    bpb: &'a FAT16Bpb,
+    bpb: &'a FAT16Bpb<'a>,
 }
 
 impl<'a> FAT16Table<'a> {
@@ -26,7 +26,7 @@ impl<'a> FAT16Table<'a> {
 
     /// 获取第 id 个 FAT 表项的下一个 FAT 表项
     pub fn next_cluster(&self, id: u16) -> Option<u16> {
-        let raw = u16::from_le_bytes([data[2 * id], data[2 * id + 1]]);
+        let raw = u16::from_le_bytes([self.data[2 * id as usize], self.data[2 * id as usize + 1]]);
         if raw > 0x0001 && raw < 0xFFF0 {
             Some(raw)
         } else {

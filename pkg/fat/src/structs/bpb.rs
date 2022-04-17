@@ -54,3 +54,30 @@ impl<'a> FAT16Bpb<'a> {
     define_field!([u8; 8],  0x36, system_identifier);
     define_field!(u16,     0x1fe, trail);
 }
+
+impl core::fmt::Debug for FAT16Bpb<'_> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "FAT16 BPB: {{\n")?;
+        write!(f, "  OEM Name: {:?}\n", self.oem_name_str())?;
+        write!(f, "  Bytes per Sector: {}\n", self.bytes_per_sector())?;
+        write!(f, "  Sectors per Cluster: {}\n", self.sectors_per_cluster())?;
+        write!(f, "  Reserved Sector Count: {}\n", self.reserved_sector_count())?;
+        write!(f, "  FAT Count: {}\n", self.fat_count())?;
+        write!(f, "  Root Entries Count: {}\n", self.root_entries_count())?;
+        write!(f, "  Total Sectors: {}\n", self.total_sectors())?;
+        write!(f, "  Media Descriptor: {}\n", self.media_descriptor())?;
+        write!(f, "  Sectors per FAT: {}\n", self.sectors_per_fat())?;
+        write!(f, "  Sectors per Track: {}\n", self.sectors_per_track())?;
+        write!(f, "  Track Count: {}\n", self.track_count())?;
+        write!(f, "  Hidden Sectors: {}\n", self.hidden_sectors())?;
+        write!(f, "  Total Sectors: {}\n", self.total_sectors())?;
+        write!(f, "  Drive Number: {}\n", self.drive_number())?;
+        write!(f, "  Reserved Flags: {}\n", self.reserved_flags())?;
+        write!(f, "  Boot Signature: {}\n", self.boot_signature())?;
+        write!(f, "  Volume ID: {}\n", self.volume_id())?;
+        write!(f, "  Volume Label: {:?}\n", self.volume_label_str())?;
+        write!(f, "  System Identifier: {:?}\n", self.system_identifier_str())?;
+        write!(f, "  Trail: 0x{:04X}\n", self.trail())?;
+        write!(f, "}}")
+    }
+}

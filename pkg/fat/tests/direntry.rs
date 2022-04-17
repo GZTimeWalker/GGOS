@@ -18,4 +18,6 @@ fn test_dir_entry() {
     assert_eq!(res.created_time, Utc.ymd(2020, 6, 16).and_hms(23, 48, 30));
     assert_eq!(res.moditified_time, Utc.ymd(2020, 6, 16).and_hms(23, 48, 30));
     assert_eq!(res.accessed_time, Utc.ymd(2020, 6, 16).and_hms(0, 0, 0));
+
+    println!("{:#?}", res);
 }
