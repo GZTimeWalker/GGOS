@@ -6,8 +6,8 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-embedded-graphics = { version = "0.7.1", features = ['fixed_point'] }
 boot = { path = "../boot", package = "ggos_boot",  default-features = false }
+embedded-graphics = { version = "0.7.1", features = ['fixed_point'] }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 paste = "1.0.7"
 spin = "0.9.2"

@@ -2,6 +2,6 @@
 members = [
     "pkg/boot",
     "pkg/elf",
+    "pkg/fs",
     "pkg/kernel",
-    "pkg/fat"
 ]

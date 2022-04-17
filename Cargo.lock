@@ -116,6 +116,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ggfs"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "chrono",
+ "hex-literal",
+ "paste",
+ "x86_64",
+]
+
+[[package]]
 name = "ggos_boot"
 version = "0.1.0"
 dependencies = [
@@ -135,16 +146,6 @@ dependencies = [
  "log",
  "x86_64",
  "xmas-elf",
-]
-
-[[package]]
-name = "ggos_fat"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "chrono",
- "hex-literal",
- "paste",
 ]
 
 [[package]]
