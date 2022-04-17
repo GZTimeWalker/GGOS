@@ -38,6 +38,7 @@ pub fn init(boot_info: &'static BootInfo) {
     gdt::init();                // init gdt
     display::init(boot_info);   // init vga display
     console::init();            // init graphic console
+    clock::init(boot_info);     // init clock (uefi service)
     interrupt::init();          // init interrupts
     mem::init(boot_info);       // init memory manager
     allocator::init();          // init heap allocator
