@@ -2,6 +2,7 @@ use boot::GraphicInfo;
 use core::intrinsics::{volatile_copy_memory, volatile_set_memory};
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::*;
+use crate::utils::*;
 
 #[derive(Debug)]
 pub enum DisplayError {
@@ -76,7 +77,7 @@ impl<'a> GOPDisplay<'a> {
 
     pub fn clear(&mut self, color: Option<<GOPDisplay<'a> as DrawTarget>::Color>, base: usize) {
         let size = self.resolution();
-        let color = color.unwrap_or_default();
+        let color = color.unwrap_or(colors::BACKGROUND);
         let buf = self.buffer.as_mut_ptr();
 
         unsafe {
