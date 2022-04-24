@@ -34,7 +34,7 @@ pub fn init() {
 #[inline(always)]
 pub fn enable_irq(irq: u8) {
     let mut ioapic =
-        unsafe { IoApic::new(crate::memory::physical_to_virtual(IOAPIC_ADDR as usize)) };
+        unsafe { IoApic::new(crate::memory::physical_to_virtual(IOAPIC_ADDR as u64)) };
     ioapic.enable(irq, 0);
 }
 

@@ -5,22 +5,22 @@ use core::ptr::{read_volatile, write_volatile};
 use x86::cpuid::CpuId;
 
 pub struct XApic {
-    addr: usize,
+    addr: u64,
 }
 
 impl XApic {
     unsafe fn read(&self, reg: u32) -> u32 {
-        read_volatile((self.addr + reg as usize) as *const u32)
+        read_volatile((self.addr + reg as u64) as *const u32)
     }
 
     unsafe fn write(&mut self, reg: u32, value: u32) {
-        write_volatile((self.addr + reg as usize) as *mut u32, value);
+        write_volatile((self.addr + reg as u64) as *mut u32, value);
         self.read(0x20);
     }
 }
 
 impl XApic {
-    pub unsafe fn new(addr: usize) -> Self {
+    pub unsafe fn new(addr: u64) -> Self {
         XApic { addr }
     }
 }
@@ -41,7 +41,7 @@ impl LocalApic for XApic {
             // TICR would be calibrated using an external time source.
             self.write(TDCR, X1);
             self.write(TIMER, PERIODIC | (T_IRQ0 + IRQ_TIMER));
-            self.write(TICR, 10000000);
+            self.write(TICR, 5000000);
 
             // Disable logical interrupt lines.
             self.write(LINT0, MASKED);
@@ -119,7 +119,7 @@ fn microdelay(us: u64) {
     while unsafe { rdtsc() } < end {}
 }
 
-pub const LAPIC_ADDR: usize = 0xfee00000;
+pub const LAPIC_ADDR: u64 = 0xfee00000;
 
 const CMOS_PORT: u16        = 0x70;
 const CMOS_RETURN: u16      = 0x71;

@@ -106,7 +106,7 @@ impl Process {
 
         // 3. create page table object
         let page_table_raw = unsafe {
-            (physical_to_virtual(page_table_addr.start_address().as_u64() as usize)
+            (physical_to_virtual(page_table_addr.start_address().as_u64())
                 as *mut PageTable)
             .as_mut()
         }.unwrap();
@@ -122,7 +122,7 @@ impl Process {
         let status = ProgramStatus::Created;
         let stack_frame = InterruptStackFrameValue {
             instruction_pointer: VirtAddr::new_truncate(0),
-            code_segment: 0,
+            code_segment: 8,
             cpu_flags: 0,
             stack_pointer: VirtAddr::new_truncate(0),
             stack_segment: 0,
@@ -169,7 +169,8 @@ impl core::fmt::Display for Process {
         write!(f, "    ticks_passed: {},\n", self.ticks_passed)?;
         write!(f, "    children: {:?}\n", self.children)?;
         write!(f, "    page_table_addr: {:?},\n", self.page_table_addr)?;
-        write!(f, "    stack_frame_top: 0x{:016x},\n", self.stack_frame.stack_pointer.as_u64())?;
+        write!(f, "    stack_top: 0x{:016x},\n", self.stack_frame.stack_pointer.as_u64())?;
+        write!(f, "    cpu_flags: 0x{:04x},\n", self.stack_frame.cpu_flags)?;
         write!(f, "    instruction_pointer: 0x{:016x}\n", self.stack_frame.instruction_pointer.as_u64())?;
         write!(f, "}}")?;
         Ok(())

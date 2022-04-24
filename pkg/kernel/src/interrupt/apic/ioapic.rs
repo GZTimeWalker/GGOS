@@ -9,7 +9,7 @@ pub struct IoApic {
 }
 
 impl IoApic {
-    pub unsafe fn new(addr: usize) -> Self {
+    pub unsafe fn new(addr: u64) -> Self {
         IoApic {
             reg: addr as *mut u32,
             data: (addr + 0x10) as *mut u32,
