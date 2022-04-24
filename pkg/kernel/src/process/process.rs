@@ -11,6 +11,9 @@ use x86_64::registers::rflags::RFlags;
 use alloc::string::String;
 use alloc::vec::Vec;
 use x86_64::VirtAddr;
+use alloc::collections::btree_map::BTreeMap;
+
+const PRIORITY_FACTOR: usize = 2;
 
 pub struct Process {
     pid: u16,
@@ -24,10 +27,26 @@ pub struct Process {
     children: Vec::<u16>,
     stack_frame: InterruptStackFrameValue,
     page_table_addr: (PhysFrame, Cr3Flags),
-    page_table: Option<OffsetPageTable<'static>>
+    page_table: Option<OffsetPageTable<'static>>,
+    proc_data: ProcessData
 }
 
-const PRIORITY_FACTOR: usize = 2;
+#[derive(Clone, Debug, Default)]
+pub struct ProcessData {
+    env: BTreeMap<String, String>,
+}
+
+impl ProcessData {
+    pub fn new() -> Self {
+        let env = BTreeMap::new();
+        Self { env }
+    }
+
+    pub fn set_env(mut self, key: &str, val: &str) -> Self {
+        self.env.insert(key.into(), val.into());
+        self
+    }
+}
 
 impl Process {
     pub fn pid(&self) -> u16 {
@@ -61,6 +80,14 @@ impl Process {
         self.status == ProgramStatus::Running
     }
 
+    pub fn env(&self, key: &str) -> Option<String> {
+        self.proc_data.env.get(key).cloned()
+    }
+
+    pub fn set_env(&mut self, key: &str, val: &str) {
+        self.proc_data.env.insert(key.into(), val.into());
+    }
+
     pub fn save(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
         self.regs = unsafe{ regs.as_mut().read().clone() };
         self.stack_frame = unsafe{ sf.as_mut().read().clone() };
@@ -87,7 +114,8 @@ impl Process {
 impl Process {
     pub fn new(
         frame_alloc: &mut BootInfoFrameAllocator,
-        pid: u16, name: String, priority: usize, parent: u16
+        pid: u16, name: String, priority: usize, parent: u16,
+        proc_data: Option<ProcessData>
     ) -> Self {
         // 1. alloc a page table for process
         let page_table_addr = frame_alloc.allocate_frame()
@@ -145,7 +173,8 @@ impl Process {
             regs,
             page_table_addr: (page_table_addr, Cr3::read().1),
             page_table: Some(page_table),
-            children: Vec::new()
+            children: Vec::new(),
+            proc_data: proc_data.unwrap_or_default()
         }
     }
 }

@@ -1,8 +1,7 @@
 #![no_std]
 #![no_main]
 
-use ggos::utils;
-use ggos_kernel::{input, print, println};
+use ggos_kernel::*;
 use ggos_kernel as ggos;
 
 boot::entry_point!(kernal_main);
@@ -22,7 +21,8 @@ pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
                 ggos::process::print_process_list();
             },
             "test" => {
-                todo!()
+                ggos::new_test_thread(format!("{}", test_num).as_str());
+                test_num += 1;
             },
             _ => println!("[=] {}", line),
         }

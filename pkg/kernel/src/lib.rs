@@ -32,6 +32,7 @@ pub mod process;
 pub mod interrupt;
 
 use boot::BootInfo;
+pub use alloc::format;
 
 pub fn init(boot_info: &'static BootInfo) {
     serial::init();             // init serial output
@@ -53,13 +54,21 @@ pub fn init(boot_info: &'static BootInfo) {
     process::spawn_kernel_thread(
         utils::draw::clock,
         alloc::string::String::from("clock"),
-        5
+        1, None
     );
 
     info!("GGOS initialized.");
 
     // Enable cursor...?
     print_serial!("\x1b[?25h");
+}
+
+pub fn new_test_thread(id: &str) {
+    process::spawn_kernel_thread(
+        utils::draw::test,
+        alloc::string::String::from(format!("#{}_test", id)),
+        5, Some(process::ProcessData::new().set_env("id", id))
+    );
 }
 
 pub fn shutdown(boot_info: &'static BootInfo) -> ! {

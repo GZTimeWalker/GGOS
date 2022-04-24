@@ -1,8 +1,8 @@
 use super::*;
-use alloc::vec::Vec;
 use crate::utils::Registers;
-use x86_64::VirtAddr;
+use alloc::vec::Vec;
 use x86_64::structures::idt::InterruptStackFrame;
+use x86_64::VirtAddr;
 
 once_mutex!(pub PROCESS_MANAGER: ProcessManager);
 guard_access_fn! {
@@ -14,30 +14,40 @@ pub struct ProcessManager {
     next_pid: u16,
     /// pid of the current running process
     cur_pid: u16,
-    processes: Vec<Process>
+    processes: Vec<Process>,
 }
 
 impl ProcessManager {
-    pub fn new(init: Process) -> Self{
+    pub fn new(init: Process) -> Self {
         let mut processes = Vec::<Process>::new();
         processes.push(init);
         Self {
             cur_pid: 0,
             next_pid: 1,
-            processes
+            processes,
         }
     }
 
-    fn get_current(&mut self) -> &mut Process {
-        self.processes.iter_mut().find(|x| x.pid() == self.cur_pid).unwrap()
+    fn current_mut(&mut self) -> &mut Process {
+        self.processes
+            .iter_mut()
+            .find(|x| x.pid() == self.cur_pid)
+            .unwrap()
     }
 
     pub fn tick(&mut self) -> bool {
-        self.get_current().tick()
+        self.current_mut().tick()
+    }
+
+    pub fn current(&self) -> &Process {
+        self.processes
+            .iter()
+            .find(|x| x.pid() == self.cur_pid)
+            .unwrap()
     }
 
     pub fn save_current(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
-        let current = self.get_current();
+        let current = self.current_mut();
         if current.is_running() {
             current.save(regs, sf);
         }
@@ -45,8 +55,12 @@ impl ProcessManager {
     }
 
     fn get_next_pos(&self) -> usize {
-        let next_pos = self.processes.iter()
-            .position(|x| x.pid() == self.cur_pid).unwrap() + 1;
+        let next_pos = self
+            .processes
+            .iter()
+            .position(|x| x.pid() == self.cur_pid)
+            .unwrap()
+            + 1;
         if next_pos >= self.processes.len() {
             0
         } else {
@@ -69,11 +83,22 @@ impl ProcessManager {
         }
     }
 
-    pub fn spawn(&mut self, entry: VirtAddr, stack_top: VirtAddr,
-            name: String, priority: usize, parent: u16) -> u16{
+    pub fn spawn(
+        &mut self,
+        entry: VirtAddr,
+        stack_top: VirtAddr,
+        name: String,
+        priority: usize,
+        parent: u16,
+        proc_data: Option<ProcessData>
+    ) -> u16 {
         let mut p = Process::new(
             &mut *crate::memory::get_frame_alloc_for_sure(),
-            self.next_pid, name, priority, parent
+            self.next_pid,
+            name,
+            priority,
+            parent,
+            proc_data
         );
         p.pause();
         p.init_stack_frame(entry, stack_top);

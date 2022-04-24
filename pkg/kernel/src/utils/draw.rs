@@ -1,17 +1,24 @@
-pub fn test(id: usize) -> ! {
+pub fn test() -> ! {
     let mut count = 0;
+    let id;
+    if let Some(id_env) = crate::process::env("id") {
+        id = id_env
+    } else { id = "unknown".into()}
     loop {
         count += 1;
         if count == 100 {
             count = 0;
-            trace!("[{}] Hello, world!", id);
+            debug!("\r{} => Hello, world!", id);
+        }
+        unsafe {
+           core::arch::asm!("hlt")
         }
     }
 }
 
 pub fn clock() -> ! {
     let mut angle: f32 = 90.0;
-    const ANGLE_INCR: f32 = 1.0;
+    const ANGLE_INCR: f32 = 30.0;
     const D_OFFSET: i32 = 4;
     let (cx, _) = crate::drivers::display::get_display().unwrap().resolution();
 
@@ -22,6 +29,8 @@ pub fn clock() -> ! {
     use micromath::F32Ext;
 
     loop {
+        super::clock::spin_wait_for_ns(10000);
+
         angle += ANGLE_INCR;
         if angle >= 360.0 {
             angle = 0.0;
@@ -51,6 +60,6 @@ pub fn clock() -> ! {
                     .draw(&mut *display)
                     .unwrap();
             }
-        })
+        });
     }
 }

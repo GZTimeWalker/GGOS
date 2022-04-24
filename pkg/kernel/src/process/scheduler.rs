@@ -4,6 +4,7 @@ use x86_64::structures::paging::FrameAllocator;
 use alloc::string::String;
 use crate::memory::*;
 use crate::utils::Registers;
+use crate::process::ProcessData;
 use super::manager::get_process_manager_for_sure;
 
 pub fn switch(regs: &mut Registers, sf: &mut InterruptStackFrame) {
@@ -18,7 +19,7 @@ pub fn switch(regs: &mut Registers, sf: &mut InterruptStackFrame) {
     });
 }
 
-pub fn spawn_kernel_thread(entry: fn() -> !, name: String, priority: usize) {
+pub fn spawn_kernel_thread(entry: fn() -> !, name: String, priority: usize, data: Option<ProcessData>) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let entry = VirtAddr::new(entry as u64);
 
@@ -29,6 +30,6 @@ pub fn spawn_kernel_thread(entry: fn() -> !, name: String, priority: usize) {
             stack.start_address().as_u64()) + FRAME_SIZE);
 
         let mut manager = get_process_manager_for_sure();
-        manager.spawn(entry, stack_top, name, priority, 0);
+        manager.spawn(entry, stack_top, name, priority, 0, data);
     });
 }
