@@ -2,11 +2,10 @@ mod process;
 mod manager;
 mod scheduler;
 
-// pub mod manager;
 use process::*;
 use manager::*;
-pub use scheduler::*;
 
+pub use scheduler::*;
 
 use alloc::string::String;
 use self::manager::init_PROCESS_MANAGER;
@@ -30,4 +29,10 @@ pub fn init() {
     init_PROCESS_MANAGER(ProcessManager::new(kproc));
 
     info!("Process Manager Initialized.");
+}
+
+pub fn print_process_list() {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager_for_sure().print_process_list();
+    })
 }

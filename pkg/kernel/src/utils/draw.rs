@@ -1,4 +1,15 @@
-pub fn clock() {
+pub fn test(id: usize) -> ! {
+    let mut count = 0;
+    loop {
+        count += 1;
+        if count == 100 {
+            count = 0;
+            trace!("[{}] Hello, world!", id);
+        }
+    }
+}
+
+pub fn clock() -> ! {
     let mut angle: f32 = 90.0;
     const ANGLE_INCR: f32 = 1.0;
     const D_OFFSET: i32 = 4;
@@ -25,8 +36,8 @@ pub fn clock() {
             (len as f32 * value.sin()) as i32,
         );
 
-        if let Some(mut display) = crate::drivers::display::get_display() {
-            x86_64::instructions::interrupts::without_interrupts(|| {
+        x86_64::instructions::interrupts::without_interrupts(|| {
+            if let Some(mut display) = crate::drivers::display::get_display() {
                 Circle::new(
                     Point::new(cx - len - D_OFFSET, cy - len - D_OFFSET),
                     (2 * len + D_OFFSET * 2) as u32,
@@ -39,7 +50,7 @@ pub fn clock() {
                     .into_styled(PrimitiveStyle::with_stroke(colors::GREEN, 5))
                     .draw(&mut *display)
                     .unwrap();
-            })
-        }
+            }
+        })
     }
 }

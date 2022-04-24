@@ -1,11 +1,16 @@
 OVMF := /usr/share/ovmf/OVMF.fd
 ESP := esp
 BUILD_ARGS :=
-QEMU_ARGS := -net none
+QEMU_ARGS := -serial stdio
 MODE ?= release
+RUN_MODE ?= 
 
 ifeq (${MODE}, release)
 	BUILD_ARGS += --release
+endif
+
+ifeq (${RUN_MODE}, nographic)
+	QEMU_ARGS = -nographic
 endif
 
 .PHONY: build run debug clean launch \
@@ -17,14 +22,15 @@ run: build launch
 launch:
 	@qemu-system-x86_64 \
 		-bios ${OVMF} \
-		-serial stdio \
-		-drive format=raw,file=fat:rw:${ESP} \
-		$(QEMU_ARGS)
+		-net none \
+		$(QEMU_ARGS) \
+		-drive format=raw,file=fat:rw:${ESP}
 
 debug: build
 	@qemu-system-x86_64 \
 		-bios ${OVMF} \
-		-serial stdio \
+		-net none \
+		$(QEMU_ARGS) \
 		-drive format=raw,file=fat:rw:${ESP} \
 		-s -S
 

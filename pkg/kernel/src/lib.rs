@@ -61,3 +61,13 @@ pub fn init(boot_info: &'static BootInfo) {
     // Enable cursor...?
     print_serial!("\x1b[?25h");
 }
+
+pub fn shutdown(boot_info: &'static BootInfo) -> ! {
+    unsafe {
+        boot_info.system_table.runtime_services().reset(
+            boot::ResetType::Shutdown,
+            boot::UefiStatus::SUCCESS,
+            None,
+        );
+    }
+}

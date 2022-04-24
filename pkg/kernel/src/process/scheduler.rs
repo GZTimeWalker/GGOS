@@ -18,7 +18,7 @@ pub fn switch(regs: &mut Registers, sf: &mut InterruptStackFrame) {
     });
 }
 
-pub fn spawn_kernel_thread(entry: fn(), name: String, priority: usize) {
+pub fn spawn_kernel_thread(entry: fn() -> !, name: String, priority: usize) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let entry = VirtAddr::new(entry as u64);
 

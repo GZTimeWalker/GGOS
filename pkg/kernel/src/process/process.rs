@@ -12,7 +12,6 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use x86_64::VirtAddr;
 
-#[derive(Debug)]
 pub struct Process {
     pid: u16,
     regs: RegistersValue,
@@ -28,7 +27,7 @@ pub struct Process {
     page_table: Option<OffsetPageTable<'static>>
 }
 
-const PRIORITY_FACTOR: usize = 5;
+const PRIORITY_FACTOR: usize = 2;
 
 impl Process {
     pub fn pid(&self) -> u16 {
@@ -157,7 +156,7 @@ impl Drop for Process {
     }
 }
 
-impl core::fmt::Display for Process {
+impl core::fmt::Debug for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "Process {{\n")?;
         write!(f, "    pid: {},\n", self.pid)?;
@@ -173,6 +172,13 @@ impl core::fmt::Display for Process {
         write!(f, "    cpu_flags: 0x{:04x},\n", self.stack_frame.cpu_flags)?;
         write!(f, "    instruction_pointer: 0x{:016x}\n", self.stack_frame.instruction_pointer.as_u64())?;
         write!(f, "}}")?;
+        Ok(())
+    }
+}
+
+impl core::fmt::Display for Process {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "#{:3} | {:10} | {}", self.pid, self.name, self.ticks_passed)?;
         Ok(())
     }
 }

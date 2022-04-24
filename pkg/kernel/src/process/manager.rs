@@ -77,11 +77,17 @@ impl ProcessManager {
         );
         p.pause();
         p.init_stack_frame(entry, stack_top);
-        info!("Spawn process:\n\n{}\n", p);
+        info!("Spawn process:\n\n{:?}\n", p);
         let pid = p.pid();
         self.processes.push(p);
         self.next_pid += 1; // TODO: recycle PID
         pid
+    }
+
+    pub fn print_process_list(&self) {
+        for p in self.processes.iter() {
+            println!("{}", p);
+        }
     }
 
     pub fn kill(&mut self) {
