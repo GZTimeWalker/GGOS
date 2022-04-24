@@ -122,7 +122,6 @@ fn prase_datetime(time: u32) -> DateTime<Utc> {
     let minute = (time >> 5) & 0x3f;
     let second = (time & 0x1f) * 2;
 
-    // trace!("{}-{}-{} {}:{}:{}", year, month, day, hour, minute, second);
     Utc.ymd(year, month, day).and_hms(hour, minute, second)
 }
 

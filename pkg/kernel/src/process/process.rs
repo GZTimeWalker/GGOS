@@ -156,3 +156,22 @@ impl Drop for Process {
         // TODO: deallocate memory
     }
 }
+
+impl core::fmt::Display for Process {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        write!(f, "Process {{\n")?;
+        write!(f, "    pid: {},\n", self.pid)?;
+        write!(f, "    name: {},\n", self.name)?;
+        write!(f, "    parent: {},\n", self.parent)?;
+        write!(f, "    priority: {},\n", self.priority)?;
+        write!(f, "    status: {:?},\n", self.status)?;
+        write!(f, "    ticks: {},\n", self.ticks)?;
+        write!(f, "    ticks_passed: {},\n", self.ticks_passed)?;
+        write!(f, "    children: {:?}\n", self.children)?;
+        write!(f, "    page_table_addr: {:?},\n", self.page_table_addr)?;
+        write!(f, "    stack_frame_top: 0x{:016x},\n", self.stack_frame.stack_pointer.as_u64())?;
+        write!(f, "    instruction_pointer: 0x{:016x}\n", self.stack_frame.instruction_pointer.as_u64())?;
+        write!(f, "}}")?;
+        Ok(())
+    }
+}

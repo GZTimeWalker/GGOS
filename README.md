@@ -16,3 +16,4 @@ Using `JetBrainsMono` as console font.
 2. [rCore-Tutorial](https://rcore-os.github.io/rCore-Tutorial-Book-v3/index.html)
 3. [Writing an OS in Rust](https://os.phil-opp.com/)
 4. [rust-xos](https://github.com/xfoxfu/rust-xos)
+5. [moros](https://github.com/vinc/moros)

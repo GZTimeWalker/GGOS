@@ -50,6 +50,14 @@ pub fn init(boot_info: &'static BootInfo) {
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
+    process::spawn_kernel_thread(
+        utils::draw::clock,
+        alloc::string::String::from("clock"),
+        5
+    );
+
+    info!("GGOS initialized.");
+
     // Enable cursor...?
     print_serial!("\x1b[?25h");
 }

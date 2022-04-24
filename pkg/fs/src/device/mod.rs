@@ -1,11 +1,11 @@
 mod random;
-mod disk;
 
 pub use random::Random;
-pub use disk::Disk;
+
+use super::block::Block;
 
 #[derive(Debug, Eq, PartialEq)]
-pub enum BlockError {
+pub enum DeviceError {
     Busy,
     UnknownDevice,
     Unknown,
@@ -13,13 +13,13 @@ pub enum BlockError {
     WithStatus(usize),
 }
 
-pub trait Device {
-    fn read(&mut self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize, BlockError>;
-    fn write(&mut self, buf: &[u8], offset: usize, size: usize) -> Result<usize, BlockError>;
+pub trait Device<T> {
+    fn read(&mut self, buf: &mut [T], offset: usize, size: usize) -> Result<usize, DeviceError>;
+    fn write(&mut self, buf: &[T], offset: usize, size: usize) -> Result<usize, DeviceError>;
 }
 
-pub trait BlockDevice: Device {
-    fn block_size(&self) -> Result<usize, BlockError>;
+pub trait BlockDevice: Device<Block> {
+    fn block_count(&self) -> usize;
 }
 
 pub trait FatDevice: BlockDevice {

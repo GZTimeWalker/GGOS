@@ -1,8 +1,19 @@
-//! MBR Partition Metadata
+//! Partition Metadata
 //!
 //! This struct represents partitions' metadata.
 pub struct MBRPartitions<'a> {
     pub partitions: [PartitionMetaData<'a>; 4]
+}
+
+impl MBRPartitions<'_> {
+    pub fn parse(data: &[u8; 512]) -> Self {
+        for i in 0..4 {
+            partitions[i] = PartitionMetaData::parse(
+                &data[0x1be + (i * 16)..0x1be + (i * 16) + 16]
+            );
+        }
+        Self { partitions }
+    }
 }
 
 pub struct PartitionMetaData<'a> {
@@ -11,7 +22,7 @@ pub struct PartitionMetaData<'a> {
 
 impl<'a> PartitionMetaData<'a> {
     /// Attempt to parse a Boot Parameter Block from a 512 byte sector.
-    pub fn create_from_bytes(data: &[u8; 16]) -> Result<PartitionMetaData, &'static str> {
+    pub fn parse(data: &[u8; 16]) -> Result<PartitionMetaData, &'static str> {
         Ok(PartitionMetaData { data })
     }
 

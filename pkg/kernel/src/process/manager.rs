@@ -41,7 +41,7 @@ impl ProcessManager {
         if current.is_running() {
             current.save(regs, sf);
         }
-        // trace!("Paused process #{}", self.cur_pid);
+        trace!("Paused process #{}", self.cur_pid);
     }
 
     fn get_next_pos(&self) -> usize {
@@ -58,7 +58,7 @@ impl ProcessManager {
         let pos = self.get_next_pos();
         let p = &mut self.processes[pos];
 
-        // trace!("Next process {}#{}", p.name(), p.pid());
+        trace!("Next process {}#{}", p.name(), p.pid());
         if p.pid() == self.cur_pid {
             // the next process to be resumed is the same as the current one
             p.resume();
@@ -77,6 +77,7 @@ impl ProcessManager {
         );
         p.pause();
         p.init_stack_frame(entry, stack_top);
+        info!("Spawn process:\n\n{}\n", p);
         let pid = p.pid();
         self.processes.push(p);
         self.next_pid += 1; // TODO: recycle PID

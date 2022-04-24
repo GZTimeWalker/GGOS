@@ -4,24 +4,24 @@ use super::*;
 #[derive(Debug, Clone)]
 pub struct Random;
 
-impl Device for Random {
-    fn read(&mut self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize, BlockError> {
+impl Device<u8> for Random {
+    fn read(&mut self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize, DeviceError> {
         if let Some(rng) = RdRand::new() {
             for i in 0..size {
                 if let Some(num) = rng.get_u16() {
                     buf[offset + i] = num as u8;
                 } else {
-                    return Err(BlockError::Unknown);
+                    return Err(DeviceError::Unknown);
                 }
             }
             Ok(size)
         } else {
-            Err(BlockError::Unknown)
+            Err(DeviceError::Unknown)
         }
     }
 
-    fn write(&mut self, _buf: &[u8], _offset: usize, _size: usize) -> Result<usize, BlockError> {
-        Err(BlockError::InvalidOperation)
+    fn write(&mut self, _buf: &[u8], _offset: usize, _size: usize) -> Result<usize, DeviceError> {
+        Err(DeviceError::InvalidOperation)
     }
 }
 

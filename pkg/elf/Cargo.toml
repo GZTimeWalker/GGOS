@@ -7,5 +7,5 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [dependencies]
 log = "0.4.16"
-x86_64 = "0.14.8"
+x86_64 = "0.14.9"
 xmas-elf  = "0.8"
