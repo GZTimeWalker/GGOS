@@ -1,4 +1,4 @@
-use crate::utils::GOPDisplay;
+use super::gop::GOPDisplay;
 
 once_mutex!(pub DISPLAY: GOPDisplay<'static>);
 

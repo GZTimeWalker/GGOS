@@ -35,10 +35,6 @@ impl ProcessManager {
             .unwrap()
     }
 
-    pub fn tick(&mut self) -> bool {
-        self.current_mut().tick()
-    }
-
     pub fn current(&self) -> &Process {
         self.processes
             .iter()
@@ -49,6 +45,7 @@ impl ProcessManager {
     pub fn save_current(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
         let current = self.current_mut();
         if current.is_running() {
+            current.tick();
             current.save(regs, sf);
         }
         trace!("Paused process #{}", self.cur_pid);
@@ -88,7 +85,6 @@ impl ProcessManager {
         entry: VirtAddr,
         stack_top: VirtAddr,
         name: String,
-        priority: usize,
         parent: u16,
         proc_data: Option<ProcessData>
     ) -> u16 {
@@ -96,13 +92,13 @@ impl ProcessManager {
             &mut *crate::memory::get_frame_alloc_for_sure(),
             self.next_pid,
             name,
-            priority,
             parent,
             proc_data
         );
         p.pause();
         p.init_stack_frame(entry, stack_top);
-        info!("Spawn process:\n\n{:?}\n", p);
+        info!("Spawn process: {}#{}", p.name(), p.pid());
+        // info!("Spawn process:\n\n{:?}\n", p);
         let pid = p.pid();
         self.processes.push(p);
         self.next_pid += 1; // TODO: recycle PID

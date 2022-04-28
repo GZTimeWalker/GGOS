@@ -11,15 +11,12 @@ pub fn switch(regs: &mut Registers, sf: &mut InterruptStackFrame) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let mut manager = get_process_manager_for_sure();
 
-        if manager.tick() {
-            return;
-        }
         manager.save_current(regs, sf);
         manager.switch_next(regs, sf);
     });
 }
 
-pub fn spawn_kernel_thread(entry: fn() -> !, name: String, priority: usize, data: Option<ProcessData>) {
+pub fn spawn_kernel_thread(entry: fn() -> !, name: String, data: Option<ProcessData>) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let entry = VirtAddr::new(entry as u64);
 
@@ -30,6 +27,6 @@ pub fn spawn_kernel_thread(entry: fn() -> !, name: String, priority: usize, data
             stack.start_address().as_u64()) + FRAME_SIZE);
 
         let mut manager = get_process_manager_for_sure();
-        manager.spawn(entry, stack_top, name, priority, 0, data);
+        manager.spawn(entry, stack_top, name, 0, data);
     });
 }

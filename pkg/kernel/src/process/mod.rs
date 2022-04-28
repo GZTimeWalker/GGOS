@@ -24,7 +24,7 @@ pub enum ProgramStatus {
 pub fn init() {
     let mut alloc = crate::memory::get_frame_alloc_for_sure();
     // kernel process
-    let mut kproc = Process::new( &mut *alloc, 0, String::from("kernel"), 1, 0, None);
+    let mut kproc = Process::new( &mut *alloc, 0, String::from("kernel"), 0, None);
     kproc.resume();
     kproc.set_page_table_with_cr3();
     init_PROCESS_MANAGER(ProcessManager::new(kproc));

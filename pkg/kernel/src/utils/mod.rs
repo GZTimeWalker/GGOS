@@ -1,4 +1,3 @@
-mod gop;
 mod math;
 mod uefi;
 
@@ -7,13 +6,12 @@ mod macros;
 #[macro_use]
 mod regs;
 
-pub mod draw;
+pub mod func;
 pub mod font;
 pub mod colors;
 pub mod logger;
 pub mod clock;
 
-pub use gop::GOPDisplay;
 pub use macros::*;
 pub use regs::*;
 

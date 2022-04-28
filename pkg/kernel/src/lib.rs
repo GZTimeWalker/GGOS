@@ -52,9 +52,9 @@ pub fn init(boot_info: &'static BootInfo) {
     info!("Interrupts Enabled.");
 
     process::spawn_kernel_thread(
-        utils::draw::clock,
+        utils::func::clock,
         alloc::string::String::from("clock"),
-        1, None
+        None
     );
 
     info!("GGOS initialized.");
@@ -65,13 +65,14 @@ pub fn init(boot_info: &'static BootInfo) {
 
 pub fn new_test_thread(id: &str) {
     process::spawn_kernel_thread(
-        utils::draw::test,
-        alloc::string::String::from(format!("#{}_test", id)),
-        5, Some(process::ProcessData::new().set_env("id", id))
+        utils::func::test,
+        alloc::string::String::from(format!("test_{}", id)),
+        Some(process::ProcessData::new().set_env("id", id))
     );
 }
 
 pub fn shutdown(boot_info: &'static BootInfo) -> ! {
+    info!("GGOS shutting down.");
     unsafe {
         boot_info.system_table.runtime_services().reset(
             boot::ResetType::Shutdown,

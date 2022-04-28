@@ -20,7 +20,7 @@ pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
             "ps" => {
                 ggos::process::print_process_list();
             },
-            "test" => {
+            "t" => {
                 ggos::new_test_thread(format!("{}", test_num).as_str());
                 test_num += 1;
             },

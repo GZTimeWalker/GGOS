@@ -1,4 +1,5 @@
 mod uart16550;
+mod gop;
 
 pub mod serial;
 pub mod console;

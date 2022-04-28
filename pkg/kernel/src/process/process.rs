@@ -21,8 +21,6 @@ pub struct Process {
     name: String,
     parent: u16,
     status: ProgramStatus,
-    priority: usize,
-    ticks: usize,
     ticks_passed: usize,
     children: Vec::<u16>,
     stack_frame: InterruptStackFrameValue,
@@ -57,10 +55,8 @@ impl Process {
         self.name.as_str()
     }
 
-    pub fn tick(&mut self) -> bool {
-        self.ticks -= 1;
+    pub fn tick(&mut self) {
         self.ticks_passed += 1;
-        self.ticks > 0
     }
 
     pub fn pause(&mut self) {
@@ -68,7 +64,6 @@ impl Process {
     }
 
     pub fn resume(&mut self) {
-        self.ticks = self.priority * PRIORITY_FACTOR;
         self.status = ProgramStatus::Running;
     }
 
@@ -100,7 +95,6 @@ impl Process {
             sf.as_mut().write(self.stack_frame);
             Cr3::write(self.page_table_addr.0, self.page_table_addr.1)
         }
-        self.ticks = self.priority * PRIORITY_FACTOR;
         self.status = ProgramStatus::Running;
     }
 
@@ -114,7 +108,7 @@ impl Process {
 impl Process {
     pub fn new(
         frame_alloc: &mut BootInfoFrameAllocator,
-        pid: u16, name: String, priority: usize, parent: u16,
+        pid: u16, name: String, parent: u16,
         proc_data: Option<ProcessData>
     ) -> Self {
         // 1. alloc a page table for process
@@ -155,7 +149,6 @@ impl Process {
             stack_segment: 0,
         };
         let regs = RegistersValue::default();
-        let ticks = priority * PRIORITY_FACTOR;
         let ticks_passed = 0;
 
         debug!("New process {}#{} created.", name, pid);
@@ -165,9 +158,7 @@ impl Process {
             pid,
             name,
             parent,
-            priority,
             status,
-            ticks,
             ticks_passed,
             stack_frame,
             regs,
@@ -191,9 +182,7 @@ impl core::fmt::Debug for Process {
         write!(f, "    pid: {},\n", self.pid)?;
         write!(f, "    name: {},\n", self.name)?;
         write!(f, "    parent: {},\n", self.parent)?;
-        write!(f, "    priority: {},\n", self.priority)?;
         write!(f, "    status: {:?},\n", self.status)?;
-        write!(f, "    ticks: {},\n", self.ticks)?;
         write!(f, "    ticks_passed: {},\n", self.ticks_passed)?;
         write!(f, "    children: {:?}\n", self.children)?;
         write!(f, "    page_table_addr: {:?},\n", self.page_table_addr)?;
