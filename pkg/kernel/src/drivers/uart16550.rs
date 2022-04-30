@@ -128,16 +128,8 @@ impl SerialPort {
         }
     }
 
-    /// Receives a byte on the serial port.
-    pub fn receive(&mut self) -> u8 {
-        unsafe {
-            wait_for!(self.line_sts().contains(LineStsFlags::INPUT_FULL));
-            self.data.read()
-        }
-    }
-
     /// Receives a byte on the serial port no wait.
-    pub fn receive_no_wait(&mut self) -> Option<u8> {
+    pub fn receive(&mut self) -> Option<u8> {
         unsafe {
             if self.line_sts().contains(LineStsFlags::INPUT_FULL) {
                 return Some(self.data.read());

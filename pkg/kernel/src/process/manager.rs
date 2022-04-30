@@ -1,5 +1,6 @@
 use super::*;
 use crate::utils::Registers;
+use alloc::format;
 use alloc::vec::Vec;
 use x86_64::structures::idt::InterruptStackFrame;
 use x86_64::VirtAddr;
@@ -106,9 +107,11 @@ impl ProcessManager {
     }
 
     pub fn print_process_list(&self) {
+        let mut output = String::from(" PID | Name       | Ticks\n");
         for p in self.processes.iter() {
-            println!("{}", p);
+            output = output + format!("{}\n", p).as_str();
         }
+        print!("{}", output);
     }
 
     pub fn kill(&mut self) {

@@ -11,7 +11,7 @@ pub fn test() -> ! {
             print_serial!("\r{:-6} => Hello, world!", id);
         }
         unsafe {
-           core::arch::asm!("hlt")
+            core::arch::asm!("hlt");
         }
     }
 }
@@ -20,11 +20,7 @@ pub fn clock() -> ! {
     let mut angle: f32 = 90.0;
     const ANGLE_INCR: f32 = 15.0;
     const D_OFFSET: i32 = 4;
-
-    let cx = match crate::drivers::display::get_display() {
-        Some(display) => display.resolution().0,
-        None => 1024
-    };
+    let cx = 1024;
 
     use crate::utils::colors;
     use embedded_graphics::prelude::*;

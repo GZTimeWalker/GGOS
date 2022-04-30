@@ -13,8 +13,6 @@ use alloc::vec::Vec;
 use x86_64::VirtAddr;
 use alloc::collections::btree_map::BTreeMap;
 
-const PRIORITY_FACTOR: usize = 2;
-
 pub struct Process {
     pid: u16,
     regs: RegistersValue,
@@ -103,9 +101,7 @@ impl Process {
         self.stack_frame.instruction_pointer = entry;
         self.stack_frame.cpu_flags = (RFlags::IOPL_HIGH | RFlags::IOPL_LOW | RFlags::INTERRUPT_FLAG).bits();
     }
-}
 
-impl Process {
     pub fn new(
         frame_alloc: &mut BootInfoFrameAllocator,
         pid: u16, name: String, parent: u16,

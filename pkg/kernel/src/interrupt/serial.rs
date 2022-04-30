@@ -19,7 +19,7 @@ pub fn init() {
 /// Receive character from uart 16550
 /// Should be called on every interrupt
 pub fn receive() -> Option<DecodedKey> {
-    if let Some(scancode) = get_serial_for_sure().receive_no_wait() {
+    if let Some(scancode) = get_serial_for_sure().receive() {
         match scancode {
             127 => Some(DecodedKey::Unicode('\x08')),
             13 => Some(DecodedKey::Unicode('\n')),

@@ -84,9 +84,7 @@ pub extern "x86-interrupt" fn page_fault_handler(stack_frame: InterruptStackFram
 
 pub extern "C" fn clock(mut regs: Registers, mut sf: InterruptStackFrame ) {
     super::ack(consts::Interrupts::IRQ0 as u8);
-
     crate::process::switch( &mut regs, &mut sf);
-    // crate::utils::draw::clock();
 }
 
 as_handler!(clock);
