@@ -9,13 +9,14 @@
 /// Represents a Boot Parameter Block. This is the first sector of a FAT 16
 /// formatted partition, and it describes various properties of the FAT 16
 /// filesystem.
-pub struct FAT16Bpb<'a> {
-    data: &'a [u8]
+pub struct FAT16Bpb {
+    data: [u8; 512]
 }
 
-impl<'a> FAT16Bpb<'a> {
+impl FAT16Bpb {
     /// Attempt to parse a Boot Parameter Block from a 512 byte sector.
-    pub fn create_from_bytes(data: &[u8]) -> Result<FAT16Bpb, &'static str> {
+    pub fn new(data: &[u8]) -> Result<FAT16Bpb, &'static str> {
+        let data = data.try_into().unwrap();
         let bpb = FAT16Bpb { data };
 
         if bpb.data.len() != 512 || bpb.trail() != 0xAA55 {
@@ -55,7 +56,7 @@ impl<'a> FAT16Bpb<'a> {
     define_field!(u16,     0x1fe, trail);
 }
 
-impl core::fmt::Debug for FAT16Bpb<'_> {
+impl core::fmt::Debug for FAT16Bpb {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "FAT16 BPB: {{\n")?;
         write!(f, "  OEM Name: {:?}\n", self.oem_name_str())?;

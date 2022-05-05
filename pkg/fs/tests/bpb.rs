@@ -20,7 +20,7 @@ fn test_fat16_bpb_1() {
          65 73 73 20 61 6E 79 20 6B 65 79 20 74 6F 20 74
          72 79 20 61 67 61 69 6E 20 2E 2E 2E 20 0D 0A 00"),
          [0x00; 318], [0x55, 0xAA]);
-    let bpb = FAT16Bpb::create_from_bytes(BPB_EXAMPLE).unwrap();
+    let bpb = FAT16Bpb::new(BPB_EXAMPLE).unwrap();
 
     assert_eq!(bpb.oem_name(), b"mkfs.fat");
     assert_eq!(bpb.bytes_per_sector(), 512);
@@ -57,7 +57,7 @@ fn test_fat16_bpb_2() {
          C1 BF 0F 00 80 00 29 FD 1A BE FA 51 45 4D 55 20
          56 56 46 41 54 20 46 41 54 31 36 20 20 20 00 00"
     ), [0x00; 446], [0x55, 0xAA]);
-    let bpb = FAT16Bpb::create_from_bytes(BPB_EXAMPLE).unwrap();
+    let bpb = FAT16Bpb::new(BPB_EXAMPLE).unwrap();
 
     assert_eq!(bpb.oem_name(), b"MSWIN4.1");
     assert_eq!(bpb.oem_name_str(), "MSWIN4.1");
@@ -125,7 +125,7 @@ fn test_fat16_bpb_3() {
         61 6E 79 20 6B 65 79 20 74 6F 20 72 65 73 74 61
         72 74 0D 0A 00 00 00 00 00 00 00 AC CB D8 55 AA"
     ));
-    let bpb = FAT16Bpb::create_from_bytes(BPB_EXAMPLE).unwrap();
+    let bpb = FAT16Bpb::new(BPB_EXAMPLE).unwrap();
 
     println!("{:?}", bpb);
 }

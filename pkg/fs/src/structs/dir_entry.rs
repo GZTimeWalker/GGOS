@@ -31,12 +31,13 @@ bitflags! {
         const VOLUME_ID = 0x08;
         const DIRECTORY = 0x10;
         const ARCHIVE   = 0x20;
-        const LFN       = 0x0f; // Long File Name
+        const LFN       = 0x0f; // Long File Name, Not Implemented
     }
 }
 
-
 impl DirEntry {
+    pub const LEN: usize = 0x20;
+
     pub fn is_readonly(&self) -> bool {
         self.attributes.contains(Attributes::READ_ONLY)
     }
@@ -73,21 +74,21 @@ impl DirEntry {
         self.filename.is_unused()
     }
 
+    /// For Standard 8.3 format
     pub fn parse(data: &[u8]) -> Result<DirEntry, FilenameError> {
         let pos = data.iter().position(|&x| x == 0).unwrap_or(data.len());
-        // println!("pos: {:?}", pos);
-
         let filename = ShortFileName::new(&data[..pos]);
 
         // TODO: parse long file name
-
         if filename.is_eod() || filename.is_unused() {
             return Err(FilenameError::UnableToParse);
         }
 
         let attributes = Attributes::from_bits_truncate(data[11]);
+
         // 12: Reserved. Must be set to zero
         // 13: CrtTimeTenth, not supported, set to zero
+
         let mut time = u32::from_le_bytes([data[14], data[15], data[16], data[17]]);
         let created_time = prase_datetime(time);
 
@@ -154,6 +155,10 @@ impl ShortFileName {
 
     pub fn is_unused(&self) -> bool {
         self.name[0] == 0xE5
+    }
+
+    pub fn matches(&self, sfn: &ShortFileName) -> bool {
+        self.name == sfn.name && self.ext == sfn.ext
     }
 
     pub fn parse(name: &str) -> Result<ShortFileName, FilenameError> {

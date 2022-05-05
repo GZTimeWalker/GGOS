@@ -3,7 +3,7 @@ use ggfs::structs::partition::*;
 #[cfg(test)]
 #[test]
 fn partition_test() {
-    let meta0 = PartitionMetaData::create_from_bytes(&[
+    let meta0 = PartitionMetaData::parse(&[
         0x80, 0x01, 0x01, 0x00, 0x0B, 0xFE, 0xBF, 0xFC,
         0x3F, 0x00, 0x00, 0x00, 0x7E, 0x86, 0xBB, 0x00,
     ]).unwrap();

@@ -5,7 +5,7 @@ use super::*;
 pub struct Random;
 
 impl Device<u8> for Random {
-    fn read(&mut self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize, DeviceError> {
+    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize, DeviceError> {
         if let Some(rng) = RdRand::new() {
             for i in 0..size {
                 if let Some(num) = rng.get_u16() {
@@ -20,9 +20,9 @@ impl Device<u8> for Random {
         }
     }
 
-    fn write(&mut self, _buf: &[u8], _offset: usize, _size: usize) -> Result<usize, DeviceError> {
-        Err(DeviceError::InvalidOperation)
-    }
+    // fn write(&mut self, _buf: &[u8], _offset: usize, _size: usize) -> Result<usize, DeviceError> {
+    //     Err(DeviceError::InvalidOperation)
+    // }
 }
 
 macro_rules! rand {

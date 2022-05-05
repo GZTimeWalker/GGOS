@@ -1,4 +1,5 @@
 mod random;
+pub mod disk;
 
 pub use random::Random;
 
@@ -14,15 +15,15 @@ pub enum DeviceError {
 }
 
 pub trait Device<T> {
-    fn read(&mut self, buf: &mut [T], offset: usize, size: usize) -> Result<usize, DeviceError>;
-    fn write(&mut self, buf: &[T], offset: usize, size: usize) -> Result<usize, DeviceError>;
+    fn read(&self, buf: &mut [T], offset: usize, size: usize) -> Result<usize, DeviceError>;
+
+    // TODO: implement write
+    //fn write(&mut self, buf: &[T], offset: usize, size: usize) -> Result<usize, DeviceError>;
 }
 
 pub trait BlockDevice: Device<Block> {
-    fn block_count(&self) -> usize;
-}
+    fn block_count(&self) -> Result<usize, DeviceError>;
+    fn read_block(&self, offset: usize) -> Result<Block, DeviceError>;
 
-pub trait FatDevice: BlockDevice {
-    fn fat_meta(&self) -> &crate::FAT16Bpb;
-    fn fat_table(&self) -> crate::FAT16Table;
+    // TODO: implement write
 }

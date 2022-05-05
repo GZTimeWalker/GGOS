@@ -1,29 +1,39 @@
 //! Partition Metadata
 //!
 //! This struct represents partitions' metadata.
-pub struct MBRPartitions<'a> {
-    pub partitions: [PartitionMetaData<'a>; 4]
+pub struct MBRPartitions {
+    pub partitions: [PartitionMetaData; 4]
 }
 
-impl MBRPartitions<'_> {
+impl MBRPartitions {
     pub fn parse(data: &[u8; 512]) -> Self {
+        let mut partitions = vec![PartitionMetaData::default(); 4];
         for i in 0..4 {
             partitions[i] = PartitionMetaData::parse(
-                &data[0x1be + (i * 16)..0x1be + (i * 16) + 16]
-            );
+                &data[0x1be + (i * 16)..0x1be + (i * 16) + 16].try_into().unwrap()
+            ).unwrap();
         }
-        Self { partitions }
+        Self { partitions: partitions.try_into().unwrap() }
     }
 }
 
-pub struct PartitionMetaData<'a> {
-    data: &'a [u8; 16]
+#[derive(Clone, Copy)]
+pub struct PartitionMetaData {
+    data: [u8; 16]
 }
 
-impl<'a> PartitionMetaData<'a> {
+impl Default for PartitionMetaData {
+    fn default() -> Self {
+        Self {
+            data: [0u8; 16]
+        }
+    }
+}
+
+impl PartitionMetaData {
     /// Attempt to parse a Boot Parameter Block from a 512 byte sector.
     pub fn parse(data: &[u8; 16]) -> Result<PartitionMetaData, &'static str> {
-        Ok(PartitionMetaData { data })
+        Ok(PartitionMetaData { data: data.to_owned() })
     }
 
     define_field!( u8, 0x00, status);
@@ -60,7 +70,7 @@ impl<'a> PartitionMetaData<'a> {
     }
 }
 
-impl<'a> core::fmt::Debug for PartitionMetaData<'a> {
+impl core::fmt::Debug for PartitionMetaData {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Partition Meta Data: {{\n")?;
         write!(f, "  Active: {}\n", self.is_active())?;
