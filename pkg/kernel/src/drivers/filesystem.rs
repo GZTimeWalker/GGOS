@@ -50,8 +50,8 @@ pub fn init() {
     info!("Initialized Filesystem.");
 }
 
-pub fn ls(path_ori: &str) {
-    let mut path = path_ori.to_owned();
+pub fn ls(root_path: &str) {
+    let mut path = root_path.to_owned();
     let mut root = fs::root_dir();
 
     while let Some(pos) = path.find('/') {
@@ -62,7 +62,7 @@ pub fn ls(path_ori: &str) {
         );
 
         if tmp.is_err() {
-            error!("Directory not found: {}, {:?}", path_ori, tmp);
+            error!("Directory not found: {}, {:?}", root_path, tmp);
             return;
         }
 
@@ -84,9 +84,32 @@ pub fn ls(path_ori: &str) {
     }
 }
 
-pub fn cat(path: &str) {
-    let root = fs::root_dir();
-    let file = fs::open_file(fs(), &root, path, file::Mode::ReadOnly);
+pub fn cat(root_path: &str, file: &str) {
+    let mut path = root_path.to_owned();
+    let mut root = fs::root_dir();
+
+    while let Some(pos) = path.find('/') {
+        let dir = path[..pos].to_owned();
+
+        let tmp = fs::find_directory_entry(
+            fs(), &root, dir.as_str()
+        );
+
+        if tmp.is_err() {
+            error!("Directory not found: {}, {:?}", root_path, tmp);
+            return;
+        }
+
+        root = tmp.unwrap();
+
+        path = path[pos + 1..].to_string();
+
+        if path.len() == 0 {
+            break;
+        }
+    }
+
+    let file = fs::open_file(fs(), &root, file, file::Mode::ReadOnly);
 
     if file.is_err() {
         println!("ERROR: {:?}", file.unwrap_err());

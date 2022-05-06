@@ -33,7 +33,7 @@ pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
                 ggos::filesystem::ls(root_dir.as_str());
             }
             "cat" => {
-                ggos::filesystem::cat(line[1]);
+                ggos::filesystem::cat(root_dir.as_str(), line[1]);
             }
             "cd" => {
                 match line[1] {
@@ -48,6 +48,7 @@ pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
                     _ => {
                         root_dir.push_str(line[1]);
                         root_dir.push('/');
+                        root_dir = root_dir.to_ascii_uppercase();
                     }
                 }
             }
