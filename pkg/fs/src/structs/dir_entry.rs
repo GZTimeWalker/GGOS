@@ -5,8 +5,10 @@
 //! - https://github.com/xfoxfu/rust-xos/blob/main/fatpart/src/struct/dir_entry.rs
 //! - https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/filesystem.rs
 
-use chrono::{DateTime, Utc, TimeZone};
+use alloc::string::String;
 use bitflags::bitflags;
+use chrono::{DateTime, TimeZone, Utc};
+use chrono::LocalResult::Single;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct DirEntry {
@@ -78,15 +80,29 @@ impl DirEntry {
         !self.is_eod() && !self.is_unused()
     }
 
+    pub fn filename(&self) -> String {
+        if self.is_valid() && !self.is_long_name() {
+            format!("{}", self.filename)
+        } else {
+            String::from("unknown")
+        }
+    }
+
     /// For Standard 8.3 format
     pub fn parse(data: &[u8]) -> Result<DirEntry, FilenameError> {
-        let pos = data.iter().position(|&x| x == 0).unwrap_or(data.len());
-        let filename = ShortFileName::new(&data[..pos]);
+        trace!("parsing file...\n    {:016x} {:016x} {:016x} {:016x}",
+            u64::from_be_bytes(data[0..8].try_into().unwrap()),
+            u64::from_be_bytes(data[8..16].try_into().unwrap()),
+            u64::from_be_bytes(data[16..24].try_into().unwrap()),
+            u64::from_be_bytes(data[24..32].try_into().unwrap()),
+        );
+
+        let filename = ShortFileName::new(&data[..11]);
 
         // TODO: parse long file name
-        if filename.is_eod() || filename.is_unused() {
-            return Err(FilenameError::UnableToParse);
-        }
+        // if filename.is_eod() || filename.is_unused() {
+        //     return Err(FilenameError::UnableToParse);
+        // }
 
         let attributes = Attributes::from_bits_truncate(data[11]);
 
@@ -99,8 +115,10 @@ impl DirEntry {
         time = u32::from_le_bytes([0, 0, data[18], data[19]]);
         let accessed_time = prase_datetime(time);
 
-        let cluster = (data[27] as u32) << 8  | (data[26] as u32) |
-                           (data[20] as u32) << 16 | (data[21] as u32) << 24;
+        let cluster = (data[27] as u32) << 8
+            | (data[26] as u32)
+            | (data[20] as u32) << 16
+            | (data[21] as u32) << 24;
 
         time = u32::from_le_bytes([data[22], data[23], data[24], data[25]]);
         let moditified_time = prase_datetime(time);
@@ -117,6 +135,19 @@ impl DirEntry {
             size,
         })
     }
+
+    fn humanized_size(&self) -> (u32, String) {
+        let bytes = self.size;
+        if bytes < 1024 {
+            (bytes, String::from("B"))
+        } else if bytes >> 10 < 1024 {
+            (bytes >> 10, String::from("K"))
+        } else if bytes >> 20 < 1024 {
+            (bytes >> 20, String::from("M"))
+        } else {
+            (bytes >> 30, String::from("G"))
+        }
+    }
 }
 
 fn prase_datetime(time: u32) -> DateTime<Utc> {
@@ -127,7 +158,14 @@ fn prase_datetime(time: u32) -> DateTime<Utc> {
     let minute = (time >> 5) & 0x3f;
     let second = (time & 0x1f) * 2;
 
-    Utc.ymd(year, month, day).and_hms(hour, minute, second)
+    if let Single(time) = Utc
+        .ymd_opt(year, month, day)
+        .and_hms_opt(hour, minute, second)
+    {
+        time
+    } else {
+        Utc.ymd(1980, 1, 1).and_hms(0, 0, 0)
+    }
 }
 
 #[derive(PartialEq, Eq, Clone)]
@@ -137,7 +175,6 @@ pub struct ShortFileName {
 }
 
 impl ShortFileName {
-
     pub fn new(buf: &[u8]) -> Self {
         Self {
             name: buf[..8].try_into().unwrap(),
@@ -166,14 +203,32 @@ impl ShortFileName {
     }
 
     pub fn parse(name: &str) -> Result<ShortFileName, FilenameError> {
-        let mut sfn = ShortFileName { name: [0; 8], ext: [0; 3] };
+        let mut sfn = ShortFileName {
+            name: [0; 8],
+            ext: [0; 3],
+        };
         let mut idx = 0;
         let mut seen_dot = false;
         for ch in name.bytes() {
             match ch {
                 // Microsoft say these are the invalid characters
-                0x00..=0x1F | 0x20 | 0x22 | 0x2A | 0x2B | 0x2C | 0x2F | 0x3A | 0x3B
-                     | 0x3C | 0x3D | 0x3E | 0x3F | 0x5B | 0x5C | 0x5D | 0x7C => {
+                0x00..=0x1F
+                | 0x20
+                | 0x22
+                | 0x2A
+                | 0x2B
+                | 0x2C
+                | 0x2F
+                | 0x3A
+                | 0x3B
+                | 0x3C
+                | 0x3D
+                | 0x3E
+                | 0x3F
+                | 0x5B
+                | 0x5C
+                | 0x5D
+                | 0x7C => {
                     return Err(FilenameError::InvalidCharacter);
                 }
                 // Denotes the start of the file extension
@@ -216,17 +271,23 @@ impl core::fmt::Debug for ShortFileName {
 
 impl core::fmt::Display for ShortFileName {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        if self.ext == [0, 0, 0] {
-            write!(f, "{}", self.basename())
+        if self.ext[0] == 0x20 {
+            write!(f, "{}", self.basename().trim_end())
         } else {
-            write!(f, "{}.{}", self.basename().trim_end(), self.extension())
+            write!(f, "{}.{}", self.basename().trim_end(), self.extension().trim_end())
         }
     }
 }
 
 impl core::fmt::Display for DirEntry {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{:8} | {} | {}", self.size, self.moditified_time, self.filename)
+        let (size, unit) = self.humanized_size();
+        write!(
+            f,
+            "{:8}{} | {} | {}{}",
+           size, unit, self.moditified_time.format("%Y/%m/%d %H:%M:%S"), self.filename,
+           if self.is_directory() { "/" } else { "" }
+        )
     }
 }
 
@@ -283,7 +344,7 @@ impl core::fmt::Debug for Cluster {
 }
 
 /// Various filename related errors that can occur.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum FilenameError {
     /// Tried to create a file with an invalid character.
     InvalidCharacter,

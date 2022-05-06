@@ -100,13 +100,13 @@ impl Bus {
     }
 
     fn poll(&mut self, bit: Status, val: bool) -> Result<(), ()> {
-        let start = crate::utils::clock::now();
+        // let start = crate::utils::clock::now();
         while self.status().get_bit(bit as usize) != val {
-            if (crate::utils::clock::now() - start).num_milliseconds() > 1000 {
-                debug!("ATA hanged while polling {:?} bit in status register", bit);
-                self.debug();
-                return Err(());
-            }
+            // if (crate::utils::clock::now() - start).num_milliseconds() > 1000 {
+            //     debug!("ATA hanged while polling {:?} bit in status register", bit);
+            //     self.debug();
+            //     return Err(());
+            // }
             spin_loop();
         }
         Ok(())
@@ -142,7 +142,7 @@ impl Bus {
             self.cylinder_high.write(bytes[2]);
             self.drive.write(bytes[3]);
         }
-        trace!("Wrote command parameters: {:x}", block);
+        trace!("Wrote command parameters: {:016b}", block);
         Ok(())
     }
 
@@ -159,7 +159,7 @@ impl Bus {
     fn write_command(&mut self, cmd: ATACommand) -> Result<(), ()> {
         unsafe { self.command.write(cmd as u8) }
         self.wait(400); // Wait at least 400 ns
-        trace!("Wrote command {:?}", cmd);
+        debug!("Wrote command {:?}", cmd);
         self.status(); // Ignore results of first read
         self.clear_interrupt();
         if self.status() == 0 {
@@ -205,7 +205,7 @@ impl Bus {
         if self.check_floating_bus().is_err() {
             return Ok(IdentifyResponse::None);
         }
-        trace!("Identifying drive {}", drive);
+        info!("Identifying drive {}", drive);
         self.setup_pio(drive, 0)?;
         if self.write_command(ATACommand::Identify).is_err() {
             if self.status() == 0 {
@@ -248,7 +248,7 @@ enum ATACommand {
 
 #[repr(usize)]
 #[derive(Debug, Clone, Copy)]
-enum XStatus {
+enum Status {
     #[doc = "Indicates an error occurred. Send a new command to clear it (or nuke it with a Software Reset)."]
     ERR = 0,
     #[doc = "Index. Always set to zero."]
@@ -265,19 +265,6 @@ enum XStatus {
     RDY = 6,
     #[doc = "Indicates the drive is preparing to send/receive data (wait for it to clear). In case of 'hang' (it never clears), do a software reset."]
     BSY = 7,
-}
-
-#[repr(usize)]
-#[derive(Debug, Clone, Copy)]
-enum Status {
-    ERR  = 0, // Error
-    IDX  = 1, // (obsolete)
-    CORR = 2, // (obsolete)
-    DRQ  = 3, // Data Request
-    DSC  = 4, // (command dependant)
-    DF   = 5, // (command dependant)
-    DRDY = 6, // Device Ready
-    BSY  = 7, // Busy
 }
 
 #[derive(Clone)]
@@ -305,13 +292,15 @@ impl Drive {
             let serial = String::from_utf8_lossy(&buf[20..40]).trim().into();
             let model = String::from_utf8_lossy(&buf[54..94]).trim().into();
             let blocks = u32::from_be_bytes(buf[120..124].try_into().unwrap()).rotate_left(16);
-            Some(Self {
+            let drive = Self {
                 bus,
                 dsk,
                 model,
                 serial,
                 blocks,
-            })
+            };
+            info!("Drive {} opened", drive);
+            Some(drive)
         } else {
             None
         }

@@ -12,6 +12,11 @@ pub mod structs;
 
 pub use structs::*;
 pub use device::*;
+use structs::dir_entry::Cluster;
+
+pub fn root_dir() -> Directory {
+    Directory::new( Cluster::ROOT_DIR)
+}
 
 // 1. The disk structure
 // How to read a file from disk

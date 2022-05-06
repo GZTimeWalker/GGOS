@@ -49,7 +49,7 @@ impl ProcessManager {
             current.tick();
             current.save(regs, sf);
         }
-        trace!("Paused process #{}", self.cur_pid);
+        // trace!("Paused process #{}", self.cur_pid);
     }
 
     fn get_next_pos(&self) -> usize {
@@ -70,7 +70,7 @@ impl ProcessManager {
         let pos = self.get_next_pos();
         let p = &mut self.processes[pos];
 
-        trace!("Next process {} #{}", p.name(), p.pid());
+        // trace!("Next process {} #{}", p.name(), p.pid());
         if p.pid() == self.cur_pid {
             // the next process to be resumed is the same as the current one
             p.resume();

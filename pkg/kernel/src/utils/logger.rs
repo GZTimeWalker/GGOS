@@ -12,6 +12,7 @@ pub fn init() {
         _ => LevelFilter::Info,
     });
 
+    info!("Current log level: {}", log::max_level());
     info!("Logger Initialized.");
 }
 
