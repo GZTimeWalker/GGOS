@@ -1,3 +1,5 @@
+use crate::alloc::borrow::ToOwned;
+
 #[derive(Clone)]
 pub struct Block {
     pub contents: [u8; Block::SIZE],
@@ -17,7 +19,9 @@ impl Block {
         &self.contents
     }
 
-
+    pub fn inner_mut(&mut self) -> &mut [u8; Block::SIZE] {
+        &mut self.contents
+    }
 }
 
 impl Default for Block {

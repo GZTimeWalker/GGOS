@@ -1,6 +1,8 @@
 mod random;
+
 pub mod disk;
 
+pub use disk::*;
 pub use random::Random;
 
 use super::block::Block;
@@ -11,6 +13,8 @@ pub enum DeviceError {
     UnknownDevice,
     Unknown,
     InvalidOperation,
+    ReadError,
+    WriteError,
     WithStatus(usize),
 }
 

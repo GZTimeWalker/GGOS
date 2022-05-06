@@ -11,6 +11,7 @@ pub fn init() {
         Some("trace") => LevelFilter::Trace,
         _ => LevelFilter::Info,
     });
+
     info!("Logger Initialized.");
 }
 

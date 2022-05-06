@@ -1,3 +1,5 @@
+use crate::display::get_display_for_sure;
+
 pub fn test() -> ! {
     let mut count = 0;
     let id;
@@ -20,7 +22,9 @@ pub fn clock() -> ! {
     let mut angle: f32 = 90.0;
     const ANGLE_INCR: f32 = 15.0;
     const D_OFFSET: i32 = 4;
-    let cx = 1024;
+    let cx = x86_64::instructions::interrupts::without_interrupts(|| {
+        get_display_for_sure().resolution().0
+    });
 
     use crate::utils::colors;
     use embedded_graphics::prelude::*;

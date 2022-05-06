@@ -19,10 +19,6 @@ impl Device<u8> for Random {
             Err(DeviceError::Unknown)
         }
     }
-
-    // fn write(&mut self, _buf: &[u8], _offset: usize, _size: usize) -> Result<usize, DeviceError> {
-    //     Err(DeviceError::InvalidOperation)
-    // }
 }
 
 macro_rules! rand {

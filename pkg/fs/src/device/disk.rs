@@ -3,7 +3,6 @@
 //! reference: https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/fat.rs#L1350
 
 use crate::{dir_entry::*, partition::PartitionMetaData, structs::*};
-
 use super::*;
 
 /// /// Identifies a Disk device
@@ -11,19 +10,34 @@ pub struct Disk<'a, T>
 where
     T: BlockDevice,
 {
-    inner: &'a mut T,
+    inner: &'a T,
+}
+
+impl<'a, T> Disk<'a, T>
+where
+    T: BlockDevice,
+{
+    pub fn new(inner: &'a T) -> Self {
+        Self { inner }
+    }
+
+    pub fn volumes(&self) -> [Volume<'a, T>; 4] {
+        let mbr = self.inner.read_block(0).unwrap();
+        let volumes = MBRPartitions::parse(mbr.inner());
+        [
+            Volume::new(self.inner, volumes.partitions[0]),
+            Volume::new(self.inner, volumes.partitions[1]),
+            Volume::new(self.inner, volumes.partitions[2]),
+            Volume::new(self.inner, volumes.partitions[3]),
+        ]
+    }
 }
 
 impl<'a, T> Device<Block> for Disk<'a, T>
 where
     T: BlockDevice,
 {
-    fn read(
-        &self,
-        buf: &mut [Block],
-        offset: usize,
-        size: usize,
-    ) -> Result<usize, DeviceError> {
+    fn read(&self, buf: &mut [Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
         self.inner.read(buf, offset, size)
     }
 }
@@ -46,20 +60,24 @@ pub struct Volume<'a, T>
 where
     T: BlockDevice,
 {
-    inner: &'a mut T,
+    inner: &'a T,
     pub meta: PartitionMetaData,
+}
+
+impl<'a, T> Volume<'a, T>
+where
+    T: BlockDevice,
+{
+    pub fn new(inner: &'a T, meta: PartitionMetaData) -> Self {
+        Self { inner, meta }
+    }
 }
 
 impl<'a, T> Device<Block> for Volume<'a, T>
 where
     T: BlockDevice,
 {
-    fn read(
-        &self,
-        buf: &mut [Block],
-        offset: usize,
-        size: usize,
-    ) -> Result<usize, DeviceError> {
+    fn read(&self, buf: &mut [Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
         self.inner
             .read(buf, offset + self.meta.begin_lba() as usize, size)
     }
@@ -94,7 +112,7 @@ pub struct FAT16Volume<'a, T>
 where
     T: BlockDevice,
 {
-    volume: &'a Volume<'a, T>,
+    volume: Volume<'a, T>,
     pub bpb: FAT16Bpb,
     pub fat_start: usize,
     pub first_data_sector: usize,
@@ -105,9 +123,11 @@ impl<'a, T> FAT16Volume<'a, T>
 where
     T: BlockDevice,
 {
-    pub fn new(volume: &'a mut Volume<'a, T>) -> Self {
+    pub fn new(volume: Volume<'a, T>) -> Self {
         let block = volume.read_block(0).unwrap();
         let bpb = FAT16Bpb::new(block.inner()).unwrap();
+
+        debug!("Loading FAT16 Volume: \n{:?}", bpb);
 
         // FirstDataSector = BPB_ResvdSecCnt + (BPB_NumFATs * FATSz) + RootDirSectors;
         let root_dir_size =
@@ -131,6 +151,46 @@ where
         Directory::new(Cluster::ROOT_DIR)
     }
 
+    pub fn iterate_dir<F>(&self, dir: &Directory, mut func: F) -> Result<(), VolumeError>
+    where
+        F: FnMut(&DirEntry),
+    {
+        let mut current_cluster = Some(dir.cluster);
+        let mut dir_sector_num = self.cluster_to_sector(dir.cluster);
+        let dir_size = match dir.cluster {
+            Cluster::ROOT_DIR => self.first_data_sector - self.first_root_dir_sector,
+            _ => self.bpb.sectors_per_cluster() as usize,
+        };
+        while let Some(cluster) = current_cluster {
+            for sector in dir_sector_num..dir_sector_num + dir_size {
+                let block = self.volume.read_block(sector).unwrap();
+                for entry in 0..Block::SIZE / DirEntry::LEN {
+                    let start = entry * DirEntry::LEN;
+                    let end = (entry + 1) * DirEntry::LEN;
+                    let dir_entry = DirEntry::parse(&block.inner()[start..end])
+                        .map_err(|_| VolumeError::InvalidOperation)?;
+                    if dir_entry.is_eod() {
+                        return Ok(());
+                    } else if dir_entry.is_valid() && !dir_entry.is_long_name() {
+                        func(&dir_entry);
+                    }
+                }
+            }
+            current_cluster = if cluster != Cluster::ROOT_DIR {
+                match self.next_cluster(cluster) {
+                    Ok(n) => {
+                        dir_sector_num = self.cluster_to_sector(n);
+                        Some(n)
+                    }
+                    _ => None,
+                }
+            } else {
+                None
+            }
+        }
+        Ok(())
+    }
+
     /// Get an entry from the given directory
     pub fn find_directory_entry(
         &self,
@@ -140,14 +200,11 @@ where
         let match_name = ShortFileName::parse(name).map_err(|_| VolumeError::InvalidOperation)?;
 
         let mut current_cluster = Some(dir.cluster);
-
         let mut dir_sector_num = self.cluster_to_sector(dir.cluster);
-
         let dir_size = match dir.cluster {
             Cluster::ROOT_DIR => self.first_data_sector - self.first_root_dir_sector,
             _ => self.bpb.sectors_per_cluster() as usize,
         };
-
         while let Some(cluster) = current_cluster {
             for sector in dir_sector_num..dir_sector_num + dir_size {
                 match self.find_entry_in_sector(&match_name, sector) {
@@ -210,8 +267,8 @@ where
         for entry in 0..Block::SIZE / DirEntry::LEN {
             let start = entry * DirEntry::LEN;
             let end = (entry + 1) * DirEntry::LEN;
-            let dir_entry =
-                DirEntry::parse(&block.inner()[start..end]).map_err(|_| VolumeError::InvalidOperation)?;
+            let dir_entry = DirEntry::parse(&block.inner()[start..end])
+                .map_err(|_| VolumeError::InvalidOperation)?;
             if dir_entry.is_eod() {
                 // Can quit early
                 return Err(VolumeError::FileNotFound);

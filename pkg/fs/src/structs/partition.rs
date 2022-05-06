@@ -1,6 +1,9 @@
 //! Partition Metadata
 //!
 //! This struct represents partitions' metadata.
+
+use crate::alloc::borrow::ToOwned;
+
 pub struct MBRPartitions {
     pub partitions: [PartitionMetaData; 4]
 }
@@ -11,7 +14,10 @@ impl MBRPartitions {
         for i in 0..4 {
             partitions[i] = PartitionMetaData::parse(
                 &data[0x1be + (i * 16)..0x1be + (i * 16) + 16].try_into().unwrap()
-            ).unwrap();
+            );
+            if partitions[i].is_active() {
+                debug!("Partition {}: \n{:?}", i, partitions[i]);
+            }
         }
         Self { partitions: partitions.try_into().unwrap() }
     }
@@ -32,8 +38,8 @@ impl Default for PartitionMetaData {
 
 impl PartitionMetaData {
     /// Attempt to parse a Boot Parameter Block from a 512 byte sector.
-    pub fn parse(data: &[u8; 16]) -> Result<PartitionMetaData, &'static str> {
-        Ok(PartitionMetaData { data: data.to_owned() })
+    pub fn parse(data: &[u8; 16]) -> PartitionMetaData {
+        PartitionMetaData { data: data.to_owned() }
     }
 
     define_field!( u8, 0x00, status);

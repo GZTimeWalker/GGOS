@@ -122,6 +122,7 @@ dependencies = [
  "bitflags",
  "chrono",
  "hex-literal",
+ "log",
  "paste",
  "x86_64",
 ]
@@ -150,13 +151,14 @@ dependencies = [
 
 [[package]]
 name = "ggos_kernel"
-version = "0.5.3"
+version = "0.6.0"
 dependencies = [
  "bit_field",
  "bitflags",
  "chrono",
  "crossbeam-queue",
  "embedded-graphics",
+ "ggfs",
  "ggos_boot",
  "lazy_static",
  "libm",

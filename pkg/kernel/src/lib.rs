@@ -47,6 +47,8 @@ pub fn init(boot_info: &'static BootInfo) {
     process::init();            // init process manager
     keyboard::init();           // init keyboard
     input::init();              // init input manager
+    ata::init();                // init ata
+    filesystem::init();         // init filesystem
 
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");

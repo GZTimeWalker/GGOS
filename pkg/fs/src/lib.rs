@@ -1,10 +1,17 @@
+#![no_std]
 #![allow(dead_code)]
 #![feature(trait_alias)]
+
+#[macro_use]
+extern crate alloc;
+#[macro_use]
+extern crate log;
 
 pub mod device;
 pub mod structs;
 
 pub use structs::*;
+pub use device::*;
 
 // 1. The disk structure
 // How to read a file from disk

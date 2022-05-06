@@ -74,6 +74,10 @@ impl DirEntry {
         self.filename.is_unused()
     }
 
+    pub fn is_valid(&self) -> bool {
+        !self.is_eod() && !self.is_unused()
+    }
+
     /// For Standard 8.3 format
     pub fn parse(data: &[u8]) -> Result<DirEntry, FilenameError> {
         let pos = data.iter().position(|&x| x == 0).unwrap_or(data.len());
@@ -206,11 +210,7 @@ impl ShortFileName {
 
 impl core::fmt::Debug for ShortFileName {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        if self.ext == [0, 0, 0] {
-            write!(f, "{}", self.basename())
-        } else {
-            write!(f, "{}.{}", self.basename().trim_end(), self.extension())
-        }
+        write!(f, "{}", self)
     }
 }
 
@@ -224,9 +224,9 @@ impl core::fmt::Display for ShortFileName {
     }
 }
 
-impl  core::fmt::Display for DirEntry {
+impl core::fmt::Display for DirEntry {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "{}", self.filename)
+        write!(f, "{:8} | {} | {}", self.size, self.moditified_time, self.filename)
     }
 }
 
