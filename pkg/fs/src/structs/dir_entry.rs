@@ -116,9 +116,9 @@ impl DirEntry {
         let accessed_time = prase_datetime(time);
 
         let cluster = (data[27] as u32) << 8
-            | (data[26] as u32)
-            | (data[20] as u32) << 16
-            | (data[21] as u32) << 24;
+                         | (data[26] as u32) << 0
+                         | (data[21] as u32) << 24
+                         | (data[20] as u32) << 16;
 
         time = u32::from_le_bytes([data[22], data[23], data[24], data[25]]);
         let moditified_time = prase_datetime(time);
@@ -204,8 +204,8 @@ impl ShortFileName {
 
     pub fn parse(name: &str) -> Result<ShortFileName, FilenameError> {
         let mut sfn = ShortFileName {
-            name: [0; 8],
-            ext: [0; 3],
+            name: [0x20; 8],
+            ext: [0x20; 3],
         };
         let mut idx = 0;
         let mut seen_dot = false;
@@ -235,12 +235,14 @@ impl ShortFileName {
                 b'.' => {
                     if idx >= 1 && idx <= 8 {
                         seen_dot = true;
+                        idx = 8;
                     } else {
                         return Err(FilenameError::MisplacedPeriod);
                     }
                 }
                 _ => {
                     let ch = ch.to_ascii_uppercase();
+                    trace!("char: '{}', at: {}", ch as char, idx);
                     if seen_dot {
                         if idx >= 8 && idx < 11 {
                             sfn.ext[idx - 8] = ch;
@@ -250,6 +252,7 @@ impl ShortFileName {
                     } else if idx < 8 {
                         sfn.name[idx] = ch;
                     } else {
+                        trace!("1");
                         return Err(FilenameError::NameTooLong);
                     }
                     idx += 1;

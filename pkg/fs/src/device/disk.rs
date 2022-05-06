@@ -2,6 +2,7 @@
 //!
 //! reference: https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/fat.rs#L1350
 
+use crate::Block;
 use super::*;
 use crate::{dir_entry::*, partition::PartitionMetaData, structs::*};
 
@@ -118,6 +119,10 @@ pub enum VolumeError {
     InvalidOperation,
     BadCluster,
     EndOfFile,
+    NotADirectory,
+    NotAFile,
+    ReadOnly,
+    Unsupported,
     DeviceError(DeviceError),
     FileNameError(FilenameError),
 }
@@ -132,6 +137,28 @@ where
     pub fat_start: usize,
     pub first_data_sector: usize,
     pub first_root_dir_sector: usize,
+}
+
+impl<'a, T> Device<Block> for FAT16Volume<'a, T>
+where
+    T: BlockDevice,
+{
+    fn read(&self, buf: &mut [Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
+        self.volume.read(buf, offset, size)
+    }
+}
+
+impl<'a, T> BlockDevice for FAT16Volume<'a, T>
+where
+    T: BlockDevice,
+{
+    fn block_count(&self) -> Result<usize, DeviceError> {
+        self.volume.block_count()
+    }
+
+    fn read_block(&self, offset: usize) -> Result<Block, DeviceError> {
+        self.volume.read_block(offset)
+    }
 }
 
 impl<'a, T> FAT16Volume<'a, T>
@@ -168,7 +195,7 @@ where
     {
         debug!("Iterating directory: {:?}", dir);
         let mut current_cluster = Some(dir.cluster);
-        let mut dir_sector_num = self.cluster_to_sector(dir.cluster);
+        let mut dir_sector_num = self.cluster_to_sector(&dir.cluster);
         let dir_size = match dir.cluster {
             Cluster::ROOT_DIR => self.first_data_sector - self.first_root_dir_sector,
             _ => self.bpb.sectors_per_cluster() as usize,
@@ -194,7 +221,7 @@ where
             current_cluster = if cluster != Cluster::ROOT_DIR {
                 match self.next_cluster(cluster) {
                     Ok(n) => {
-                        dir_sector_num = self.cluster_to_sector(n);
+                        dir_sector_num = self.cluster_to_sector(&n);
                         Some(n)
                     }
                     _ => None,
@@ -212,10 +239,11 @@ where
         dir: &Directory,
         name: &str,
     ) -> Result<DirEntry, VolumeError> {
-        let match_name = ShortFileName::parse(name).map_err(|_| VolumeError::InvalidOperation)?;
+        let match_name = ShortFileName::parse(name)
+            .map_err(|x| VolumeError::FileNameError(x))?;
 
         let mut current_cluster = Some(dir.cluster);
-        let mut dir_sector_num = self.cluster_to_sector(dir.cluster);
+        let mut dir_sector_num = self.cluster_to_sector(&dir.cluster);
         let dir_size = match dir.cluster {
             Cluster::ROOT_DIR => self.first_data_sector - self.first_root_dir_sector,
             _ => self.bpb.sectors_per_cluster() as usize,
@@ -230,7 +258,7 @@ where
             current_cluster = if cluster != Cluster::ROOT_DIR {
                 match self.next_cluster(cluster) {
                     Ok(n) => {
-                        dir_sector_num = self.cluster_to_sector(n);
+                        dir_sector_num = self.cluster_to_sector(&n);
                         Some(n)
                     }
                     _ => None,
@@ -242,8 +270,8 @@ where
         Err(VolumeError::FileNotFound)
     }
 
-    pub fn cluster_to_sector(&self, cluster: Cluster) -> usize {
-        match cluster {
+    pub fn cluster_to_sector(&self, cluster: &Cluster) -> usize {
+        match *cluster {
             Cluster::ROOT_DIR => self.first_root_dir_sector,
             Cluster(c) => {
                 // FirstSectorofCluster = ((N – 2) * BPB_SecPerClus) + FirstDataSector;
@@ -254,7 +282,7 @@ where
     }
 
     /// look for next cluster in FAT
-    fn next_cluster(&self, cluster: Cluster) -> Result<Cluster, VolumeError> {
+    pub fn next_cluster(&self, cluster: Cluster) -> Result<Cluster, VolumeError> {
         let fat_offset = (cluster.0 * 2) as usize;
         let cur_fat_sector = self.fat_start + fat_offset / Block::SIZE;
         let offset = (fat_offset % Block::SIZE) as usize;
@@ -283,6 +311,7 @@ where
             let end = (entry + 1) * DirEntry::LEN;
             let dir_entry = DirEntry::parse(&block.inner()[start..end])
                 .map_err(|_| VolumeError::InvalidOperation)?;
+            trace!("matching {} to {}...", dir_entry.filename(), match_name);
             if dir_entry.is_eod() {
                 // Can quit early
                 return Err(VolumeError::FileNotFound);

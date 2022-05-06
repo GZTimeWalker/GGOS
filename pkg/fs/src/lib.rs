@@ -10,13 +10,11 @@ extern crate log;
 pub mod device;
 pub mod structs;
 
-pub use structs::*;
+use alloc::vec::Vec;
+use device::BlockDevice;
 pub use device::*;
-use structs::dir_entry::Cluster;
-
-pub fn root_dir() -> Directory {
-    Directory::new( Cluster::ROOT_DIR)
-}
+pub use structs::*;
+use structs::{dir_entry::Cluster, file::Mode};
 
 // 1. The disk structure
 // How to read a file from disk
@@ -34,3 +32,127 @@ pub fn root_dir() -> Directory {
 //     The BPB contains information about the filesystem.
 //
 //     [ FAT16 BPB ] [ Data ]
+
+
+pub fn root_dir() -> Directory {
+    Directory::new(Cluster::ROOT_DIR)
+}
+
+/// Call a callback function for each directory entry in a directory.
+pub fn iterate_dir<'a, T, F>(
+    volume: &FAT16Volume<'a, T>,
+    dir: &Directory,
+    func: F,
+) -> Result<(), VolumeError>
+where
+    T: BlockDevice,
+    F: FnMut(&DirEntry),
+{
+    volume.iterate_dir(dir, func)
+}
+
+/// Look in a directory for a named file.
+pub fn find_directory_entry<'a, T>(
+    volume: &FAT16Volume<'a, T>,
+    dir: &Directory,
+    name: &str,
+) -> Result<Directory, VolumeError>
+where
+    T: BlockDevice,
+{
+    if name.len() < 2 {
+        return Ok(root_dir());
+    }
+
+    let res = volume.find_directory_entry(dir, name)?;
+
+    if res.is_directory() {
+        Ok(Directory::from_entry(res))
+    } else {
+        Err(VolumeError::NotADirectory)
+    }
+}
+
+/// Open a dir in a dir
+pub fn open_dir<'a, T>(
+    volume: &FAT16Volume<'a, T>,
+    parent: &Directory,
+    name: &str,
+) -> Result<Directory, VolumeError>
+where
+    T: BlockDevice,
+{
+    let dir_entry = volume.find_directory_entry(parent, name)?;
+
+    if !dir_entry.is_directory() {
+        return Err(VolumeError::NotADirectory);
+    }
+
+    let dir = Directory::from_entry(dir_entry);
+
+    trace!("opened dir: \n{:#?}", &dir);
+
+    Ok(dir)
+}
+
+/// Open a file in a dir
+pub fn open_file<'a, T>(
+    volume: &FAT16Volume<'a, T>,
+    parent: &Directory,
+    name: &str,
+    mode: Mode,
+) -> Result<File, VolumeError>
+where
+    T: BlockDevice,
+{
+    trace!("try open file: {}", name);
+    let dir_entry = volume.find_directory_entry(parent, name)?;
+
+    if dir_entry.is_directory() {
+        return Err(VolumeError::NotAFile);
+    }
+
+    if dir_entry.is_readonly() && mode != Mode::ReadOnly {
+        return Err(VolumeError::ReadOnly);
+    }
+
+    let file = match mode {
+        Mode::ReadOnly => File {
+            start_cluster: dir_entry.cluster,
+            length: dir_entry.size,
+            mode,
+            entry: dir_entry,
+        },
+        _ => return Err(VolumeError::Unsupported),
+    };
+
+    trace!("opened file: \n{:#?}", &file);
+
+    Ok(file)
+}
+
+/// read a file
+pub fn read<'a, T>(
+    volume: &FAT16Volume<'a, T>,
+    file: &File
+) -> Result<Vec<u8>, VolumeError>
+where
+    T: BlockDevice,
+{
+    let mut data = vec![0u8; file.length() as usize];
+    let mut length = file.length() as usize;
+    for i in 0..file.length() as usize / Block::SIZE + 1 {
+        let sector = volume.cluster_to_sector(&file.start_cluster());
+        let block = volume.read_block(sector as usize + i).unwrap();
+        if length > Block::SIZE {
+            data[i * Block::SIZE..(i + 1) * Block::SIZE]
+                .copy_from_slice(&block.inner()[..]);
+            length -= Block::SIZE;
+        } else {
+            data[i * Block::SIZE..i * Block::SIZE + length as usize]
+                .copy_from_slice(&block.inner()[..length as usize]);
+            break;
+        }
+    }
+    Ok(data)
+}

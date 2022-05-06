@@ -1,5 +1,6 @@
 use crate::ata::*;
-use fs::*;
+use alloc::{borrow::ToOwned, string::ToString};
+use fs::{device::BlockDevice, *};
 use spin::Mutex;
 
 pub type Disk = fs::device::Disk<'static, MutexDrive<'static>>;
@@ -10,7 +11,7 @@ guard_access_fn!(get_drive(DRIVE: Drive));
 
 pub static FILESYSTEM: spin::Once<Volume> = spin::Once::new();
 
-pub fn fs() -> &'static Volume {
+fn fs() -> &'static Volume {
     FILESYSTEM.get().unwrap()
 }
 
@@ -47,4 +48,101 @@ pub fn init() {
     FILESYSTEM.call_once(|| FAT16Volume::new(p0));
 
     info!("Initialized Filesystem.");
+}
+
+pub fn ls(path_ori: &str) {
+    let mut path = path_ori.to_owned();
+    let mut root = fs::root_dir();
+
+    while let Some(pos) = path.find('/') {
+        let dir = path[..pos].to_owned();
+
+        let tmp = fs::find_directory_entry(
+            fs(), &root, dir.as_str()
+        );
+
+        if tmp.is_err() {
+            error!("Directory not found: {}, {:?}", path_ori, tmp);
+            return;
+        }
+
+        root = tmp.unwrap();
+
+        path = path[pos + 1..].to_string();
+
+        if path.len() == 0 {
+            break;
+        }
+    }
+
+    println!("     Size | Last Modified       | Name");
+
+    if let Err(err) = fs::iterate_dir(fs(), &root, |entry| {
+        println!("{}", entry);
+    }) {
+        println!("{:?}", err);
+    }
+}
+
+pub fn cat(path: &str) {
+    let root = fs::root_dir();
+    let file = fs::open_file(fs(), &root, path, file::Mode::ReadOnly);
+
+    if file.is_err() {
+        println!("ERROR: {:?}", file.unwrap_err());
+        return;
+    }
+
+    let file = file.unwrap();
+
+    let data = fs::read(fs(), &file);
+
+    if data.is_err() {
+        println!("ERROR: {:?}", data.unwrap_err());
+        return;
+    }
+
+    let data = data.unwrap();
+
+    let mut count = 0;
+    print!("    ");
+    for (idx, b) in data.iter().enumerate() {
+        print!("{:02x}", b);
+        count += 1;
+        if count % 8 == 0 {
+            print!(" ");
+        }
+        if count == 24 {
+            print!(" | ");
+            for i in idx - 23..=idx {
+                let d = data[i];
+                if (d as char).is_ascii_graphic() || d == 0x20 {
+                    print!("{}", d as char);
+                } else {
+                    print!(".");
+                }
+            }
+            println!();
+            count = 0;
+            print!("    ")
+        }
+    }
+    if count > 0 {
+        for _ in count..24 {
+            print!("  ");
+        }
+        for _ in 0..3 - (count / 8) {
+            print!(" ");
+        }
+        print!(" | ");
+        for i in data.len() - count..data.len() {
+            let d = data[i];
+            if (d as char).is_ascii_graphic() || d == 0x20 {
+                print!("{}", d as char);
+            } else {
+                print!(".");
+            }
+        }
+    }
+    println!();
 }

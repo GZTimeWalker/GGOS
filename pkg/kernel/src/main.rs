@@ -1,8 +1,12 @@
 #![no_std]
 #![no_main]
 
+use alloc::string::*;
+use alloc::vec::Vec;
 use ggos_kernel as ggos;
 use ggos_kernel::*;
+
+extern crate alloc;
 
 boot::entry_point!(kernal_main);
 
@@ -10,11 +14,13 @@ pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
     ggos::init(boot_info);
 
     let mut test_num = 0;
+    let mut root_dir = String::from("/");
 
     loop {
-        print!("[>] ");
-        let line = input::get_line();
-        match line.trim() {
+        print!("[{}] ", root_dir);
+        let input = input::get_line();
+        let line: Vec<&str> = input.trim().split(' ').collect();
+        match line[0] {
             "exit" => break,
             "ps" => {
                 ggos::process::print_process_list();
@@ -24,13 +30,28 @@ pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
                 test_num += 1;
             }
             "ls" => {
-                let root = fs::root_dir();
-                ggos::filesystem::fs()
-                    .iterate_dir(&root,
-                        |entry| println!("{}", entry)
-                    ).unwrap();
+                ggos::filesystem::ls(root_dir.as_str());
             }
-            _ => println!("[=] {}", line),
+            "cat" => {
+                ggos::filesystem::cat(line[1]);
+            }
+            "cd" => {
+                match line[1] {
+                    ".." => {
+                        if root_dir.as_str() == "/" {
+                            break;
+                        }
+                        root_dir.pop();
+                        let pos = root_dir.rfind('/').unwrap();
+                        root_dir = root_dir[..pos + 1].to_string();
+                    },
+                    _ => {
+                        root_dir.push_str(line[1]);
+                        root_dir.push('/');
+                    }
+                }
+            }
+            _ => println!("[=] {}", input),
         }
     }
 

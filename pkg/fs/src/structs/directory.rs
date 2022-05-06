@@ -22,6 +22,13 @@ impl Directory {
             entry: None,
         }
     }
+
+    pub fn from_entry(entry: DirEntry) -> Self {
+        Directory {
+            cluster: entry.cluster,
+            entry: Some(entry),
+        }
+    }
 }
 
 impl core::fmt::Display for Directory {

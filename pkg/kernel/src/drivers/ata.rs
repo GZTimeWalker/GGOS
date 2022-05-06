@@ -122,7 +122,7 @@ impl Bus {
             self.drive.write(0xA0 | (drive << 4))
         }
         trace!("Selected drive {}, waiting...", drive);
-        self.wait(400); // Wait at least 400 ns
+        // self.wait(400); // Wait at least 400 ns
         self.poll(Status::BSY, false)?;
         self.poll(Status::DRQ, false)?;
         Ok(())
@@ -158,7 +158,7 @@ impl Bus {
 
     fn write_command(&mut self, cmd: ATACommand) -> Result<(), ()> {
         unsafe { self.command.write(cmd as u8) }
-        self.wait(400); // Wait at least 400 ns
+        // self.wait(400); // Wait at least 400 ns
         debug!("Wrote command {:?}", cmd);
         self.status(); // Ignore results of first read
         self.clear_interrupt();
@@ -329,7 +329,7 @@ impl core::fmt::Display for Drive {
     }
 }
 
-use fs::*;
+use fs::{*, device::BlockDevice};
 
 impl<'a> Device<Block> for Drive {
     fn read(&self, _: &mut [Block], _: usize, _: usize) -> Result<usize, DeviceError> {
