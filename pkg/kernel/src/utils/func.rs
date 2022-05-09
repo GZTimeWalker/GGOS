@@ -1,11 +1,14 @@
 use crate::display::get_display_for_sure;
+use crate::interrupt::*;
 
 pub fn test() -> ! {
     let mut count = 0;
     let id;
     if let Some(id_env) = crate::process::env("id") {
         id = id_env
-    } else { id = "unknown".into()}
+    } else {
+        id = "unknown".into()
+    }
     loop {
         count += 1;
         if count == 100 {
@@ -15,6 +18,20 @@ pub fn test() -> ! {
         unsafe {
             core::arch::asm!("hlt");
         }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn syscall(syscall: usize, arg0: usize, arg1: usize, arg2: usize) {
+    unsafe {
+        core::arch::asm!(
+            "mov rbx, {}
+             int 0x80",
+            in(reg) arg0,
+            in("rax") syscall,
+            in("rcx") arg1,
+            in("rdx") arg2
+        );
     }
 }
 
@@ -33,7 +50,25 @@ pub fn clock() -> ! {
     use micromath::F32Ext;
 
     loop {
-        super::clock::spin_wait_for_ns(10000);
+        let mut start: i64 = 0;
+
+        syscall(
+            Syscall::Clock as usize,
+            (&mut start as *mut i64) as usize,
+            0,
+            0,
+        );
+
+        let mut current = start;
+
+        while current - start < 1000_0000 {
+            syscall(
+                Syscall::Clock as usize,
+                (&mut current as *mut i64) as usize,
+                0,
+                0,
+            );
+        }
 
         angle += ANGLE_INCR;
         if angle >= 360.0 {

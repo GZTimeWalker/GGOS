@@ -1,13 +1,9 @@
 use crate::ata::*;
 use alloc::{borrow::ToOwned, string::ToString};
-use fs::{device::BlockDevice, *};
-use spin::Mutex;
+use fs::*;
 
-pub type Disk = fs::device::Disk<'static, MutexDrive<'static>>;
-pub type Volume = fs::device::FAT16Volume<'static, MutexDrive<'static>>;
-
-once_mutex!(DRIVE: Drive);
-guard_access_fn!(get_drive(DRIVE: Drive));
+pub type Disk = fs::device::Disk<Drive>;
+pub type Volume = fs::device::FAT16Volume<Drive>;
 
 pub static FILESYSTEM: spin::Once<Volume> = spin::Once::new();
 
@@ -15,42 +11,16 @@ fn fs() -> &'static Volume {
     FILESYSTEM.get().unwrap()
 }
 
-pub struct MutexDrive<'a>(pub &'a Mutex<Drive>);
-
-static MUTEX_DRIVE: spin::Once<MutexDrive> = spin::Once::new();
-
-pub fn get_device() -> &'static MutexDrive<'static> {
-    MUTEX_DRIVE.get().unwrap()
-}
-
-impl<'a> Device<Block> for MutexDrive<'a> {
-    fn read(&self, buf: &mut [Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
-        self.0.try_lock().unwrap().read(buf, offset, size)
-    }
-}
-
-impl<'a> BlockDevice for MutexDrive<'a> {
-    fn block_count(&self) -> Result<usize, DeviceError> {
-        self.0.try_lock().unwrap().block_count()
-    }
-
-    fn read_block(&self, offset: usize) -> Result<Block, DeviceError> {
-        self.0.try_lock().unwrap().read_block(offset)
-    }
-}
-
 pub fn init() {
     info!("Initializing filesystem...");
 
-    init_DRIVE(Drive::open(0, 0).unwrap());
-    MUTEX_DRIVE.call_once(|| MutexDrive(DRIVE.get().unwrap()));
-    let [p0, _, _, _] = Disk::new(get_device()).volumes();
+    let [p0, _, _, _] = Disk::new(Drive::open(0, 0).unwrap()).volumes();
     FILESYSTEM.call_once(|| FAT16Volume::new(p0));
 
     info!("Initialized Filesystem.");
 }
 
-pub fn ls(root_path: &str) {
+fn resolve_path(root_path: &str) -> Option<Directory> {
     let mut path = root_path.to_owned();
     let mut root = fs::root_dir();
 
@@ -62,8 +32,8 @@ pub fn ls(root_path: &str) {
         );
 
         if tmp.is_err() {
-            error!("Directory not found: {}, {:?}", root_path, tmp);
-            return;
+            warn!("Directory not found: {}, {:?}", root_path, tmp);
+            return None;
         }
 
         root = tmp.unwrap();
@@ -74,6 +44,16 @@ pub fn ls(root_path: &str) {
             break;
         }
     }
+
+    Some(root)
+}
+
+pub fn ls(root_path: &str) {
+
+    let root = match resolve_path(root_path) {
+        Some(root) => root,
+        None => return,
+    };
 
     println!("     Size | Last Modified       | Name");
 
@@ -85,34 +65,16 @@ pub fn ls(root_path: &str) {
 }
 
 pub fn cat(root_path: &str, file: &str) {
-    let mut path = root_path.to_owned();
-    let mut root = fs::root_dir();
 
-    while let Some(pos) = path.find('/') {
-        let dir = path[..pos].to_owned();
-
-        let tmp = fs::find_directory_entry(
-            fs(), &root, dir.as_str()
-        );
-
-        if tmp.is_err() {
-            error!("Directory not found: {}, {:?}", root_path, tmp);
-            return;
-        }
-
-        root = tmp.unwrap();
-
-        path = path[pos + 1..].to_string();
-
-        if path.len() == 0 {
-            break;
-        }
-    }
+    let root = match resolve_path(root_path) {
+        Some(root) => root,
+        None => return,
+    };
 
     let file = fs::open_file(fs(), &root, file, file::Mode::ReadOnly);
 
     if file.is_err() {
-        println!("ERROR: {:?}", file.unwrap_err());
+        warn!("ERROR: {:?}", file.unwrap_err());
         return;
     }
 
@@ -121,7 +83,7 @@ pub fn cat(root_path: &str, file: &str) {
     let data = fs::read(fs(), &file);
 
     if data.is_err() {
-        println!("ERROR: {:?}", data.unwrap_err());
+        warn!("ERROR: {:?}", data.unwrap_err());
         return;
     }
 

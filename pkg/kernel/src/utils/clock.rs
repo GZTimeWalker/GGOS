@@ -1,8 +1,6 @@
 use super::uefi;
 use boot::BootInfo;
 use chrono::naive::*;
-use chrono::Duration;
-use core::hint::spin_loop;
 
 pub fn init(boot_info: &'static BootInfo) {
     if uefi::get_uefi_runtime().is_none() {
@@ -19,14 +17,4 @@ pub fn now() -> NaiveDateTime {
         time.second() as u32,
         time.nanosecond(),
     )
-}
-
-pub fn spin_wait_until(time: &NaiveDateTime) {
-    while &now() < time {
-        spin_loop();
-    }
-}
-
-pub fn spin_wait_for_ns(ns: usize) {
-    spin_wait_until(&(now() + Duration::nanoseconds(ns as i64)))
 }

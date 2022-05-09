@@ -39,8 +39,8 @@ pub fn root_dir() -> Directory {
 }
 
 /// Call a callback function for each directory entry in a directory.
-pub fn iterate_dir<'a, T, F>(
-    volume: &FAT16Volume<'a, T>,
+pub fn iterate_dir<T, F>(
+    volume: &FAT16Volume<T>,
     dir: &Directory,
     func: F,
 ) -> Result<(), VolumeError>
@@ -52,8 +52,8 @@ where
 }
 
 /// Look in a directory for a named file.
-pub fn find_directory_entry<'a, T>(
-    volume: &FAT16Volume<'a, T>,
+pub fn find_directory_entry<T>(
+    volume: &FAT16Volume<T>,
     dir: &Directory,
     name: &str,
 ) -> Result<Directory, VolumeError>
@@ -74,8 +74,8 @@ where
 }
 
 /// Open a dir in a dir
-pub fn open_dir<'a, T>(
-    volume: &FAT16Volume<'a, T>,
+pub fn open_dir<T>(
+    volume: &FAT16Volume<T>,
     parent: &Directory,
     name: &str,
 ) -> Result<Directory, VolumeError>
@@ -96,8 +96,8 @@ where
 }
 
 /// Open a file in a dir
-pub fn open_file<'a, T>(
-    volume: &FAT16Volume<'a, T>,
+pub fn open_file<T>(
+    volume: &FAT16Volume<T>,
     parent: &Directory,
     name: &str,
     mode: Mode,
@@ -132,8 +132,8 @@ where
 }
 
 /// read a file
-pub fn read<'a, T>(
-    volume: &FAT16Volume<'a, T>,
+pub fn read<T>(
+    volume: &FAT16Volume<T>,
     file: &File
 ) -> Result<Vec<u8>, VolumeError>
 where

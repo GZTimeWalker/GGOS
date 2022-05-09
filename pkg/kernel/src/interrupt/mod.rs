@@ -3,6 +3,9 @@ mod consts;
 mod handlers;
 mod keyboard;
 mod serial;
+mod syscall;
+
+pub use syscall::{Syscall, SyscallArgs};
 
 use apic::*;
 use x86_64::structures::idt::InterruptDescriptorTable;

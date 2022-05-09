@@ -1,13 +1,17 @@
-use core::fmt::Write;
-use crate::utils::font;
-use crate::utils::colors;
 use crate::drivers::display::get_display_for_sure;
+use crate::input::get_input_buf_for_sure;
+use crate::utils::colors;
+use crate::utils::font;
+use alloc::string::ToString;
+use core::fmt::Write;
 use embedded_graphics::{
     mono_font::{MonoFont, MonoTextStyle},
     pixelcolor::Rgb888,
     prelude::*,
     text::{renderer::CharacterStyle, Baseline, Text},
 };
+use fs::*;
+use pc_keyboard::DecodedKey;
 
 once_mutex!(pub CONSOLE: Console);
 
@@ -121,7 +125,7 @@ impl Console {
                 '\n' => self.next_row(),
                 '\r' => self.x_pos = 0,
                 '\x08' => backspace(),
-                _ => self.write_char(c)
+                _ => self.write_char(c),
             }
         }
     }
@@ -157,16 +161,53 @@ impl Console {
     pub fn clear(&self) {
         get_display_for_sure().clear(
             Some(self.background),
-            FONT_Y as usize * TOP_PAD_LINE_NUM as usize
+            FONT_Y as usize * TOP_PAD_LINE_NUM as usize,
         );
     }
 
     pub fn header(&self) {
         let mut style = MonoTextStyle::new(&font::JBMONO_TITLE, colors::BLUE);
         CharacterStyle::set_background_color(&mut style, Some(colors::BACKGROUND));
-        Text::with_baseline(crate::utils::get_header(), Point::new(6, 6), style, Baseline::Top)
-            .draw(&mut *get_display_for_sure())
-            .expect("Drawing Error!");
+        Text::with_baseline(
+            crate::utils::get_header(),
+            Point::new(6, 6),
+            style,
+            Baseline::Top,
+        )
+        .draw(&mut *get_display_for_sure())
+        .expect("Drawing Error!");
+    }
+}
+
+impl Device<u8> for Console {
+    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize, DeviceError> {
+        if offset + size >= buf.len() {
+            return Err(DeviceError::ReadError);
+        }
+
+        x86_64::instructions::interrupts::without_interrupts(|| {
+            let stdin = get_input_buf_for_sure();
+            let mut read_count = 0;
+            while !stdin.is_empty() && read_count < size {
+                if let Some(DecodedKey::Unicode(c)) = stdin.pop() {
+                    let s = c.to_string();
+                    let len = s.len();
+                    buf[offset + read_count..offset + read_count + len]
+                        .copy_from_slice(s.as_bytes());
+                    read_count += len;
+                }
+            }
+            Ok(read_count)
+        })
+    }
+
+    fn write(&mut self, buf: &[u8], offset: usize, size: usize) -> Result<usize, DeviceError> {
+        if let Ok(s) = core::str::from_utf8(&buf[offset..offset + size]) {
+            self.write(s);
+            Ok(size)
+        } else {
+            Err(DeviceError::WriteError)
+        }
     }
 }
 

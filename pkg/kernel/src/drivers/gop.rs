@@ -51,10 +51,10 @@ impl<'a> GOPDisplay<'a> {
         }
     }
 
-    pub fn draw_pixel(
+    pub fn draw_pixel_u32(
         &mut self,
         point: Point,
-        color: <GOPDisplay<'a> as DrawTarget>::Color,
+        color: u32
     ) -> Result<(), DisplayError> {
         let size = self.resolution();
         let (x, y) = (point.x as usize, point.y as usize);
@@ -63,12 +63,18 @@ impl<'a> GOPDisplay<'a> {
             return Err(DisplayError::OutOfBounds(x, y));
         }
 
-        let color = color.into_storage();
-
         let index = y * size.0 + x;
         self.buffer[index] = color;
 
         Ok(())
+    }
+
+    pub fn draw_pixel(
+        &mut self,
+        point: Point,
+        color: <GOPDisplay<'a> as DrawTarget>::Color,
+    ) -> Result<(), DisplayError> {
+        self.draw_pixel_u32(point, color.into_storage())
     }
 
     pub fn resolution(&self) -> (usize, usize) {

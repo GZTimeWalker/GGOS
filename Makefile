@@ -3,7 +3,7 @@ ESP := esp
 BUILD_ARGS :=
 QEMU_ARGS := -serial stdio
 MODE ?= release
-RUN_MODE ?= 
+RUN_MODE ?=
 
 ifeq (${MODE}, release)
 	BUILD_ARGS += --release

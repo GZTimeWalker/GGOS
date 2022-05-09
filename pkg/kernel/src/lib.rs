@@ -31,6 +31,8 @@ use memory::allocator;
 pub mod process;
 pub mod interrupt;
 
+pub use interrupt::Syscall;
+
 use boot::BootInfo;
 pub use alloc::format;
 
@@ -53,11 +55,11 @@ pub fn init(boot_info: &'static BootInfo) {
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");
 
-    process::spawn_kernel_thread(
-        utils::func::clock,
-        alloc::string::String::from("clock"),
-        None
-    );
+    // process::spawn_kernel_thread(
+    //     utils::func::clock,
+    //     alloc::string::String::from("clock"),
+    //     None
+    // );
 
     info!("GGOS initialized.");
 

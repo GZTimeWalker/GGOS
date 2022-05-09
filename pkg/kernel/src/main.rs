@@ -4,7 +4,7 @@
 use alloc::string::*;
 use alloc::vec::Vec;
 use ggos_kernel as ggos;
-use ggos_kernel::*;
+use ggos::*;
 
 extern crate alloc;
 

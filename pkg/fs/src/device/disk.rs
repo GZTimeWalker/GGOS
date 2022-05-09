@@ -2,89 +2,72 @@
 //!
 //! reference: https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/fat.rs#L1350
 
-use crate::Block;
 use super::*;
+use crate::Block;
 use crate::{dir_entry::*, partition::PartitionMetaData, structs::*};
 
-/// /// Identifies a Disk device
-pub struct Disk<'a, T>
+/// Identifies a Disk device
+///
+/// do not hold a reference to the disk device directly.
+pub struct Disk<T>
 where
-    T: BlockDevice,
+    T: BlockDevice + Clone,
 {
-    inner: &'a T,
+    inner: T
 }
 
-impl<'a, T> Disk<'a, T>
+impl<T> Disk<T>
 where
-    T: BlockDevice,
+    T: BlockDevice + Clone,
 {
-    pub fn new(inner: &'a T) -> Self {
+    pub fn new(inner: T) -> Self {
         Self { inner }
     }
 
-    pub fn volumes(&self) -> [Volume<'a, T>; 4] {
+    pub fn volumes(&mut self) -> [Volume<T>; 4] {
         let mbr = self.inner.read_block(0).unwrap();
         let volumes = MBRPartitions::parse(mbr.inner());
         [
-            Volume::new(self.inner, volumes.partitions[0]),
-            Volume::new(self.inner, volumes.partitions[1]),
-            Volume::new(self.inner, volumes.partitions[2]),
-            Volume::new(self.inner, volumes.partitions[3]),
+            Volume::new(self.inner.clone(), volumes.partitions[0]),
+            Volume::new(self.inner.clone(), volumes.partitions[1]),
+            Volume::new(self.inner.clone(), volumes.partitions[2]),
+            Volume::new(self.inner.clone(), volumes.partitions[3]),
         ]
     }
 }
 
-impl<'a, T> Device<Block> for Disk<'a, T>
-where
-    T: BlockDevice,
-{
-    fn read(&self, buf: &mut [Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
-        self.inner.read(buf, offset, size)
-    }
-}
-
-impl<'a, T> BlockDevice for Disk<'a, T>
-where
-    T: BlockDevice,
-{
-    fn block_count(&self) -> Result<usize, DeviceError> {
-        self.inner.block_count()
-    }
-
-    fn read_block(&self, offset: usize) -> Result<Block, DeviceError> {
-        self.inner.read_block(offset)
-    }
-}
-
 /// Identifies a Volume on the disk.
-pub struct Volume<'a, T>
+pub struct Volume<T>
 where
     T: BlockDevice,
 {
-    inner: &'a T,
+    inner: T,
     pub meta: PartitionMetaData,
 }
 
-impl<'a, T> Volume<'a, T>
+impl<T> Volume<T>
 where
     T: BlockDevice,
 {
-    pub fn new(inner: &'a T, meta: PartitionMetaData) -> Self {
+    pub fn new(inner: T, meta: PartitionMetaData) -> Self {
         Self { inner, meta }
     }
 }
 
-impl<'a, T> Device<Block> for Volume<'a, T>
+impl<T> Device<Block> for Volume<T>
 where
     T: BlockDevice,
 {
     fn read(&self, buf: &mut [Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
-        self.inner
-            .read(buf, offset + self.meta.begin_lba() as usize, size)
+        self.inner.read(buf, offset + self.meta.begin_lba() as usize, size)
+    }
+
+    fn write(&mut self, buf: &[Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
+        self.inner.write(buf, offset + self.meta.begin_lba() as usize, size)
     }
 }
 
-impl<'a, T> BlockDevice for Volume<'a, T>
+impl<T> BlockDevice for Volume<T>
 where
     T: BlockDevice,
 {
@@ -104,7 +87,7 @@ where
             .read_block(offset + self.meta.begin_lba() as usize);
 
         if let Ok(block_value) = block {
-            debug!("{:?}", block_value);
+            trace!("{:?}", block_value);
             return Ok(block_value);
         }
 
@@ -128,27 +111,31 @@ pub enum VolumeError {
 }
 
 /// Identifies a FAT16 Volume on the disk.
-pub struct FAT16Volume<'a, T>
+pub struct FAT16Volume<T>
 where
     T: BlockDevice,
 {
-    volume: Volume<'a, T>,
+    volume: Volume<T>,
     pub bpb: FAT16Bpb,
     pub fat_start: usize,
     pub first_data_sector: usize,
     pub first_root_dir_sector: usize,
 }
 
-impl<'a, T> Device<Block> for FAT16Volume<'a, T>
+impl<T> Device<Block> for FAT16Volume<T>
 where
     T: BlockDevice,
 {
     fn read(&self, buf: &mut [Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
         self.volume.read(buf, offset, size)
     }
+
+    fn write(&mut self, buf: &[Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
+        self.volume.write(buf, offset, size)
+    }
 }
 
-impl<'a, T> BlockDevice for FAT16Volume<'a, T>
+impl<T> BlockDevice for FAT16Volume<T>
 where
     T: BlockDevice,
 {
@@ -161,11 +148,11 @@ where
     }
 }
 
-impl<'a, T> FAT16Volume<'a, T>
+impl<T> FAT16Volume<T>
 where
     T: BlockDevice,
 {
-    pub fn new(volume: Volume<'a, T>) -> Self {
+    pub fn new(volume: Volume<T>) -> Self {
         let block = volume.read_block(0).unwrap();
         let bpb = FAT16Bpb::new(block.inner()).unwrap();
 

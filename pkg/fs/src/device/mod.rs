@@ -20,9 +20,7 @@ pub enum DeviceError {
 
 pub trait Device<T> {
     fn read(&self, buf: &mut [T], offset: usize, size: usize) -> Result<usize, DeviceError>;
-
-    // TODO: implement write
-    //fn write(&mut self, buf: &[T], offset: usize, size: usize) -> Result<usize, DeviceError>;
+    fn write(&mut self, buf: &[T], offset: usize, size: usize) -> Result<usize, DeviceError>;
 }
 
 pub trait BlockDevice: Device<Block> {
