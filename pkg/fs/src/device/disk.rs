@@ -106,6 +106,7 @@ pub enum VolumeError {
     NotAFile,
     ReadOnly,
     Unsupported,
+    BufferTooSmall,
     DeviceError(DeviceError),
     FileNameError(FilenameError),
 }

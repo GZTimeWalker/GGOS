@@ -7,8 +7,17 @@ pub type Volume = fs::device::FAT16Volume<Drive>;
 
 pub static FILESYSTEM: spin::Once<Volume> = spin::Once::new();
 
-fn fs() -> &'static Volume {
+pub fn get_volume() -> &'static Volume {
     FILESYSTEM.get().unwrap()
+}
+
+#[derive(Debug, Clone)]
+pub struct StdIO;
+
+impl StdIO {
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 pub fn init() {
@@ -28,7 +37,7 @@ fn resolve_path(root_path: &str) -> Option<Directory> {
         let dir = path[..pos].to_owned();
 
         let tmp = fs::find_directory_entry(
-            fs(), &root, dir.as_str()
+            get_volume(), &root, dir.as_str()
         );
 
         if tmp.is_err() {
@@ -57,7 +66,7 @@ pub fn ls(root_path: &str) {
 
     println!("     Size | Last Modified       | Name");
 
-    if let Err(err) = fs::iterate_dir(fs(), &root, |entry| {
+    if let Err(err) = fs::iterate_dir(get_volume(), &root, |entry| {
         println!("{}", entry);
     }) {
         println!("{:?}", err);
@@ -71,7 +80,7 @@ pub fn cat(root_path: &str, file: &str) {
         None => return,
     };
 
-    let file = fs::open_file(fs(), &root, file, file::Mode::ReadOnly);
+    let file = fs::open_file(get_volume(), &root, file, file::Mode::ReadOnly);
 
     if file.is_err() {
         warn!("ERROR: {:?}", file.unwrap_err());
@@ -80,7 +89,7 @@ pub fn cat(root_path: &str, file: &str) {
 
     let file = file.unwrap();
 
-    let data = fs::read(fs(), &file);
+    let data = fs::read(get_volume(), &file);
 
     if data.is_err() {
         warn!("ERROR: {:?}", data.unwrap_err());

@@ -1,6 +1,7 @@
 use super::ProgramStatus;
+use crate::filesystem::StdIO;
 use crate::memory::BootInfoFrameAllocator;
-use crate::utils::{Registers, RegistersValue};
+use crate::utils::{Registers, RegistersValue, Resource};
 use crate::memory::physical_to_virtual;
 use core::intrinsics::copy_nonoverlapping;
 use x86_64::structures::paging::{OffsetPageTable, PhysFrame, PageTable};
@@ -30,12 +31,18 @@ pub struct Process {
 #[derive(Clone, Debug, Default)]
 pub struct ProcessData {
     env: BTreeMap<String, String>,
+    file_handles: BTreeMap<u8, Resource>
 }
 
 impl ProcessData {
     pub fn new() -> Self {
         let env = BTreeMap::new();
-        Self { env }
+        let mut file_handles = BTreeMap::new();
+        // stdin, stdout, stderr
+        file_handles.insert(0, Resource::Console(StdIO::new()));
+        file_handles.insert(1, Resource::Console(StdIO::new()));
+        file_handles.insert(2, Resource::Console(StdIO::new()));
+        Self { env, file_handles }
     }
 
     pub fn set_env(mut self, key: &str, val: &str) -> Self {

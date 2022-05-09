@@ -156,3 +156,32 @@ where
     }
     Ok(data)
 }
+
+/// read a file
+pub fn read_to_buf<T>(
+    volume: &FAT16Volume<T>,
+    file: &File,
+    buf: &mut [u8]
+) -> Result<usize, VolumeError>
+where
+    T: BlockDevice,
+{
+    if buf.len() < file.length() as usize {
+        return Err(VolumeError::BufferTooSmall);
+    }
+    let mut length = file.length() as usize;
+    for i in 0..file.length() as usize / Block::SIZE + 1 {
+        let sector = volume.cluster_to_sector(&file.start_cluster());
+        let block = volume.read_block(sector as usize + i).unwrap();
+        if length > Block::SIZE {
+            buf[i * Block::SIZE..(i + 1) * Block::SIZE]
+                .copy_from_slice(&block.inner()[..]);
+            length -= Block::SIZE;
+        } else {
+            buf[i * Block::SIZE..i * Block::SIZE + length as usize]
+                .copy_from_slice(&block.inner()[..length as usize]);
+            break;
+        }
+    }
+    Ok(file.length() as usize)
+}

@@ -11,7 +11,9 @@ pub mod font;
 pub mod colors;
 pub mod logger;
 pub mod clock;
+pub mod resource;
 
+pub use resource::Resource;
 pub use macros::*;
 pub use regs::*;
 
