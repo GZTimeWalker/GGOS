@@ -4,6 +4,11 @@ BUILD_ARGS :=
 QEMU_ARGS := -serial stdio
 MODE ?= release
 RUN_MODE ?=
+CUR_PATH := $(shell pwd)
+APP_PATH := $(CUR_PATH)/pkg/app
+APPS := $(shell find $(APP_PATH) -maxdepth 1 -type d)
+APPS := $(filter-out $(APP_PATH),$(patsubst $(APP_PATH)/%, %, $(APPS)))
+APPS := $(filter-out config,$(APPS))
 
 ifeq (${MODE}, release)
 	BUILD_ARGS += --release
@@ -15,7 +20,8 @@ endif
 
 .PHONY: build run debug clean launch \
 	target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi \
-	target/x86_64-unknown-none/$(MODE)/ggos_kernel
+	target/x86_64-unknown-none/$(MODE)/ggos_kernel \
+	target/x86_64-unknown-ggos/$(MODE)
 
 run: build launch
 
@@ -37,9 +43,12 @@ debug: build
 clean:
 	@cargo clean
 
+list:
+	@for dir in $(APPS); do echo $$dir || exit; done
+
 build: $(ESP)
 
-$(ESP): $(ESP)/EFI/BOOT/BOOTX64.EFI $(ESP)/KERNEL.ELF $(ESP)/EFI/BOOT/boot.conf
+$(ESP): $(ESP)/EFI/BOOT/BOOTX64.EFI $(ESP)/KERNEL.ELF $(ESP)/EFI/BOOT/boot.conf $(ESP)/APP
 
 $(ESP)/EFI/BOOT/BOOTX64.EFI: target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi
 	@mkdir -p $(@D)
@@ -50,8 +59,18 @@ $(ESP)/EFI/BOOT/boot.conf: pkg/kernel/config/boot.conf
 $(ESP)/KERNEL.ELF: target/x86_64-unknown-none/$(MODE)/ggos_kernel
 	@mkdir -p $(@D)
 	cp $< $@
+$(ESP)/APP: target/x86_64-unknown-ggos/$(MODE)
+	@for app in $(APPS); do \
+		mkdir -p $(@D)/APP; \
+		cp $</ggos_$$app $(@D)/APP/$$app; \
+	done
 
 target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi: pkg/boot
 	cd pkg/boot && cargo build $(BUILD_ARGS)
 target/x86_64-unknown-none/$(MODE)/ggos_kernel: pkg/kernel
 	cd pkg/kernel && cargo build $(BUILD_ARGS)
+target/x86_64-unknown-ggos/$(MODE): pkg/app/$(APPS)
+	@for app in $(APPS); do \
+		echo "Building $$app"; \
+		cd $(APP_PATH)/$$app && cargo build $(BUILD_ARGS); \
+	done

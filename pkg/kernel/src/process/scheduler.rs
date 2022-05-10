@@ -27,6 +27,6 @@ pub fn spawn_kernel_thread(entry: fn() -> !, name: String, data: Option<ProcessD
             stack.start_address().as_u64()) + FRAME_SIZE);
 
         let mut manager = get_process_manager_for_sure();
-        manager.spawn(entry, stack_top, name, 0, data);
+        manager.spawn_kernel_thread(entry, stack_top, name, 0, data);
     });
 }

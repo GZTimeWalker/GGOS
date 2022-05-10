@@ -13,6 +13,12 @@ boot::entry_point!(kernal_main);
 pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
     ggos::init(boot_info);
 
+    let sh_file = ggos::filesystem::try_get_file("/APP/SH").unwrap();
+
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        ggos::process::spawn(&sh_file).unwrap();
+    });
+
     let mut test_num = 0;
     let mut root_dir = String::from("/");
 

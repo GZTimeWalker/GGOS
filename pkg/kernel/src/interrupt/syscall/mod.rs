@@ -1,4 +1,5 @@
 use crate::utils::*;
+use core::alloc::Layout;
 use x86_64::structures::idt::InterruptStackFrame;
 
 mod service;
@@ -13,10 +14,11 @@ pub enum Syscall {
     Open = 5,
     Close = 6,
     Stat = 7,
-    // rax = 8, ret: *rbx, u64 timestamp
     Clock = 8,
     Draw = 9,
-    None = 0xdeadbeef
+    Allocate = 10,
+    Deallocate = 11,
+    None = 0xdeadbeef,
 }
 
 #[derive(Clone, Debug)]
@@ -28,22 +30,19 @@ pub struct SyscallArgs {
 }
 
 #[allow(unused_variables)]
-pub unsafe fn dispatcher(args: SyscallArgs, regs: &mut Registers, st: &mut InterruptStackFrame) {
+pub unsafe fn dispatcher(args: SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
     match args.syscall {
         Syscall::SpwanProcess => {}
-        Syscall::ExitProcess => {}
-        Syscall::Read => {
-            match args.arg0 {
-                0 => {
-
-                }
-                fd => warn!("SYSCALL: cannot read from fd: {}", fd),
-            }
-        }
+        Syscall::ExitProcess => exit_process(regs, sf), // todo: handle exit code
+        Syscall::Read => match args.arg0 {
+            0 => {}
+            fd => warn!("SYSCALL: cannot read from fd: {}", fd),
+        },
         Syscall::Write => {
-            let s = core::str::from_utf8_unchecked(
-                core::slice::from_raw_parts(args.arg1 as *const u8, args.arg2)
-            );
+            let s = core::str::from_utf8_unchecked(core::slice::from_raw_parts(
+                args.arg1 as *const u8,
+                args.arg2,
+            ));
             match args.arg0 {
                 1 => print!("{}", s),
                 fd => warn!("SYSCALL: cannot write to fd: {}", fd),
@@ -52,8 +51,15 @@ pub unsafe fn dispatcher(args: SyscallArgs, regs: &mut Registers, st: &mut Inter
         Syscall::Open => {}
         Syscall::Close => {}
         Syscall::Stat => {}
-        Syscall::Clock => *(args.arg0 as *mut i64) = sys_clock(),
+        Syscall::Clock => regs.set_rax(sys_clock() as usize),
         Syscall::Draw => sys_draw(args.arg0, args.arg1, args.arg2),
+        Syscall::Allocate => {
+            regs.set_rax(sys_allocate((args.arg0 as *const Layout).as_ref().unwrap()) as usize)
+        }
+        Syscall::Deallocate => sys_deallocate(
+            args.arg0 as *mut u8,
+            (args.arg1 as *const Layout).as_ref().unwrap(),
+        ),
         Syscall::None => {}
     }
 }
@@ -69,10 +75,13 @@ impl From<usize> for Syscall {
             6 => Self::Close,
             7 => Self::Stat,
             8 => Self::Clock,
+            9 => Self::Draw,
+            10 => Self::Allocate,
+            11 => Self::Deallocate,
             _ => {
                 warn!("Unknown SYSCALL: {}", num);
                 Self::None
-            },
+            }
         }
     }
 }
@@ -92,7 +101,7 @@ impl core::fmt::Display for SyscallArgs {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(
             f,
-            "SYSCALL: {:?} ({:016x}, {:016x}, {:016x})",
+            "SYSCALL: {:?} (0x{:016x}, 0x{:016x}, 0x{:016x})",
             self.syscall, self.arg0, self.arg1, self.arg2
         )
     }

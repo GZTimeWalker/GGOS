@@ -146,7 +146,7 @@ impl Bus {
 
     fn write_command(&mut self, cmd: ATACommand) -> Result<(), ()> {
         unsafe { self.command.write(cmd as u8) }
-        debug!("Wrote command {:?}", cmd);
+        trace!("Wrote command {:?}", cmd);
         self.status(); // Ignore results of first read
         self.clear_interrupt();
         if self.status() == 0 {

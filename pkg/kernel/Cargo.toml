@@ -1,6 +1,6 @@
 [package]
 name = "ggos_kernel"
-version = "0.6.4"
+version = "0.7.0"
 edition = "2021"
 authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,6 +8,7 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 [dependencies]
 boot = { path = "../boot", package = "ggos_boot",  default-features = false }
 fs = { path = "../fs", package = "ggfs" }
+elf = { package = "ggos_elf", path = "../elf" }
 embedded-graphics = { version = "0.7.1", features = ['fixed_point'] }
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 paste = "1.0.7"
@@ -24,3 +25,4 @@ linked_list_allocator = "0.9.1"
 pc-keyboard = "0.5.1"
 crossbeam-queue = { version = "0.3.5", default-features = false, features = ["alloc"] }
 volatile = "0.4.4"
+xmas-elf = "0.8"

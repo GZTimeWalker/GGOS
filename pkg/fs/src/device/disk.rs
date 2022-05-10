@@ -76,7 +76,7 @@ where
     }
 
     fn read_block(&self, offset: usize) -> Result<Block, DeviceError> {
-        debug!(
+        trace!(
             "read_block offset: {}, volume lba start: {}",
             offset,
             self.meta.begin_lba()

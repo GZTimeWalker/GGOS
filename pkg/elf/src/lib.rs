@@ -40,10 +40,10 @@ pub fn map_elf(
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) -> Result<(), MapToError<Size4KiB>> {
-    debug!("Mapping ELF file...");
-    let kernel_start = PhysAddr::new(elf.input.as_ptr() as u64);
+    debug!("Mapping ELF file...{:?}", elf.input.as_ptr());
+    let start = PhysAddr::new(elf.input.as_ptr() as u64);
     for segment in elf.program_iter() {
-        map_segment(&segment, kernel_start, page_table, frame_allocator)?;
+        map_segment(&segment, start, page_table, frame_allocator)?;
     }
     Ok(())
 }
@@ -88,7 +88,7 @@ pub fn map_stack(
 
 fn map_segment(
     segment: &program::ProgramHeader,
-    kernel_start: PhysAddr,
+    start: PhysAddr,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) -> Result<(), MapToError<Size4KiB>> {
@@ -100,7 +100,7 @@ fn map_segment(
     let mem_size = segment.mem_size();
     let file_size = segment.file_size();
     let file_offset = segment.offset() & !0xfff;
-    let phys_start_addr = kernel_start + file_offset;
+    let phys_start_addr = start + file_offset;
     let virt_start_addr = VirtAddr::new(segment.virtual_addr());
 
     let start_page: Page = Page::containing_address(virt_start_addr);

@@ -130,16 +130,6 @@ dependencies = [
 [[package]]
 name = "gglib"
 version = "0.1.0"
-dependencies = [
- "ggos_kernel",
-]
-
-[[package]]
-name = "ggos_app_sh"
-version = "0.1.0"
-dependencies = [
- "gglib",
-]
 
 [[package]]
 name = "ggos_boot"
@@ -174,6 +164,7 @@ dependencies = [
  "embedded-graphics",
  "ggfs",
  "ggos_boot",
+ "ggos_elf",
  "lazy_static",
  "libm",
  "linked_list_allocator",
@@ -185,6 +176,14 @@ dependencies = [
  "volatile",
  "x86",
  "x86_64",
+ "xmas-elf",
+]
+
+[[package]]
+name = "ggos_sh"
+version = "0.1.0"
+dependencies = [
+ "gglib",
 ]
 
 [[package]]

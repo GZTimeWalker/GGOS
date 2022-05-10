@@ -23,7 +23,7 @@ pub struct RegistersValue {
 }
 
 #[repr(C)]
-pub struct  Registers {
+pub struct Registers {
     value: RegistersValue
 }
 
@@ -31,6 +31,11 @@ impl Registers {
     #[inline]
     pub unsafe fn as_mut(&mut self) -> Volatile<&mut RegistersValue> {
         Volatile::new(&mut self.value)
+    }
+
+    #[inline]
+    pub unsafe fn set_rax(&mut self, value: usize) {
+        self.value.rax = value;
     }
 }
 

@@ -12,12 +12,10 @@ pub fn get_volume() -> &'static Volume {
 }
 
 #[derive(Debug, Clone)]
-pub struct StdIO;
-
-impl StdIO {
-    pub fn new() -> Self {
-        Self {}
-    }
+pub enum StdIO {
+    Stdin,
+    Stdout,
+    Stderr,
 }
 
 pub fn init() {
@@ -29,7 +27,7 @@ pub fn init() {
     info!("Initialized Filesystem.");
 }
 
-fn resolve_path(root_path: &str) -> Option<Directory> {
+pub fn resolve_path(root_path: &str) -> Option<Directory> {
     let mut path = root_path.to_owned();
     let mut root = fs::root_dir();
 
@@ -48,6 +46,7 @@ fn resolve_path(root_path: &str) -> Option<Directory> {
         root = tmp.unwrap();
 
         path = path[pos + 1..].to_string();
+        trace!("Resolving path: {}", path);
 
         if path.len() == 0 {
             break;
@@ -55,6 +54,28 @@ fn resolve_path(root_path: &str) -> Option<Directory> {
     }
 
     Some(root)
+}
+
+pub fn try_get_file(path: &str) -> Result<File, VolumeError> {
+    let path = path.to_owned();
+    let pos = path.rfind('/');
+
+    if pos.is_none() {
+        return Err(VolumeError::FileNotFound);
+    }
+    let pos = pos.unwrap();
+
+    trace!("root: {}, filename: {}", &path[..pos + 1], &path[pos + 1..]);
+
+    let root = resolve_path(&path[..pos + 1]);
+    let filename = &path[pos + 1..];
+
+    if root.is_none() {
+        return Err(VolumeError::FileNotFound);
+    }
+    let root = root.unwrap();
+
+    fs::open_file(get_volume(), &root, filename, file::Mode::ReadOnly)
 }
 
 pub fn ls(root_path: &str) {

@@ -1,19 +1,42 @@
-use kernel::Syscall;
+use crate::Syscall;
 
-fn syscall(id: Syscall, arg0: u64, arg1: u64, arg2: u64) {
-    unsafe {
-        core::arch::asm!("int 0x80", in("rax") id as u64, in("rbx") arg0, in("rcx") arg1, in("rdx") arg2);
+pub fn sys_draw(x: i32, y: i32, color: u32) -> isize {
+    syscall!(Syscall::Draw, x as usize, y as usize, color as usize)
+}
+
+pub fn sys_write(fd: u64, buf: &[u8]) -> Option<usize> {
+    let ret = syscall!(Syscall::Write, fd, buf.as_ptr() as u64, buf.len() as u64);
+    if ret.is_negative() {
+        None
+    } else {
+        Some(ret as usize)
     }
 }
 
-pub fn sys_draw(x: i32, y: i32, color: u32) {
-    syscall(Syscall::Draw, x as u64, y as u64, color as u64);
+pub fn sys_read(fd: u64, buf: &mut [u8]) -> Option<usize> {
+    let ret = syscall!(Syscall::Read, fd, buf.as_ptr() as u64, buf.len() as u64);
+    if ret.is_negative() {
+        None
+    } else {
+        Some(ret as usize)
+    }
 }
 
-pub fn sys_write(s: &str, fd: usize) {
-    syscall(Syscall::Write, s.as_ptr() as u64, s.len() as u64, fd)
+pub fn sys_allocate(layout: &core::alloc::Layout) -> *mut u8 {
+    syscall!(
+        Syscall::Allocate,
+        layout as *const _
+    ) as *mut u8
 }
 
-pub fn sys_read(buf: &mut [u8], count: usize, fd: usize) -> usize {
-    syscall(Syscall::Read, buf.as_ptr() as u64, count as u64, fd)
+pub fn sys_deallocate(ptr: *mut u8, layout: &core::alloc::Layout) -> isize {
+    syscall!(
+        Syscall::Deallocate,
+        ptr,
+        layout as *const _
+    )
+}
+
+pub fn sys_exit(code: usize) {
+    syscall!(Syscall::ExitProcess, code);
 }

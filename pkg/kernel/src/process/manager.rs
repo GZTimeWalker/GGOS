@@ -4,6 +4,7 @@ use alloc::format;
 use alloc::vec::Vec;
 use x86_64::structures::idt::InterruptStackFrame;
 use x86_64::VirtAddr;
+use xmas_elf::ElfFile;
 
 once_mutex!(pub PROCESS_MANAGER: ProcessManager);
 guard_access_fn! {
@@ -57,7 +58,7 @@ impl ProcessManager {
             .processes
             .iter()
             .position(|x| x.pid() == self.cur_pid)
-            .unwrap()
+            .unwrap_or(0)
             + 1;
         if next_pos >= self.processes.len() {
             0
@@ -83,18 +84,46 @@ impl ProcessManager {
 
     pub fn spawn(
         &mut self,
-        entry: VirtAddr,
-        stack_top: VirtAddr,
+        elf: &ElfFile,
         name: String,
         parent: u16,
-        proc_data: Option<ProcessData>
+        proc_data: Option<ProcessData>,
     ) -> u16 {
         let mut p = Process::new(
             &mut *crate::memory::get_frame_alloc_for_sure(),
             self.next_pid,
             name,
             parent,
-            proc_data
+            proc_data,
+        );
+        p.pause();
+        p.init_stack_frame(
+            VirtAddr::new_truncate(elf.header.pt2.entry_point()),
+            VirtAddr::new_truncate(STACK_TOP),
+        );
+        p.init_elf(elf);
+        info!("Spawn process: {}#{}", p.name(), p.pid());
+        // info!("Spawn process:\n\n{:?}\n", p);
+        let pid = p.pid();
+        self.processes.push(p);
+        self.next_pid += 1; // TODO: recycle PID
+        pid
+    }
+
+    pub fn spawn_kernel_thread(
+        &mut self,
+        entry: VirtAddr,
+        stack_top: VirtAddr,
+        name: String,
+        parent: u16,
+        proc_data: Option<ProcessData>,
+    ) -> u16 {
+        let mut p = Process::new(
+            &mut *crate::memory::get_frame_alloc_for_sure(),
+            self.next_pid,
+            name,
+            parent,
+            proc_data,
         );
         p.pause();
         p.init_stack_frame(entry, stack_top);
