@@ -3,8 +3,8 @@ use crate::alloc::string::ToString;
 use core::arch::asm;
 
 #[doc(hidden)]
-pub fn syscall0(n: Syscall) -> isize {
-    let ret: isize;
+pub fn syscall0(n: Syscall) -> usize {
+    let ret: usize;
     unsafe {
         asm!(
             "int 0x80", in("rax") n as usize,
@@ -15,8 +15,8 @@ pub fn syscall0(n: Syscall) -> isize {
 }
 
 #[doc(hidden)]
-pub fn syscall1(n: Syscall, arg0: usize) -> isize {
-    let ret: isize;
+pub fn syscall1(n: Syscall, arg0: usize) -> usize {
+    let ret: usize;
     unsafe {
         asm!(
             "int 0x80", in("rax") n as usize,
@@ -28,8 +28,8 @@ pub fn syscall1(n: Syscall, arg0: usize) -> isize {
 }
 
 #[doc(hidden)]
-pub fn syscall2(n: Syscall, arg0: usize, arg1: usize) -> isize {
-    let ret: isize;
+pub fn syscall2(n: Syscall, arg0: usize, arg1: usize) -> usize {
+    let ret: usize;
     unsafe {
         asm!(
             "int 0x80", in("rax") n as usize,
@@ -41,8 +41,8 @@ pub fn syscall2(n: Syscall, arg0: usize, arg1: usize) -> isize {
 }
 
 #[doc(hidden)]
-pub fn syscall3(n: Syscall, arg0: usize, arg1: usize, arg2: usize) -> isize {
-    let ret: isize;
+pub fn syscall3(n: Syscall, arg0: usize, arg1: usize, arg2: usize) -> usize {
+    let ret: usize;
     unsafe {
         asm!(
             "int 0x80", in("rax") n as usize,

@@ -20,17 +20,18 @@ use alloc::format;
 
 #[derive(Clone, Debug)]
 pub enum Syscall {
-    SpwanProcess = 1,
+    SpawnProcess = 1,
     ExitProcess = 2,
     Read = 3,
     Write = 4,
     Open = 5,
     Close = 6,
     Stat = 7,
-    Clock = 8,
-    Draw = 9,
+    Time = 8,
+    DirectoryList = 9,
     Allocate = 10,
     Deallocate = 11,
+    Draw = 12
 }
 
 #[macro_export]

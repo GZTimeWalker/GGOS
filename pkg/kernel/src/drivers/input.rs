@@ -1,8 +1,8 @@
+use crate::drivers::{console, serial};
+use alloc::string::String;
 use crossbeam_queue::ArrayQueue;
 use pc_keyboard::DecodedKey;
-use crate::drivers::{serial, console};
 use x86_64::instructions::interrupts;
-use alloc::string::String;
 
 once_mutex!(pub INPUT_BUF: ArrayQueue<DecodedKey>);
 
@@ -26,9 +26,12 @@ pub fn try_get_key() -> Option<DecodedKey> {
 
 pub fn get_key() -> DecodedKey {
     loop {
-        if let Some(k) = try_get_key() {
-            return k;
-        }
+        crate::utils::halt();
+        interrupts::without_interrupts(|| {
+            if let Some(k) = try_get_key() {
+                return k;
+            }
+        })
     }
 }
 

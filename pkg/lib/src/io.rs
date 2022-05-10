@@ -15,8 +15,7 @@ impl Stdin {
         let mut buf = vec![0; 4];
         if let Some(bytes) = sys_read(0, &mut buf) {
             if bytes > 0 {
-                buf.resize(bytes, 0);
-                return Some(String::from_utf8_lossy(&buf).to_string().remove(0));
+                return Some(String::from_utf8_lossy(&buf[..bytes]).to_string().remove(0));
             }
         }
         None
@@ -25,8 +24,7 @@ impl Stdin {
     pub fn read_line(&self) -> String {
         let mut buf = vec![0; 256];
         if let Some(bytes) = sys_read(0, &mut buf) {
-            buf.resize(bytes, 0);
-            String::from_utf8_lossy(&buf).to_string()
+            String::from_utf8_lossy(&buf[..bytes]).to_string()
         } else {
             String::new()
         }

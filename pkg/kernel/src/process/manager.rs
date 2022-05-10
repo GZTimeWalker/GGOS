@@ -50,7 +50,7 @@ impl ProcessManager {
             current.tick();
             current.save(regs, sf);
         }
-        // trace!("Paused process #{}", self.cur_pid);
+        debug!("Paused process #{}", self.cur_pid);
     }
 
     fn get_next_pos(&self) -> usize {
@@ -67,11 +67,15 @@ impl ProcessManager {
         }
     }
 
+    pub fn still_alive(&self, pid: u16) -> bool {
+        self.processes.iter().any(|x| x.pid() == pid)
+    }
+
     pub fn switch_next(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
         let pos = self.get_next_pos();
         let p = &mut self.processes[pos];
 
-        // trace!("Next process {} #{}", p.name(), p.pid());
+        debug!("Next process {} #{}", p.name(), p.pid());
         if p.pid() == self.cur_pid {
             // the next process to be resumed is the same as the current one
             p.resume();

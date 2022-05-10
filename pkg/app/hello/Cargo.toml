@@ -1,5 +1,5 @@
 [package]
-name = "gglib"
+name = "ggos_hello"
 version = "0.1.0"
 edition = "2021"
 authors = ["GZTime <Time.GZ@outlook.com>"]
@@ -7,4 +7,4 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = { version = "0.4.19", default-features = false }
+lib = { path="../../lib", package="gglib"}

@@ -7,3 +7,6 @@ build-std = ["core", "compiler_builtins", "alloc"]
 
 [env]
 LOG_LEVEL = "debug"
+
+[profile.release]
+debug = true

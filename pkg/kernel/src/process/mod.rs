@@ -9,7 +9,7 @@ use process::*;
 pub use process::ProcessData;
 pub use scheduler::*;
 
-use crate::{filesystem::get_volume, Registers};
+use crate::{filesystem::get_volume, Registers, Resource};
 use alloc::string::String;
 use x86_64::structures::{idt::InterruptStackFrame, paging::FrameAllocator};
 
@@ -60,20 +60,30 @@ pub fn process_exit(regs: &mut Registers, sf: &mut InterruptStackFrame) {
     })
 }
 
+pub fn handle(fd: u8) -> Option<Resource> {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager_for_sure().current().handle(fd)
+    })
+}
+
+pub fn still_alive(pid: u16) -> bool {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager_for_sure().still_alive(pid)
+    })
+}
+
 pub fn spawn(file: &File) -> Result<u16, String> {
     let size = file.length();
     let data = {
         let pages = (size as usize + 0x1000 - 1) / 0x1000;
         let allocator = &mut *crate::memory::get_frame_alloc_for_sure();
 
-        let mem_start = allocator.allocate_frame().unwrap()
-            .start_address().as_u64();
+        let mem_start = allocator.allocate_frame().unwrap().start_address().as_u64();
 
-            trace!("alloc = 0x{:016x}", mem_start);
+        trace!("alloc = 0x{:016x}", mem_start);
 
         for _ in 1..pages {
-            let addr = allocator.allocate_frame().unwrap()
-            .start_address().as_u64();
+            let addr = allocator.allocate_frame().unwrap().start_address().as_u64();
             trace!("alloc = 0x{:016x}", addr);
         }
 
@@ -90,14 +100,16 @@ pub fn spawn(file: &File) -> Result<u16, String> {
     const STACK_PAGES: u64 = 512;
     const STACK_TOP: u64 = STACK_BOT + STACK_PAGES * 0x1000;
 
-    let mut manager = get_process_manager_for_sure();
+    let pid = x86_64::instructions::interrupts::without_interrupts(|| {
+        let mut manager = get_process_manager_for_sure();
 
-    let parent = manager.current().pid();
-    let pid = manager.spawn(
-        &elf,
-        file.entry.filename(),
-        parent,
-        Some(ProcessData::new()),
-    );
+        let parent = manager.current().pid();
+        manager.spawn(
+            &elf,
+            file.entry.filename(),
+            parent,
+            Some(ProcessData::new()),
+        )
+    });
     Ok(pid)
 }

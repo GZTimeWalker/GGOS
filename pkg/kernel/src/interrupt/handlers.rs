@@ -27,7 +27,8 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.page_fault.set_handler_fn(page_fault_handler);
     idt.alignment_check.set_handler_fn(alignment_check_handler);
     idt.machine_check.set_handler_fn(machine_check_handler);
-    idt.simd_floating_point.set_handler_fn(simd_floating_point_handler);
+    idt.simd_floating_point
+        .set_handler_fn(simd_floating_point_handler);
 
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
         .set_handler_fn(clock_handler)
@@ -157,15 +158,9 @@ pub extern "C" fn clock(mut regs: Registers, mut sf: InterruptStackFrame) {
 as_handler!(clock);
 
 pub extern "C" fn syscall(mut regs: Registers, mut sf: InterruptStackFrame) {
-    let args =
-        super::syscall::SyscallArgs::new(Syscall::from(regs.rax), regs.rdi, regs.rsi, regs.rdx);
-    trace!("{}", args);
-    unsafe {
-        x86_64::instructions::interrupts::without_interrupts(|| {
-            super::syscall::dispatcher(args, &mut regs, &mut sf);
-        })
-    }
-    super::ack(consts::Interrupts::Syscall as u8);
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        super::syscall::dispatcher(&mut regs, &mut sf);
+    });
 }
 
 as_handler!(syscall);

@@ -184,7 +184,6 @@ impl Device<u8> for Console {
         if offset + size >= buf.len() {
             return Err(DeviceError::ReadError);
         }
-
         x86_64::instructions::interrupts::without_interrupts(|| {
             let stdin = get_input_buf_for_sure();
             let mut read_count = 0;

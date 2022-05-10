@@ -22,6 +22,7 @@ impl Resource {
                     if buf.len() < 4 {
                         return Ok(0);
                     }
+
                     let mut s = if buf.len() == 4 {
                         if let DecodedKey::Unicode(c) = input::get_key() {
                             c.to_string()

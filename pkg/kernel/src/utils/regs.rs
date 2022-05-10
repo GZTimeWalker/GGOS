@@ -19,12 +19,12 @@ pub struct RegistersValue {
     pub rcx: usize,
     pub rbx: usize,
     pub rax: usize,
-    pub rbp: usize
+    pub rbp: usize,
 }
 
 #[repr(C)]
 pub struct Registers {
-    value: RegistersValue
+    value: RegistersValue,
 }
 
 impl Registers {
@@ -34,7 +34,7 @@ impl Registers {
     }
 
     #[inline]
-    pub unsafe fn set_rax(&mut self, value: usize) {
+    pub fn set_rax(&mut self, value: usize) {
         self.value.rax = value;
     }
 }
@@ -60,13 +60,13 @@ impl fmt::Debug for RegistersValue {
         write!(f, "Registers {{\n")?;
         write!(f, "    r15: 0x{:016x}, ", self.r15)?;
         write!(f, "    r14: 0x{:016x}, ", self.r14)?;
-        write!(f, "    r13: 0x{:016x}, ", self.r13)?;
-        write!(f, "    r12: 0x{:016x},\n", self.r12)?;
+        write!(f, "    r13: 0x{:016x},\n", self.r13)?;
+        write!(f, "    r12: 0x{:016x}, ", self.r12)?;
         write!(f, "    r11: 0x{:016x}, ", self.r11)?;
-        write!(f, "    r10: 0x{:016x}, ", self.r10)?;
+        write!(f, "    r10: 0x{:016x},\n", self.r10)?;
         write!(f, "    r9 : 0x{:016x}, ", self.r9)?;
-        write!(f, "    r8 : 0x{:016x},\n", self.r8)?;
-        write!(f, "    rdi: 0x{:016x}, ", self.rdi)?;
+        write!(f, "    r8 : 0x{:016x}, ", self.r8)?;
+        write!(f, "    rdi: 0x{:016x},\n", self.rdi)?;
         write!(f, "    rsi: 0x{:016x}, ", self.rsi)?;
         write!(f, "    rdx: 0x{:016x}, ", self.rdx)?;
         write!(f, "    rcx: 0x{:016x},\n", self.rcx)?;
@@ -77,7 +77,6 @@ impl fmt::Debug for RegistersValue {
         Ok(())
     }
 }
-
 
 #[macro_export]
 macro_rules! as_handler {
@@ -123,5 +122,5 @@ macro_rules! as_handler {
                 }
             }
         }
-    }
+    };
 }

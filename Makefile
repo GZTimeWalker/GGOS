@@ -61,16 +61,16 @@ $(ESP)/KERNEL.ELF: target/x86_64-unknown-none/$(MODE)/ggos_kernel
 	cp $< $@
 $(ESP)/APP: target/x86_64-unknown-ggos/$(MODE)
 	@for app in $(APPS); do \
-		mkdir -p $(@D)/APP; \
-		cp $</ggos_$$app $(@D)/APP/$$app; \
+		mkdir -p $(ESP)/APP; \
+		cp $</ggos_$$app $(ESP)/APP/$$app; \
 	done
 
 target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi: pkg/boot
 	cd pkg/boot && cargo build $(BUILD_ARGS)
 target/x86_64-unknown-none/$(MODE)/ggos_kernel: pkg/kernel
 	cd pkg/kernel && cargo build $(BUILD_ARGS)
-target/x86_64-unknown-ggos/$(MODE): pkg/app/$(APPS)
+target/x86_64-unknown-ggos/$(MODE):
 	@for app in $(APPS); do \
 		echo "Building $$app"; \
-		cd $(APP_PATH)/$$app && cargo build $(BUILD_ARGS); \
+		cd $(APP_PATH)/$$app && cargo build $(BUILD_ARGS) || exit; \
 	done

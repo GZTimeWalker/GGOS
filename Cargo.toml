@@ -5,5 +5,6 @@ members = [
     "pkg/fs",
     "pkg/kernel",
     "pkg/lib",
-    "pkg/app/sh"
+    "pkg/app/sh",
+    "pkg/app/hello"
 ]

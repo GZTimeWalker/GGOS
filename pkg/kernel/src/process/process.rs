@@ -95,6 +95,10 @@ impl Process {
         self.status = ProgramStatus::Ready;
     }
 
+    pub fn handle(&self, fd: u8) -> Option<Resource> {
+        self.proc_data.file_handles.get(&fd).cloned()
+    }
+
     pub fn restore(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
         unsafe {
             regs.as_mut().write(self.regs);
