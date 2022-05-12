@@ -12,10 +12,8 @@ guard_access_fn! {
 }
 
 pub struct ProcessManager {
-    /// the next pid to be assigned
-    next_pid: u16,
     /// pid of the current running process
-    cur_pid: u16,
+    cur_pid: ProcessId,
     processes: Vec<Process>,
 }
 
@@ -24,8 +22,7 @@ impl ProcessManager {
         let mut processes = Vec::<Process>::new();
         processes.push(init);
         Self {
-            cur_pid: 0,
-            next_pid: 1,
+            cur_pid: ProcessId(0),
             processes,
         }
     }
@@ -50,7 +47,7 @@ impl ProcessManager {
             current.tick();
             current.save(regs, sf);
         }
-        debug!("Paused process #{}", self.cur_pid);
+        // debug!("Paused process #{}", self.cur_pid);
     }
 
     fn get_next_pos(&self) -> usize {
@@ -67,7 +64,7 @@ impl ProcessManager {
         }
     }
 
-    pub fn still_alive(&self, pid: u16) -> bool {
+    pub fn still_alive(&self, pid: ProcessId) -> bool {
         self.processes.iter().any(|x| x.pid() == pid)
     }
 
@@ -75,7 +72,7 @@ impl ProcessManager {
         let pos = self.get_next_pos();
         let p = &mut self.processes[pos];
 
-        debug!("Next process {} #{}", p.name(), p.pid());
+        // debug!("Next process {} #{}", p.name(), p.pid());
         if p.pid() == self.cur_pid {
             // the next process to be resumed is the same as the current one
             p.resume();
@@ -90,12 +87,11 @@ impl ProcessManager {
         &mut self,
         elf: &ElfFile,
         name: String,
-        parent: u16,
+        parent: ProcessId,
         proc_data: Option<ProcessData>,
-    ) -> u16 {
+    ) -> ProcessId {
         let mut p = Process::new(
             &mut *crate::memory::get_frame_alloc_for_sure(),
-            self.next_pid,
             name,
             parent,
             proc_data,
@@ -110,7 +106,6 @@ impl ProcessManager {
         // info!("Spawn process:\n\n{:?}\n", p);
         let pid = p.pid();
         self.processes.push(p);
-        self.next_pid += 1; // TODO: recycle PID
         pid
     }
 
@@ -119,12 +114,11 @@ impl ProcessManager {
         entry: VirtAddr,
         stack_top: VirtAddr,
         name: String,
-        parent: u16,
+        parent: ProcessId,
         proc_data: Option<ProcessData>,
-    ) -> u16 {
+    ) -> ProcessId {
         let mut p = Process::new(
             &mut *crate::memory::get_frame_alloc_for_sure(),
-            self.next_pid,
             name,
             parent,
             proc_data,
@@ -132,10 +126,8 @@ impl ProcessManager {
         p.pause();
         p.init_stack_frame(entry, stack_top);
         info!("Spawn process: {}#{}", p.name(), p.pid());
-        // info!("Spawn process:\n\n{:?}\n", p);
         let pid = p.pid();
         self.processes.push(p);
-        self.next_pid += 1; // TODO: recycle PID
         pid
     }
 

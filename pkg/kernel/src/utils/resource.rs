@@ -1,7 +1,5 @@
-use crate::input;
-use alloc::string::{String, ToString};
+use alloc::string::String;
 use fs::{Device, File, Random};
-use pc_keyboard::DecodedKey;
 
 use crate::filesystem::{get_volume, StdIO};
 
@@ -19,24 +17,12 @@ impl Resource {
             Resource::File(file) => fs::read_to_buf(get_volume(), file, buf).map_err(|_| ()),
             Resource::Console(stdio) => match stdio {
                 &StdIO::Stdin => {
-                    if buf.len() < 4 {
-                        return Ok(0);
-                    }
-
-                    let mut s = if buf.len() == 4 {
-                        if let DecodedKey::Unicode(c) = input::get_key() {
-                            c.to_string()
-                        } else {
-                            return Ok(0);
-                        }
+                    return if buf.len() < 4 {
+                        Ok(0)
                     } else {
-                        input::get_line()
-                    };
-
-                    s.truncate(buf.len());
-                    let n = s.len();
-                    buf[..n].copy_from_slice(s.as_bytes());
-                    Ok(n)
+                        // TODO: get key async
+                        Ok(0)
+                    }
                 }
                 _ => Err(()),
             },

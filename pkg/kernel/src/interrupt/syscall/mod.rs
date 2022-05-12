@@ -40,8 +40,6 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         regs.rsi,
         regs.rdx
     );
-    debug!("{}", args);
-    debug!("{:#?}\n{:#?}", sf, regs);
 
     match args.syscall {
         Syscall::SpawnProcess => regs.set_rax(spawn_process(&args)),
@@ -58,7 +56,7 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         Syscall::Draw => sys_draw(&args),
         Syscall::None => {}
     }
-    debug!("syscall finished.");
+    // debug!("syscall finished.");
 }
 
 impl SyscallArgs {

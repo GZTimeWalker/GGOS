@@ -25,6 +25,9 @@ pub mod drivers;
 pub use drivers::*;
 
 pub mod memory;
+pub mod tasks;
+
+pub use tasks::*;
 use memory::gdt;
 use memory::allocator;
 
@@ -48,7 +51,6 @@ pub fn init(boot_info: &'static BootInfo) {
     allocator::init();          // init heap allocator
     process::init();            // init process manager
     keyboard::init();           // init keyboard
-    input::init();              // init input manager
     ata::init();                // init ata
     filesystem::init();         // init filesystem
 

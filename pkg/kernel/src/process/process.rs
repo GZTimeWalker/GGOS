@@ -14,15 +14,16 @@ use x86_64::structures::paging::FrameAllocator;
 use x86_64::structures::paging::{OffsetPageTable, PageTable, PhysFrame};
 use x86_64::VirtAddr;
 use xmas_elf::ElfFile;
+use super::ProcessId;
 
 pub struct Process {
-    pid: u16,
+    pid: ProcessId,
     regs: RegistersValue,
     name: String,
-    parent: u16,
+    parent: ProcessId,
     status: ProgramStatus,
     ticks_passed: usize,
-    children: Vec<u16>,
+    children: Vec<ProcessId>,
     stack_frame: InterruptStackFrameValue,
     page_table_addr: (PhysFrame, Cr3Flags),
     page_table: Option<OffsetPageTable<'static>>,
@@ -53,7 +54,7 @@ impl ProcessData {
 }
 
 impl Process {
-    pub fn pid(&self) -> u16 {
+    pub fn pid(&self) -> ProcessId {
         self.pid
     }
 
@@ -117,9 +118,8 @@ impl Process {
 
     pub fn new(
         frame_alloc: &mut BootInfoFrameAllocator,
-        pid: u16,
         name: String,
-        parent: u16,
+        parent: ProcessId,
         proc_data: Option<ProcessData>,
     ) -> Self {
         // 1. alloc a page table for process
@@ -162,6 +162,7 @@ impl Process {
         };
         let regs = RegistersValue::default();
         let ticks_passed = 0;
+        let pid = ProcessId::new();
 
         debug!("New process {}#{} created.", name, pid);
 

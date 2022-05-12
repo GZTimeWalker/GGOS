@@ -22,12 +22,17 @@ impl Stdin {
     }
 
     pub fn read_line(&self) -> String {
-        let mut buf = vec![0; 256];
-        if let Some(bytes) = sys_read(0, &mut buf) {
-            String::from_utf8_lossy(&buf[..bytes]).to_string()
-        } else {
-            String::new()
+        let mut string = String::new();
+        loop {
+            if let Some(bytes) = self.read_char() {
+                if bytes == '\n' {
+                    break;
+                } else {
+                    string.push(bytes);
+                }
+            }
         }
+        string
     }
 }
 

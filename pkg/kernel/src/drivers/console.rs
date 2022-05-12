@@ -1,8 +1,6 @@
 use crate::drivers::display::get_display_for_sure;
-use crate::input::get_input_buf_for_sure;
 use crate::utils::colors;
 use crate::utils::font;
-use alloc::string::ToString;
 use core::fmt::Write;
 use embedded_graphics::{
     mono_font::{MonoFont, MonoTextStyle},
@@ -11,7 +9,6 @@ use embedded_graphics::{
     text::{renderer::CharacterStyle, Baseline, Text},
 };
 use fs::*;
-use pc_keyboard::DecodedKey;
 
 once_mutex!(pub CONSOLE: Console);
 
@@ -184,20 +181,8 @@ impl Device<u8> for Console {
         if offset + size >= buf.len() {
             return Err(DeviceError::ReadError);
         }
-        x86_64::instructions::interrupts::without_interrupts(|| {
-            let stdin = get_input_buf_for_sure();
-            let mut read_count = 0;
-            while !stdin.is_empty() && read_count < size {
-                if let Some(DecodedKey::Unicode(c)) = stdin.pop() {
-                    let s = c.to_string();
-                    let len = s.len();
-                    buf[offset + read_count..offset + read_count + len]
-                        .copy_from_slice(s.as_bytes());
-                    read_count += len;
-                }
-            }
-            Ok(read_count)
-        })
+        // TODO: get key
+        Ok(0)
     }
 
     fn write(&mut self, buf: &[u8], offset: usize, size: usize) -> Result<usize, DeviceError> {

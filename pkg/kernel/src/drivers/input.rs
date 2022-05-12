@@ -18,20 +18,18 @@ pub fn init() {
 pub fn try_get_key() -> Option<DecodedKey> {
     interrupts::without_interrupts(|| {
         if let Some(key) = get_input_buf_for_sure().pop() {
-            return Some(key);
+            Some(key)
+        } else {
+            None
         }
-        None
     })
 }
 
 pub fn get_key() -> DecodedKey {
     loop {
-        crate::utils::halt();
-        interrupts::without_interrupts(|| {
-            if let Some(k) = try_get_key() {
-                return k;
-            }
-        })
+        if let Some(k) = try_get_key() {
+            return k;
+        }
     }
 }
 

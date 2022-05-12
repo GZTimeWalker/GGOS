@@ -65,7 +65,7 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
         warn!("spawn_process: failed to spawn process: {}", path);
         return 0;
     }
-    pid.unwrap() as usize
+    u16::from(pid.unwrap()) as usize
 }
 
 pub fn sys_read(args: &SyscallArgs) -> usize {
@@ -74,12 +74,7 @@ pub fn sys_read(args: &SyscallArgs) -> usize {
         let buf = unsafe {
             core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2)
         };
-        return if let Ok(size) = res.read(buf) {
-            debug!(
-                "read {} bytes: {:?}",
-                size,
-                unsafe{ core::str::from_utf8_unchecked(&buf[..size]) }
-            );
+        if let Ok(size) = res.read(buf) {
             size
         } else {
             0

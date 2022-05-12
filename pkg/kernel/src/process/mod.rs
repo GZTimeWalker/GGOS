@@ -2,6 +2,8 @@ mod manager;
 mod process;
 mod scheduler;
 
+use core::sync::atomic::{AtomicU16, Ordering};
+
 use fs::File;
 use manager::*;
 use process::*;
@@ -28,11 +30,33 @@ pub enum ProgramStatus {
     Dead,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ProcessId(u16);
+
+impl ProcessId {
+    pub fn new() -> Self {
+        static NEXT_PID: AtomicU16 = AtomicU16::new(0);
+        ProcessId(NEXT_PID.fetch_add(1, Ordering::Relaxed))
+    }
+}
+
+impl core::fmt::Display for ProcessId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl From<ProcessId> for u16 {
+    fn from(pid: ProcessId) -> Self {
+        pid.0
+    }
+}
+
 /// init process manager
 pub fn init() {
     let mut alloc = crate::memory::get_frame_alloc_for_sure();
     // kernel process
-    let mut kproc = Process::new(&mut *alloc, 0, String::from("kernel"), 0, None);
+    let mut kproc = Process::new(&mut *alloc, String::from("kernel"), ProcessId(0), None);
     kproc.resume();
     kproc.set_page_table_with_cr3();
     init_PROCESS_MANAGER(ProcessManager::new(kproc));
@@ -66,13 +90,13 @@ pub fn handle(fd: u8) -> Option<Resource> {
     })
 }
 
-pub fn still_alive(pid: u16) -> bool {
+pub fn still_alive(pid: ProcessId) -> bool {
     x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager_for_sure().still_alive(pid)
     })
 }
 
-pub fn spawn(file: &File) -> Result<u16, String> {
+pub fn spawn(file: &File) -> Result<ProcessId, String> {
     let size = file.length();
     let data = {
         let pages = (size as usize + 0x1000 - 1) / 0x1000;
