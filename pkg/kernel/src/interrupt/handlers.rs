@@ -158,9 +158,7 @@ pub extern "C" fn clock(mut regs: Registers, mut sf: InterruptStackFrame) {
 as_handler!(clock);
 
 pub extern "C" fn syscall(mut regs: Registers, mut sf: InterruptStackFrame) {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        super::syscall::dispatcher(&mut regs, &mut sf);
-    });
+    super::syscall::dispatcher(&mut regs, &mut sf);
 }
 
 as_handler!(syscall);

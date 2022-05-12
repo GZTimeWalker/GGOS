@@ -121,7 +121,12 @@ impl Console {
             match c {
                 '\n' => self.next_row(),
                 '\r' => self.x_pos = 0,
-                '\x08' => backspace(),
+                '\x08' => {
+                    self.prev_char();
+                    self.write("  ");
+                    self.prev_char();
+                    self.prev_char();
+                },
                 _ => self.write_char(c),
             }
         }

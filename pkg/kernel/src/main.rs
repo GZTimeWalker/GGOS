@@ -11,18 +11,12 @@ boot::entry_point!(kernal_main);
 pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
     ggos::init(boot_info);
 
-    // let sh_file = ggos::filesystem::try_get_file("/APP/SH").unwrap();
-    // let pid = ggos::process::spawn(&sh_file).unwrap();
-
-    // while ggos::process::still_alive(pid) {
-    //     unsafe {
-    //         core::arch::asm!("hlt");
-    //     }
-    // }
-
     let mut executor = Executor::new();
-    executor.spawn(Task::new(get_key()));
-    executor.run();
 
-    // ggos::shutdown(boot_info);
+    let sh_file = ggos::filesystem::try_get_file("/APP/SH").unwrap();
+    let pid = ggos::process::spawn(&sh_file).unwrap();
+
+    executor.run(pid);
+
+    ggos::shutdown(boot_info);
 }

@@ -51,6 +51,7 @@ pub fn init(boot_info: &'static BootInfo) {
     allocator::init();          // init heap allocator
     process::init();            // init process manager
     keyboard::init();           // init keyboard
+    input::init();              // init input
     ata::init();                // init ata
     filesystem::init();         // init filesystem
 

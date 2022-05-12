@@ -15,6 +15,14 @@ pub fn init() {
     info!("Input Initialized.");
 }
 
+pub fn push_key(key: DecodedKey) {
+    if let Some(queue) = get_input_buf() {
+        if let Err(_) = queue.push(key) {
+            warn!("Input buffer is full.");
+        }
+    }
+}
+
 pub fn try_get_key() -> Option<DecodedKey> {
     interrupts::without_interrupts(|| {
         if let Some(key) = get_input_buf_for_sure().pop() {

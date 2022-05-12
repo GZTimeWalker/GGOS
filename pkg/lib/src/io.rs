@@ -8,7 +8,7 @@ pub struct Stderr;
 
 impl Stdin {
     fn new() -> Self {
-        Self {}
+        Self
     }
 
     pub fn read_char(&self) -> Option<char> {
@@ -24,11 +24,22 @@ impl Stdin {
     pub fn read_line(&self) -> String {
         let mut string = String::new();
         loop {
-            if let Some(bytes) = self.read_char() {
-                if bytes == '\n' {
-                    break;
-                } else {
-                    string.push(bytes);
+            if let Some(k) = self.read_char() {
+                match k {
+                    '\n' => {
+                        stdout().write("\n");
+                        break;
+                    },
+                    '\x08' => {
+                        if !string.is_empty() {
+                            stdout().write("\x08");
+                            string.pop();
+                        }
+                    }
+                    c => {
+                        print!("{}", k);
+                        string.push(c);
+                    }
                 }
             }
         }
@@ -38,7 +49,7 @@ impl Stdin {
 
 impl Stdout {
     fn new() -> Self {
-        Self {}
+        Self
     }
 
     pub fn write(&self, s: &str) {
@@ -48,7 +59,7 @@ impl Stdout {
 
 impl Stderr {
     fn new() -> Self {
-        Self {}
+        Self
     }
 
     pub fn write(&self, s: &str) {

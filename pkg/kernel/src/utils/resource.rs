@@ -1,7 +1,8 @@
 use alloc::string::String;
 use fs::{Device, File, Random};
+use pc_keyboard::DecodedKey;
 
-use crate::filesystem::{get_volume, StdIO};
+use crate::{filesystem::{get_volume, StdIO}, input::try_get_key};
 
 #[derive(Debug, Clone)]
 pub enum Resource {
@@ -21,7 +22,12 @@ impl Resource {
                         Ok(0)
                     } else {
                         // TODO: get key async
-                        Ok(0)
+                        if let Some(DecodedKey::Unicode(k)) = try_get_key() {
+                            let s = k.encode_utf8(buf);
+                            Ok(s.len())
+                        } else {
+                            Ok(0)
+                        }
                     }
                 }
                 _ => Err(()),

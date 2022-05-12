@@ -11,6 +11,9 @@ use lib::io::stdin;
 extern crate lib;
 
 fn main() {
+
+    sys_list_dir("/");
+
     let mut root_dir = String::from("/APP/");
 
     loop {
@@ -43,6 +46,7 @@ fn main() {
             }
             "exec" => {
                 let path = root_dir.clone() + line[1];
+                println!("ready to exec {}...", path);
                 let pid = sys_spawn(path.as_str());
                 if pid == 0 {
                     println!("failed to spawn process: {}#{}", line[1], pid);

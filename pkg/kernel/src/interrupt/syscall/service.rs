@@ -1,9 +1,9 @@
 use core::alloc::Layout;
 
-use crate::{utils::*, display::get_display_for_sure};
+use crate::utils::Registers;
+use crate::{display::get_display_for_sure, utils::*};
 use embedded_graphics::prelude::*;
 use x86_64::structures::idt::InterruptStackFrame;
-use crate::utils::Registers;
 
 use super::SyscallArgs;
 
@@ -14,14 +14,12 @@ pub fn sys_clock() -> i64 {
 pub fn sys_draw(args: &SyscallArgs) {
     let _ = get_display_for_sure().draw_pixel_u32(
         Point::new(args.arg0 as i32, args.arg1 as i32),
-        args.arg2 as u32
+        args.arg2 as u32,
     );
 }
 
 pub fn sys_allocate(args: &SyscallArgs) -> usize {
-    let layout = unsafe {
-        (args.arg0 as *const Layout).as_ref().unwrap()
-    };
+    let layout = unsafe { (args.arg0 as *const Layout).as_ref().unwrap() };
     trace!("sys_allocate: \n{:#?}", layout);
     let ptr = crate::allocator::ALLOCATOR
         .lock()
@@ -34,7 +32,7 @@ pub fn sys_allocate(args: &SyscallArgs) -> usize {
 
 pub fn sys_deallocate(args: &SyscallArgs) {
     let ptr = args.arg0 as *mut u8;
-    let layout = unsafe{ (args.arg1 as *const Layout).as_ref().unwrap() };
+    let layout = unsafe { (args.arg1 as *const Layout).as_ref().unwrap() };
 
     unsafe {
         crate::allocator::ALLOCATOR
@@ -45,11 +43,12 @@ pub fn sys_deallocate(args: &SyscallArgs) {
 }
 
 pub fn spawn_process(args: &SyscallArgs) -> usize {
-    let path  = unsafe {
+    let path = unsafe {
         core::str::from_utf8_unchecked(core::slice::from_raw_parts(
-           args.arg1 as *const u8,
-           args.arg2,
-       ))};
+            args.arg0 as *const u8,
+            args.arg1,
+        ))
+    };
 
     let file = crate::filesystem::try_get_file(path);
 
@@ -71,9 +70,7 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
 pub fn sys_read(args: &SyscallArgs) -> usize {
     let fd = get_handle(args.arg0 as u8);
     if let Some(res) = fd {
-        let buf = unsafe {
-            core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2)
-        };
+        let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
         if let Ok(size) = res.read(buf) {
             size
         } else {
@@ -84,15 +81,17 @@ pub fn sys_read(args: &SyscallArgs) -> usize {
     }
 }
 
-pub fn sys_write(args: &SyscallArgs) {
-    let s = unsafe{ core::str::from_utf8_unchecked(core::slice::from_raw_parts(
-        args.arg1 as *const u8,
-        args.arg2,
-    ))};
-    match args.arg0 {
-        1 => print!("{}", s),
-        2 => print_warn!("{}", s),
-        fd => warn!("SYSCALL: cannot write to fd: {}", fd),
+pub fn sys_write(args: &SyscallArgs) -> usize {
+    let fd = get_handle(args.arg0 as u8);
+    if let Some(res) = fd {
+        let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
+        if let Ok(size) = res.write(buf) {
+            size
+        } else {
+            0
+        }
+    } else {
+        0
     }
 }
 
@@ -105,10 +104,12 @@ pub fn list_process() {
 }
 
 pub fn list_dir(args: &SyscallArgs) {
-    let root = unsafe { core::str::from_utf8_unchecked(core::slice::from_raw_parts(
-        args.arg0 as *const u8,
-        args.arg1,
-    )) };
+    let root = unsafe {
+        core::str::from_utf8_unchecked(core::slice::from_raw_parts(
+            args.arg0 as *const u8,
+            args.arg1,
+        ))
+    };
     crate::filesystem::ls(root);
 }
 

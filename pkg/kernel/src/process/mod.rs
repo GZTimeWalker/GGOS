@@ -13,7 +13,10 @@ pub use scheduler::*;
 
 use crate::{filesystem::get_volume, Registers, Resource};
 use alloc::string::String;
-use x86_64::structures::{idt::InterruptStackFrame, paging::FrameAllocator};
+use x86_64::{
+    registers::control::Cr3,
+    structures::{idt::InterruptStackFrame, paging::FrameAllocator},
+};
 
 use self::manager::init_PROCESS_MANAGER;
 
@@ -56,7 +59,13 @@ impl From<ProcessId> for u16 {
 pub fn init() {
     let mut alloc = crate::memory::get_frame_alloc_for_sure();
     // kernel process
-    let mut kproc = Process::new(&mut *alloc, String::from("kernel"), ProcessId(0), None);
+    let mut kproc = Process::new(
+        &mut *alloc,
+        String::from("kernel"),
+        ProcessId(0),
+        Cr3::read().0,
+        None,
+    );
     kproc.resume();
     kproc.set_page_table_with_cr3();
     init_PROCESS_MANAGER(ProcessManager::new(kproc));

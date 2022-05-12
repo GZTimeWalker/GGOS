@@ -78,6 +78,10 @@ impl Process {
         self.page_table_addr = Cr3::read();
     }
 
+    pub fn page_table_addr(&self) -> PhysFrame {
+        self.page_table_addr.0
+    }
+
     pub fn is_running(&self) -> bool {
         self.status == ProgramStatus::Running
     }
@@ -120,18 +124,20 @@ impl Process {
         frame_alloc: &mut BootInfoFrameAllocator,
         name: String,
         parent: ProcessId,
+        page_table_source: PhysFrame,
         proc_data: Option<ProcessData>,
     ) -> Self {
+        let name = name.to_ascii_lowercase();
         // 1. alloc a page table for process
         let page_table_addr = frame_alloc
             .allocate_frame()
             .expect("Cannot alloc page table for new process.");
-        trace!("Alloc page table for {}: {:?}", name, page_table_addr);
+        debug!("Alloc page table for {}: {:?}", name, page_table_addr);
 
         // 2. copy current page table to new page table
         unsafe {
             copy_nonoverlapping::<PageTable>(
-                Cr3::read().0.start_address().as_u64() as *mut PageTable,
+                page_table_source.start_address().as_u64() as *mut PageTable,
                 page_table_addr.start_address().as_u64() as *mut PageTable,
                 1,
             );
@@ -230,8 +236,8 @@ impl core::fmt::Display for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(
             f,
-            "#{:3} | {:10} | {}",
-            self.pid, self.name, self.ticks_passed
+            " #{:-3}| {:10} | {}",
+            u16::from(self.pid), self.name, self.ticks_passed
         )?;
         Ok(())
     }

@@ -1,4 +1,4 @@
-use crate::{Syscall, println};
+use crate::Syscall;
 use chrono::naive::*;
 
 pub fn sys_draw(x: i32, y: i32, color: u32) -> usize {
@@ -16,7 +16,6 @@ pub fn sys_write(fd: u64, buf: &[u8]) -> Option<usize> {
 
 pub fn sys_read(fd: u64, buf: &mut [u8]) -> Option<usize> {
     let ret = syscall!(Syscall::Read, fd, buf.as_ptr() as u64, buf.len() as u64) as isize;
-    println!("{}: {:?}", ret, buf);
     if ret.is_negative() {
         None
     } else {

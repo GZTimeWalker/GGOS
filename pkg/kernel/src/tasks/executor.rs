@@ -1,7 +1,11 @@
+use crate::process;
+
 use super::{Task, TaskId};
 use alloc::{collections::BTreeMap, sync::Arc, task::Wake};
 use core::task::{Context, Poll, Waker};
+use core::future::Future;
 use crossbeam_queue::ArrayQueue;
+use crate::process::ProcessId;
 
 pub struct Executor {
     tasks: BTreeMap<TaskId, Task>,
@@ -18,18 +22,24 @@ impl Executor {
         }
     }
 
-    pub fn spawn(&mut self, task: Task) {
+    pub fn spawn(&mut self, task: impl Future<Output = ()> + 'static) {
+        let task = Task::new(task);
         let task_id = task.id;
         if self.tasks.insert(task.id, task).is_some() {
-            panic!("task with same ID already in tasks");
+            panic!("Task with same ID already in tasks");
         }
-        self.task_queue.push(task_id).expect("queue full");
+        self.task_queue.push(task_id).expect("Task queue is full");
     }
 
-    pub fn run(&mut self) -> ! {
+    /// only return when init process is not alive
+    pub fn run(&mut self, init: ProcessId) {
         loop {
             self.run_ready_tasks();
-            self.sleep_if_idle();
+            if process::still_alive(init) {
+                self.sleep_if_idle();
+            } else {
+                break;
+            }
         }
     }
 
@@ -80,7 +90,7 @@ impl TaskWaker {
     }
 
     fn wake_task(&self) {
-        self.task_queue.push(self.task_id).expect("task_queue full");
+        self.task_queue.push(self.task_id).expect("Task queue is full");
     }
 }
 

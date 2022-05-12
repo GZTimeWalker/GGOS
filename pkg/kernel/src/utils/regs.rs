@@ -86,6 +86,7 @@ macro_rules! as_handler {
             pub extern "x86-interrupt" fn [<$fn _handler>](_sf: InterruptStackFrame) {
                 unsafe {
                     core::arch::asm!("
+                    cli
                     push rbp
                     push rax
                     push rbx
@@ -117,6 +118,7 @@ macro_rules! as_handler {
                     pop rbx
                     pop rax
                     pop rbp
+                    sti
                     iretq",
                     sym $fn, options(noreturn));
                 }

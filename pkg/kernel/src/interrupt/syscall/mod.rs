@@ -45,7 +45,7 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         Syscall::SpawnProcess => regs.set_rax(spawn_process(&args)),
         Syscall::ExitProcess => exit_process(regs, sf),
         Syscall::Read => regs.set_rax(sys_read(&args)),
-        Syscall::Write => sys_write(&args),
+        Syscall::Write => regs.set_rax(sys_write(&args)),
         Syscall::Open => {}
         Syscall::Close => {}
         Syscall::Stat => list_process(),
@@ -56,7 +56,6 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         Syscall::Draw => sys_draw(&args),
         Syscall::None => {}
     }
-    // debug!("syscall finished.");
 }
 
 impl SyscallArgs {

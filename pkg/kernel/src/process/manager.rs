@@ -4,6 +4,7 @@ use alloc::format;
 use alloc::vec::Vec;
 use x86_64::structures::idt::InterruptStackFrame;
 use x86_64::VirtAddr;
+use x86_64::structures::paging::PhysFrame;
 use xmas_elf::ElfFile;
 
 once_mutex!(pub PROCESS_MANAGER: ProcessManager);
@@ -83,6 +84,11 @@ impl ProcessManager {
         }
     }
 
+    fn get_kernel_page_table(&self) -> PhysFrame {
+        let proc = self.processes.get(0).unwrap();
+        proc.page_table_addr()
+    }
+
     pub fn spawn(
         &mut self,
         elf: &ElfFile,
@@ -94,6 +100,7 @@ impl ProcessManager {
             &mut *crate::memory::get_frame_alloc_for_sure(),
             name,
             parent,
+            self.get_kernel_page_table(),
             proc_data,
         );
         p.pause();
@@ -102,7 +109,7 @@ impl ProcessManager {
             VirtAddr::new_truncate(STACK_TOP),
         );
         p.init_elf(elf);
-        info!("Spawn process: {}#{}", p.name(), p.pid());
+        // info!("Spawn process: {}#{}", p.name(), p.pid());
         // info!("Spawn process:\n\n{:?}\n", p);
         let pid = p.pid();
         self.processes.push(p);
@@ -121,6 +128,7 @@ impl ProcessManager {
             &mut *crate::memory::get_frame_alloc_for_sure(),
             name,
             parent,
+            self.get_kernel_page_table(),
             proc_data,
         );
         p.pause();
