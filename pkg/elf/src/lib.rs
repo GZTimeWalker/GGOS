@@ -16,7 +16,7 @@ pub fn map_physical_memory(
     page_table: &mut impl Mapper<Size2MiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) {
-    debug!("Mapping physical memory...");
+    trace!("Mapping physical memory...");
     let start_frame = PhysFrame::containing_address(PhysAddr::new(0));
     let end_frame = PhysFrame::containing_address(PhysAddr::new(max_addr));
 
@@ -40,7 +40,7 @@ pub fn map_elf(
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) -> Result<(), MapToError<Size4KiB>> {
-    debug!("Mapping ELF file...{:?}", elf.input.as_ptr());
+    trace!("Mapping ELF file...{:?}", elf.input.as_ptr());
     let start = PhysAddr::new(elf.input.as_ptr() as u64);
     for segment in elf.program_iter() {
         map_segment(&segment, start, page_table, frame_allocator)?;
@@ -50,7 +50,7 @@ pub fn map_elf(
 
 /// Unmap ELF file
 pub fn unmap_elf(elf: &ElfFile, page_table: &mut impl Mapper<Size4KiB>) -> Result<(), UnmapError> {
-    debug!("Unmapping ELF file...");
+    trace!("Unmapping ELF file...");
     let kernel_start = PhysAddr::new(elf.input.as_ptr() as u64);
     for segment in elf.program_iter() {
         unmap_segment(&segment, kernel_start, page_table)?;
@@ -65,7 +65,7 @@ pub fn map_stack(
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) -> Result<(), MapToError<Size4KiB>> {
-    debug!("mapping stack at {:#x}", addr);
+    trace!("mapping stack at {:#x}", addr);
     // create a stack
     let stack_start = Page::containing_address(VirtAddr::new(addr));
     let stack_end = stack_start + pages;
@@ -96,7 +96,7 @@ fn map_segment(
         return Ok(());
     }
 
-    debug!("Mapping segment: {:#x?}", segment);
+    trace!("Mapping segment: {:#x?}", segment);
     let mem_size = segment.mem_size();
     let file_size = segment.file_size();
     let file_offset = segment.offset() & !0xfff;
@@ -201,7 +201,7 @@ fn unmap_segment(
     if segment.get_type().unwrap() != program::Type::Load {
         return Ok(());
     }
-    debug!("Unmapping segment: {:#x?}", segment);
+    trace!("Unmapping segment: {:#x?}", segment);
     let mem_size = segment.mem_size();
     let file_size = segment.file_size();
     let file_offset = segment.offset() & !0xfff;

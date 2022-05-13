@@ -181,7 +181,7 @@ where
     where
         F: FnMut(&DirEntry),
     {
-        debug!("Iterating directory: {:?}", dir);
+        trace!("Iterating directory: {:?}", dir);
         let mut current_cluster = Some(dir.cluster);
         let mut dir_sector_num = self.cluster_to_sector(&dir.cluster);
         let dir_size = match dir.cluster {
@@ -201,7 +201,7 @@ where
                     if dir_entry.is_eod() {
                         return Ok(());
                     } else if dir_entry.is_valid() && !dir_entry.is_long_name() {
-                        debug!("found file {}", dir_entry.filename());
+                        trace!("found file {}", dir_entry.filename());
                         func(&dir_entry);
                     }
                 }

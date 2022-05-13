@@ -31,7 +31,8 @@ pub enum Syscall {
     DirectoryList = 9,
     Allocate = 10,
     Deallocate = 11,
-    Draw = 12
+    Draw = 12,
+    WaitPid = 13,
 }
 
 #[macro_export]

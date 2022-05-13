@@ -32,11 +32,11 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
 
     idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
         .set_handler_fn(clock_handler)
-        .set_stack_index(crate::gdt::CONTEXT_SWITCH);
+        .set_stack_index(crate::gdt::CONTEXT_SWITCH_IST_INDEX);
 
     idt[consts::Interrupts::Syscall as usize]
         .set_handler_fn(syscall_handler)
-        .set_stack_index(crate::gdt::CONTEXT_SWITCH)
+        .set_stack_index(crate::gdt::SYSCALL_IST_INDEX)
         .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
 }
 
@@ -158,7 +158,9 @@ pub extern "C" fn clock(mut regs: Registers, mut sf: InterruptStackFrame) {
 as_handler!(clock);
 
 pub extern "C" fn syscall(mut regs: Registers, mut sf: InterruptStackFrame) {
-    super::syscall::dispatcher(&mut regs, &mut sf);
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        super::syscall::dispatcher(&mut regs, &mut sf);
+    });
 }
 
 as_handler!(syscall);

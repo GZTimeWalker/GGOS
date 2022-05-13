@@ -4,16 +4,26 @@ use x86_64::structures::tss::TaskStateSegment;
 use x86_64::VirtAddr;
 
 pub const DOUBLE_FAULT_IST_INDEX: u16 = 0;
-pub const CONTEXT_SWITCH: u16 = 0;
+pub const SYSCALL_IST_INDEX: u16 = 1;
+pub const CONTEXT_SWITCH_IST_INDEX: u16 = 0;
 
 lazy_static! {
     static ref TSS: TaskStateSegment = {
         let mut tss = TaskStateSegment::new();
-        tss.interrupt_stack_table[CONTEXT_SWITCH as usize] = {
-            const STACK_SIZE: usize = 4096;
+        tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] = {
+            const STACK_SIZE: usize = 0x1000;
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_end = stack_start + STACK_SIZE;
+            info!("Double Fault IST: 0x{:016x}-0x{:016x}", stack_start.as_u64(), stack_end.as_u64());
+            stack_end
+        };
+        tss.interrupt_stack_table[SYSCALL_IST_INDEX as usize] = {
+            const STACK_SIZE: usize = 0x4000;
+            static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
+            let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
+            let stack_end = stack_start + STACK_SIZE;
+            info!("Syscall IST:      0x{:016x}-0x{:016x}", stack_start.as_u64(), stack_end.as_u64());
             stack_end
         };
         tss

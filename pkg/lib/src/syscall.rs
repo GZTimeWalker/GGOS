@@ -24,22 +24,27 @@ pub fn sys_read(fd: u64, buf: &mut [u8]) -> Option<usize> {
 }
 
 pub fn sys_allocate(layout: &core::alloc::Layout) -> *mut u8 {
-    syscall!(
-        Syscall::Allocate,
-        layout as *const _
-    ) as *mut u8
+    syscall!(Syscall::Allocate, layout as *const _) as *mut u8
 }
 
 pub fn sys_deallocate(ptr: *mut u8, layout: &core::alloc::Layout) -> usize {
-    syscall!(
-        Syscall::Deallocate,
-        ptr,
-        layout as *const _
-    )
+    syscall!(Syscall::Deallocate, ptr, layout as *const _)
 }
 
 pub fn sys_exit(code: usize) {
     syscall!(Syscall::ExitProcess, code);
+}
+
+pub fn sys_wait_pid(pid: u16) -> isize {
+    loop {
+        let ret = syscall!(Syscall::WaitPid, pid as u64) as isize;
+        if !ret.is_negative() {
+            return ret;
+        }
+        unsafe {
+            core::arch::asm!("hlt");
+        }
+    }
 }
 
 pub fn sys_time() -> NaiveDateTime {
@@ -49,7 +54,11 @@ pub fn sys_time() -> NaiveDateTime {
 }
 
 pub fn sys_list_dir(root: &str) {
-    syscall!(Syscall::DirectoryList, root.as_ptr() as u64, root.len() as u64);
+    syscall!(
+        Syscall::DirectoryList,
+        root.as_ptr() as u64,
+        root.len() as u64
+    );
 }
 
 pub fn sys_stat() {
@@ -57,5 +66,9 @@ pub fn sys_stat() {
 }
 
 pub fn sys_spawn(path: &str) -> u16 {
-    syscall!(Syscall::SpawnProcess, path.as_ptr() as u64, path.len() as u64) as u16
+    syscall!(
+        Syscall::SpawnProcess,
+        path.as_ptr() as u64,
+        path.len() as u64
+    ) as u16
 }

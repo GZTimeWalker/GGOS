@@ -9,7 +9,8 @@ fn main() {
     println!("Hello, world!!!");
     let time = lib::sys_time();
     println!("Now at: {}", time);
-    lib::sys_exit(0);
+    println!("Exiting...");
+    lib::sys_exit(233);
 }
 
 entry!(main);

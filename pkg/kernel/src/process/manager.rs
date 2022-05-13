@@ -1,5 +1,6 @@
 use super::*;
 use crate::utils::Registers;
+use alloc::collections::BTreeMap;
 use alloc::format;
 use alloc::vec::Vec;
 use x86_64::structures::idt::InterruptStackFrame;
@@ -16,15 +17,18 @@ pub struct ProcessManager {
     /// pid of the current running process
     cur_pid: ProcessId,
     processes: Vec<Process>,
+    exit_code: BTreeMap<ProcessId, isize>,
 }
 
 impl ProcessManager {
     pub fn new(init: Process) -> Self {
         let mut processes = Vec::<Process>::new();
+        let exit_code = BTreeMap::new();
         processes.push(init);
         Self {
             cur_pid: ProcessId(0),
             processes,
+            exit_code
         }
     }
 
@@ -40,6 +44,14 @@ impl ProcessManager {
             .iter()
             .find(|x| x.pid() == self.cur_pid)
             .unwrap()
+    }
+
+    pub fn current_pid(&self) -> ProcessId {
+        self.cur_pid
+    }
+
+    pub fn add_child(&mut self, child: ProcessId) {
+        self.current_mut().add_child(child);
     }
 
     pub fn save_current(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
@@ -62,6 +74,14 @@ impl ProcessManager {
             0
         } else {
             next_pos
+        }
+    }
+
+    pub fn wait_pid(&mut self, pid: ProcessId) -> isize {
+        if self.exit_code.contains_key(&pid) {
+            self.exit_code.remove(&pid).unwrap()
+        } else {
+            -1
         }
     }
 
@@ -140,14 +160,26 @@ impl ProcessManager {
     }
 
     pub fn print_process_list(&self) {
-        let mut output = String::from(" PID | Name       | Ticks\n");
+        let mut output = String::from("  PID | PPID | Name       | Ticks\n");
         for p in self.processes.iter() {
             output = output + format!("{}\n", p).as_str();
         }
         print!("{}", output);
     }
 
-    pub fn kill(&mut self) {
+    pub fn kill(&mut self, ret: isize) {
+        debug!("Killing process {}", self.cur_pid);
+
+        let p = self.current().parent();
+
         self.processes.retain(|p| !p.is_running());
+
+        if let Err(_) = self.exit_code.try_insert(self.cur_pid, ret) {
+            error!("Process {} already exited", self.cur_pid);
+        }
+
+        if let Some(proc) = self.processes.iter_mut().find(|x| x.pid() == p) {
+            proc.remove_child(self.cur_pid);
+        }
     }
 }

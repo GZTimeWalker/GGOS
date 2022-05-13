@@ -12,8 +12,6 @@ extern crate lib;
 
 fn main() {
 
-    sys_list_dir("/");
-
     let mut root_dir = String::from("/APP/");
 
     loop {
@@ -28,6 +26,9 @@ fn main() {
                 // ggos::filesystem::cat(root_dir.as_str(), line[1]);
             }
             "cd" => {
+                if line[1].starts_with("/") {
+                    root_dir = String::from(line[1]);
+                }
                 match line[1] {
                     ".." => {
                         if root_dir.as_str() == "/" {
@@ -37,6 +38,7 @@ fn main() {
                         let pos = root_dir.rfind('/').unwrap();
                         root_dir = root_dir[..pos + 1].to_string();
                     },
+                    "." => break,
                     _ => {
                         root_dir.push_str(line[1]);
                         root_dir.push('/');
@@ -46,15 +48,22 @@ fn main() {
             }
             "exec" => {
                 let path = root_dir.clone() + line[1];
-                println!("ready to exec {}...", path);
+                let start = sys_time();
+
                 let pid = sys_spawn(path.as_str());
                 if pid == 0 {
-                    println!("failed to spawn process: {}#{}", line[1], pid);
+                    println!("[!] failed to spawn process: {}#{}", line[1], pid);
+                    continue;
                 } else {
-                    println!("spawned process: {}#{}", line[1], pid);
+                    println!("[+] spawned process: {}#{}", line[1], pid);
                 }
+
+                let ret = sys_wait_pid(pid);
+                let time = sys_time() - start ;
+
+                println!("[+] process exited with code {} @ {}s", ret, time.num_seconds());
             }
-            _ => println!("[=] {}", input),
+            _ => println!("[=] you said \"{}\"", input),
         }
     }
 

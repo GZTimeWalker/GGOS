@@ -34,7 +34,7 @@ pub enum ProgramStatus {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ProcessId(u16);
+pub struct ProcessId(pub u16);
 
 impl ProcessId {
     pub fn new() -> Self {
@@ -85,11 +85,17 @@ pub fn env(key: &str) -> Option<String> {
     })
 }
 
-pub fn process_exit(regs: &mut Registers, sf: &mut InterruptStackFrame) {
+pub fn process_exit(ret: isize, regs: &mut Registers, sf: &mut InterruptStackFrame) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let mut manager = get_process_manager_for_sure();
-        manager.kill();
+        manager.kill(ret);
         manager.switch_next(regs, sf);
+    })
+}
+
+pub fn wait_pid(pid: ProcessId) -> isize {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager_for_sure().wait_pid(pid)
     })
 }
 
@@ -137,12 +143,15 @@ pub fn spawn(file: &File) -> Result<ProcessId, String> {
         let mut manager = get_process_manager_for_sure();
 
         let parent = manager.current().pid();
-        manager.spawn(
+        let pid = manager.spawn(
             &elf,
             file.entry.filename(),
             parent,
             Some(ProcessData::new()),
-        )
+        );
+
+        pid
     });
+
     Ok(pid)
 }

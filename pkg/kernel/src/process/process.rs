@@ -132,7 +132,7 @@ impl Process {
         let page_table_addr = frame_alloc
             .allocate_frame()
             .expect("Cannot alloc page table for new process.");
-        debug!("Alloc page table for {}: {:?}", name, page_table_addr);
+        trace!("Alloc page table for {}: {:?}", name, page_table_addr);
 
         // 2. copy current page table to new page table
         unsafe {
@@ -188,6 +188,18 @@ impl Process {
         }
     }
 
+    pub fn add_child(&mut self, child: ProcessId) {
+        self.children.push(child);
+    }
+
+    pub fn remove_child(&mut self, child: ProcessId) {
+        self.children.retain(|c| *c != child);
+    }
+
+    pub fn parent(&self) -> ProcessId {
+        self.parent
+    }
+
     pub fn init_elf(&mut self, elf: &ElfFile) {
         let alloc = &mut *crate::memory::get_frame_alloc_for_sure();
 
@@ -236,8 +248,8 @@ impl core::fmt::Display for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(
             f,
-            " #{:-3}| {:10} | {}",
-            u16::from(self.pid), self.name, self.ticks_passed
+            " #{:-3} | #{:-3} | {:10} | {}",
+            u16::from(self.pid), u16::from(self.parent), self.name, self.ticks_passed
         )?;
         Ok(())
     }

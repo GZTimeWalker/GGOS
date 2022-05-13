@@ -1,5 +1,6 @@
 use core::alloc::Layout;
 
+use crate::process::ProcessId;
 use crate::utils::Registers;
 use crate::{display::get_display_for_sure, utils::*};
 use embedded_graphics::prelude::*;
@@ -95,8 +96,8 @@ pub fn sys_write(args: &SyscallArgs) -> usize {
     }
 }
 
-pub fn exit_process(regs: &mut Registers, sf: &mut InterruptStackFrame) {
-    crate::process::process_exit(regs, sf);
+pub fn exit_process(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
+    crate::process::process_exit(args.arg0 as isize, regs, sf);
 }
 
 pub fn list_process() {
@@ -115,4 +116,10 @@ pub fn list_dir(args: &SyscallArgs) {
 
 pub fn get_handle(fd: u8) -> Option<Resource> {
     crate::process::handle(fd)
+}
+
+pub fn sys_wait_pid(args: &SyscallArgs) -> usize {
+    let pid = ProcessId(args.arg0 as u16);
+    let ret = crate::process::wait_pid(pid);
+    ret as usize
 }

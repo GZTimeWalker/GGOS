@@ -18,7 +18,7 @@ ifeq (${RUN_MODE}, nographic)
 	QEMU_ARGS = -nographic
 endif
 
-.PHONY: build run debug clean launch \
+.PHONY: build run debug clean launch intdbg \
 	target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi \
 	target/x86_64-unknown-none/$(MODE)/ggos_kernel \
 	target/x86_64-unknown-ggos/$(MODE)
@@ -31,6 +31,13 @@ launch:
 		-net none \
 		$(QEMU_ARGS) \
 		-drive format=raw,file=fat:rw:${ESP}
+
+intdbg:
+	@qemu-system-x86_64 \
+		-bios ${OVMF} \
+		-net none \
+		$(QEMU_ARGS) \
+		-drive format=raw,file=fat:rw:${ESP} -no-reboot -d int,cpu_reset
 
 debug: build
 	@qemu-system-x86_64 \

@@ -21,6 +21,7 @@ pub enum Syscall {
     Allocate = 10,
     Deallocate = 11,
     Draw = 12,
+    WaitPid = 13,
     #[num_enum(default)]
     None = 255,
 }
@@ -42,19 +43,20 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
     );
 
     match args.syscall {
-        Syscall::SpawnProcess => regs.set_rax(spawn_process(&args)),
-        Syscall::ExitProcess => exit_process(regs, sf),
-        Syscall::Read => regs.set_rax(sys_read(&args)),
-        Syscall::Write => regs.set_rax(sys_write(&args)),
-        Syscall::Open => {}
-        Syscall::Close => {}
-        Syscall::Stat => list_process(),
-        Syscall::Time => regs.set_rax(sys_clock() as usize),
-        Syscall::DirectoryList => list_dir(&args),
-        Syscall::Allocate => regs.set_rax(sys_allocate(&args)),
-        Syscall::Deallocate => sys_deallocate(&args),
-        Syscall::Draw => sys_draw(&args),
-        Syscall::None => {}
+        Syscall::SpawnProcess   => regs.set_rax(spawn_process(&args)),
+        Syscall::ExitProcess    => exit_process(&args, regs, sf),
+        Syscall::Read           => regs.set_rax(sys_read(&args)),
+        Syscall::Write          => regs.set_rax(sys_write(&args)),
+        Syscall::Open           => {}
+        Syscall::Close          => {}
+        Syscall::Stat           => list_process(),
+        Syscall::Time           => regs.set_rax(sys_clock() as usize),
+        Syscall::DirectoryList  => list_dir(&args),
+        Syscall::Allocate       => regs.set_rax(sys_allocate(&args)),
+        Syscall::Deallocate     => sys_deallocate(&args),
+        Syscall::Draw           => sys_draw(&args),
+        Syscall::WaitPid        => regs.set_rax(sys_wait_pid(&args)),
+        Syscall::None           => {}
     }
 }
 

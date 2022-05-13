@@ -7,6 +7,7 @@
 #![feature(alloc_error_handler)]
 #![feature(type_alias_impl_trait)]
 #![feature(panic_info_message)]
+#![feature(map_try_insert)]
 
 extern crate alloc;
 #[macro_use]
