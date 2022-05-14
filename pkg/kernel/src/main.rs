@@ -20,6 +20,6 @@ pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
 }
 
 pub fn spawn_init() -> ggos::process::ProcessId {
-    let sh_file = ggos::filesystem::try_get_file("/APP/SH").unwrap();
+    let sh_file = ggos::filesystem::try_get_file("/APP/SH", fs::Mode::ReadOnly).unwrap();
     ggos::process::spawn(&sh_file).unwrap()
 }

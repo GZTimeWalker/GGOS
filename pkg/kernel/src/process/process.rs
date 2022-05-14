@@ -120,6 +120,16 @@ impl Process {
             (RFlags::IOPL_HIGH | RFlags::IOPL_LOW | RFlags::INTERRUPT_FLAG).bits();
     }
 
+    pub fn open(&mut self, res: Resource) -> u8{
+        let fd = self.proc_data.file_handles.len() as u8;
+        self.proc_data.file_handles.insert(fd, res);
+        fd
+    }
+
+    pub fn close(&mut self, fd: u8) -> bool {
+        self.proc_data.file_handles.remove(&fd).is_some()
+    }
+
     pub fn new(
         frame_alloc: &mut BootInfoFrameAllocator,
         name: String,
@@ -248,7 +258,7 @@ impl core::fmt::Display for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(
             f,
-            " #{:-3} | #{:-3} | {:10} | {}",
+            " #{:-3} | #{:-3} | {:12} | {}",
             u16::from(self.pid), u16::from(self.parent), self.name, self.ticks_passed
         )?;
         Ok(())

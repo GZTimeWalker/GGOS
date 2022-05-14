@@ -14,7 +14,8 @@ use alloc::vec::Vec;
 use device::BlockDevice;
 pub use device::*;
 pub use structs::*;
-use structs::{dir_entry::Cluster, file::Mode};
+pub use file::Mode;
+use structs::dir_entry::Cluster;
 
 // 1. The disk structure
 // How to read a file from disk

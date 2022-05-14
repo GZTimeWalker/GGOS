@@ -51,7 +51,7 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
         ))
     };
 
-    let file = crate::filesystem::try_get_file(path);
+    let file = crate::filesystem::try_get_file(path, fs::Mode::ReadOnly);
 
     if file.is_err() {
         warn!("spawn_process: file not found: {}", path);
@@ -94,6 +94,32 @@ pub fn sys_write(args: &SyscallArgs) -> usize {
     } else {
         0
     }
+}
+
+pub fn sys_open(args: &SyscallArgs) -> usize {
+    let path = unsafe {
+        core::str::from_utf8_unchecked(core::slice::from_raw_parts(
+            args.arg0 as *const u8,
+            args.arg1,
+        ))
+    };
+
+    let fd = crate::process::open(path, args.arg2 as u8);
+
+    if fd.is_none() {
+        warn!("sys_open: failed to open: {}", path);
+        return 0;
+    }
+
+    let fd = fd.unwrap();
+
+    trace!("sys_open: opened: {} at fd={}", path, &fd);
+
+    u8::from(fd) as usize
+}
+
+pub fn sys_close(args: &SyscallArgs) -> usize {
+    crate::process::close(args.arg0 as u8) as usize
 }
 
 pub fn exit_process(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {

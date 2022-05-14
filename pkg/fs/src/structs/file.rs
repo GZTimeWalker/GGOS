@@ -5,6 +5,8 @@
 //! - https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/filesystem.rs
 
 use crate::*;
+use num_enum::TryFromPrimitive;
+
 #[derive(Debug, Clone)]
 pub struct File {
     /// The starting point of the file.
@@ -18,20 +20,22 @@ pub struct File {
 }
 
 /// The different ways we can open a file.
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, TryFromPrimitive)]
+#[repr(u8)]
 pub enum Mode {
     /// Open a file for reading, if it exists.
-    ReadOnly,
+    #[num_enum(default)]
+    ReadOnly = 0,
     /// Open a file for appending (writing to the end of the existing file), if it exists.
-    ReadWriteAppend,
+    ReadWriteAppend = 1,
     /// Open a file and remove all contents, before writing to the start of the existing file, if it exists.
-    ReadWriteTruncate,
+    ReadWriteTruncate = 2,
     /// Create a new empty file. Fail if it exists.
-    ReadWriteCreate,
+    ReadWriteCreate = 3,
     /// Create a new empty file, or truncate an existing file.
-    ReadWriteCreateOrTruncate,
+    ReadWriteCreateOrTruncate = 4,
     /// Create a new empty file, or append to an existing file.
-    ReadWriteCreateOrAppend,
+    ReadWriteCreateOrAppend = 5,
 }
 
 #[derive(Debug)]

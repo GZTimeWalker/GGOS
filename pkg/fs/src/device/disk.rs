@@ -157,7 +157,7 @@ where
         let block = volume.read_block(0).unwrap();
         let bpb = FAT16Bpb::new(block.inner()).unwrap();
 
-        debug!("Loading FAT16 Volume: \n{:?}", bpb);
+        trace!("Loading FAT16 Volume: \n{:?}", bpb);
 
         // FirstDataSector = BPB_ResvdSecCnt + (BPB_NumFATs * FATSz) + RootDirSectors;
         let root_dir_size =

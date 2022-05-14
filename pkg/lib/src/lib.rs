@@ -14,9 +14,11 @@ mod syscall;
 pub mod allocator;
 
 use io::{stdout, stderr};
-pub use syscall::*;
 use core::fmt::*;
 use alloc::format;
+
+pub use syscall::*;
+pub use io::FileMode;
 
 #[derive(Clone, Debug)]
 pub enum Syscall {

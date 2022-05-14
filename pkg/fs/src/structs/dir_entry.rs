@@ -287,7 +287,7 @@ impl core::fmt::Display for DirEntry {
         let (size, unit) = self.humanized_size();
         write!(
             f,
-            "{:8}{} | {} | {}{}",
+            "{:4}{} | {} | {}{}",
            size, unit, self.moditified_time.format("%Y/%m/%d %H:%M:%S"), self.filename,
            if self.is_directory() { "/" } else { "" }
         )

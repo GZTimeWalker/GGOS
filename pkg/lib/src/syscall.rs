@@ -5,8 +5,8 @@ pub fn sys_draw(x: i32, y: i32, color: u32) -> usize {
     syscall!(Syscall::Draw, x as usize, y as usize, color as usize)
 }
 
-pub fn sys_write(fd: u64, buf: &[u8]) -> Option<usize> {
-    let ret = syscall!(Syscall::Write, fd, buf.as_ptr() as u64, buf.len() as u64) as isize;
+pub fn sys_write(fd: u8, buf: &[u8]) -> Option<usize> {
+    let ret = syscall!(Syscall::Write, fd as u64, buf.as_ptr() as u64, buf.len() as u64) as isize;
     if ret.is_negative() {
         None
     } else {
@@ -14,8 +14,8 @@ pub fn sys_write(fd: u64, buf: &[u8]) -> Option<usize> {
     }
 }
 
-pub fn sys_read(fd: u64, buf: &mut [u8]) -> Option<usize> {
-    let ret = syscall!(Syscall::Read, fd, buf.as_ptr() as u64, buf.len() as u64) as isize;
+pub fn sys_read(fd: u8, buf: &mut [u8]) -> Option<usize> {
+    let ret = syscall!(Syscall::Read, fd as u64, buf.as_ptr() as u64, buf.len() as u64) as isize;
     if ret.is_negative() {
         None
     } else {
@@ -66,9 +66,26 @@ pub fn sys_stat() {
 }
 
 pub fn sys_spawn(path: &str) -> u16 {
-    syscall!(
+    let pid = syscall!(
         Syscall::SpawnProcess,
         path.as_ptr() as u64,
         path.len() as u64
-    ) as u16
+    ) as u16;
+    unsafe {
+        core::arch::asm!("hlt");
+    }
+    pid
+}
+
+pub fn sys_open(path: &str, mode: crate::FileMode) -> u8 {
+    syscall!(
+        Syscall::Open,
+        path.as_ptr() as u64,
+        path.len() as u64,
+        mode as u64
+    ) as u8
+}
+
+pub fn sys_close(fd: u8) -> bool {
+    syscall!(Syscall::Close, fd as u64) != 0
 }

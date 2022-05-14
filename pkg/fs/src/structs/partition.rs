@@ -16,7 +16,7 @@ impl MBRPartitions {
                 &data[0x1be + (i * 16)..0x1be + (i * 16) + 16].try_into().unwrap()
             );
             if partitions[i].is_active() {
-                debug!("Partition {}: \n{:?}", i, partitions[i]);
+                trace!("Partition {}: \n{:?}", i, partitions[i]);
             }
         }
         Self { partitions: partitions.try_into().unwrap() }

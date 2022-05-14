@@ -1,5 +1,9 @@
-use x86_64::instructions::random::RdRand;
 use super::*;
+use rand::{RngCore, SeedableRng};
+use rand_hc::Hc128Rng;
+use x86_64::instructions::random::RdRand;
+
+pub static GLOBAL_RNG: spin::Once<spin::Mutex<Hc128Rng>> = spin::Once::new();
 
 #[derive(Debug, Clone)]
 pub struct Random;
@@ -11,12 +15,19 @@ impl Device<u8> for Random {
                 if let Some(num) = rng.get_u16() {
                     buf[offset + i] = num as u8;
                 } else {
-                    return Err(DeviceError::Unknown);
+                    return Err(DeviceError::ReadError);
                 }
             }
             Ok(size)
         } else {
-            Err(DeviceError::Unknown)
+            if let Some(mut rng) = GLOBAL_RNG.get().and_then(spin::Mutex::try_lock) {
+                for i in 0..size {
+                    buf[offset + i] = rng.next_u32() as u8;
+                }
+                Ok(size)
+            } else {
+                Err(DeviceError::ReadError)
+            }
         }
     }
 
@@ -25,27 +36,11 @@ impl Device<u8> for Random {
     }
 }
 
-macro_rules! rand {
-    ($ty:ty) => {
-        paste::item! {
-            pub fn [<rand_ $ty>]() -> $ty {
-                if let Some(rdrand) = RdRand::new() {
-                    if let Some(rand) = rdrand.[<get_ $ty>]() {
-                        return rand;
-                    }
-                }
-                0
-            }
-        }
-    }
-}
-
 impl Random {
-    pub fn new() -> Self {
+    pub fn new(seed: u64) -> Self {
+        if !GLOBAL_RNG.is_completed() {
+            GLOBAL_RNG.call_once(|| spin::Mutex::new(Hc128Rng::seed_from_u64(seed)));
+        }
         Self
     }
-
-    rand!(u64);
-    rand!(u32);
-    rand!(u16);
 }

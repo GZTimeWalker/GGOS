@@ -105,6 +105,18 @@ pub fn handle(fd: u8) -> Option<Resource> {
     })
 }
 
+pub fn open(path: &str, mode: u8) -> Option<u8> {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager_for_sure().open(path, mode)
+    })
+}
+
+pub fn close(fd: u8) -> bool {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager_for_sure().close(fd)
+    })
+}
+
 pub fn still_alive(pid: ProcessId) -> bool {
     x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager_for_sure().still_alive(pid)

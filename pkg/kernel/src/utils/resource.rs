@@ -32,7 +32,7 @@ impl Resource {
                 }
                 _ => Err(()),
             },
-            Resource::Random(random) => Ok(random.read(buf, 0, buf.len()).unwrap_or(0)),
+            Resource::Random(random) => Ok(random.read(buf, 0, buf.len()).unwrap()),
             Resource::Null => Ok(0),
         }
     }

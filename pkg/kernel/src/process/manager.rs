@@ -4,8 +4,8 @@ use alloc::collections::BTreeMap;
 use alloc::format;
 use alloc::vec::Vec;
 use x86_64::structures::idt::InterruptStackFrame;
-use x86_64::VirtAddr;
 use x86_64::structures::paging::PhysFrame;
+use x86_64::VirtAddr;
 use xmas_elf::ElfFile;
 
 once_mutex!(pub PROCESS_MANAGER: ProcessManager);
@@ -28,7 +28,7 @@ impl ProcessManager {
         Self {
             cur_pid: ProcessId(0),
             processes,
-            exit_code
+            exit_code,
         }
     }
 
@@ -107,6 +107,37 @@ impl ProcessManager {
     fn get_kernel_page_table(&self) -> PhysFrame {
         let proc = self.processes.get(0).unwrap();
         proc.page_table_addr()
+    }
+
+    pub fn open(&mut self, path: &str, mode: u8) -> Option<u8> {
+        let res = match path {
+            "/dev/random" => {
+                Resource::Random(fs::Random::new(crate::utils::clock::now().timestamp() as u64))
+            }
+            path => {
+                let file = crate::filesystem::try_get_file(path, fs::Mode::try_from(mode).unwrap());
+
+                if file.is_err() {
+                    return None;
+                }
+
+                Resource::File(file.unwrap())
+            }
+        };
+
+        trace!("Opening {}...\n{:#?}", path, &res);
+
+        let fd = self.current_mut().open(res);
+
+        Some(fd)
+    }
+
+    pub fn close(&mut self, fd: u8) -> bool {
+        if fd < 3 {
+            false // stdin, stdout, stderr are reserved
+        } else {
+            self.current_mut().close(fd)
+        }
     }
 
     pub fn spawn(

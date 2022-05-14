@@ -47,8 +47,8 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         Syscall::ExitProcess    => exit_process(&args, regs, sf),
         Syscall::Read           => regs.set_rax(sys_read(&args)),
         Syscall::Write          => regs.set_rax(sys_write(&args)),
-        Syscall::Open           => {}
-        Syscall::Close          => {}
+        Syscall::Open           => regs.set_rax(sys_open(&args)),
+        Syscall::Close          => regs.set_rax(sys_close(&args)),
         Syscall::Stat           => list_process(),
         Syscall::Time           => regs.set_rax(sys_clock() as usize),
         Syscall::DirectoryList  => list_dir(&args),

@@ -19,9 +19,10 @@ pub enum StdIO {
 }
 
 pub fn init() {
-    info!("Initializing filesystem...");
-
+    info!("Opening disk device...");
     let [p0, _, _, _] = Disk::new(Drive::open(0, 0).unwrap()).volumes();
+
+    info!("Mounting filesystem...");
     FILESYSTEM.call_once(|| FAT16Volume::new(p0));
 
     info!("Initialized Filesystem.");
@@ -56,7 +57,7 @@ pub fn resolve_path(root_path: &str) -> Option<Directory> {
     Some(root)
 }
 
-pub fn try_get_file(path: &str) -> Result<File, VolumeError> {
+pub fn try_get_file(path: &str, mode: file::Mode) -> Result<File, VolumeError> {
     let path = path.to_owned();
     let pos = path.rfind('/');
 
@@ -75,7 +76,7 @@ pub fn try_get_file(path: &str) -> Result<File, VolumeError> {
     }
     let root = root.unwrap();
 
-    fs::open_file(get_volume(), &root, filename, file::Mode::ReadOnly)
+    fs::open_file(get_volume(), &root, filename, mode)
 }
 
 pub fn ls(root_path: &str) {
@@ -85,79 +86,11 @@ pub fn ls(root_path: &str) {
         None => return,
     };
 
-    println!("     Size | Last Modified       | Name");
+    println!(" Size | Last Modified       | Name");
 
     if let Err(err) = fs::iterate_dir(get_volume(), &root, |entry| {
         println!("{}", entry);
     }) {
         println!("{:?}", err);
     }
-}
-
-pub fn cat(root_path: &str, file: &str) {
-
-    let root = match resolve_path(root_path) {
-        Some(root) => root,
-        None => return,
-    };
-
-    let file = fs::open_file(get_volume(), &root, file, file::Mode::ReadOnly);
-
-    if file.is_err() {
-        warn!("ERROR: {:?}", file.unwrap_err());
-        return;
-    }
-
-    let file = file.unwrap();
-
-    let data = fs::read(get_volume(), &file);
-
-    if data.is_err() {
-        warn!("ERROR: {:?}", data.unwrap_err());
-        return;
-    }
-
-    let data = data.unwrap();
-
-    let mut count = 0;
-    print!("    ");
-    for (idx, b) in data.iter().enumerate() {
-        print!("{:02x}", b);
-        count += 1;
-        if count % 8 == 0 {
-            print!(" ");
-        }
-        if count == 24 {
-            print!(" | ");
-            for i in idx - 23..=idx {
-                let d = data[i];
-                if (d as char).is_ascii_graphic() || d == 0x20 {
-                    print!("{}", d as char);
-                } else {
-                    print!(".");
-                }
-            }
-            println!();
-            count = 0;
-            print!("    ")
-        }
-    }
-    if count > 0 {
-        for _ in count..24 {
-            print!("  ");
-        }
-        for _ in 0..3 - (count / 8) {
-            print!(" ");
-        }
-        print!(" | ");
-        for i in data.len() - count..data.len() {
-            let d = data[i];
-            if (d as char).is_ascii_graphic() || d == 0x20 {
-                print!("{}", d as char);
-            } else {
-                print!(".");
-            }
-        }
-    }
-    println!();
 }

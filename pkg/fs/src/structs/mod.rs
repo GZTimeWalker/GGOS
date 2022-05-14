@@ -14,3 +14,4 @@ pub use dir_entry::DirEntry;
 pub use directory::Directory;
 pub use file::File;
 pub use block::Block;
+pub use file::Mode;
