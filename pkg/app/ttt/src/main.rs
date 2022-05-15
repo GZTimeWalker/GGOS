@@ -154,7 +154,7 @@ fn draw_board(state: &[CellState; 9]) {
 }
 
 fn get_player_input(state: &[CellState; 9]) -> usize {
-    println!("Enter the # for your choice (X)");
+    print!("Enter the # for your choice (X): ");
 
     let guess = lib::stdin().read_line();
 

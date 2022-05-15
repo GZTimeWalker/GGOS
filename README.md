@@ -4,11 +4,24 @@ OS course project.
 
 ---
 
-Currently under development, the project is progressing along with the course progress.
+The basic development of this course operating system has been completed.
 
 Using `JetBrainsMono` as console font.
 
-`/usr/share/ovmf/OVMF.fd` is required for booting this OS.
+
+## Usage
+
+use `make run` to start the OS, or run as no-graphic mode with `make run RUN_MODE=nographic`
+
+`/usr/share/ovmf/OVMF.fd` is required for booting this OS, you may need to install `ovmf` first. The development work is based on QEMU v7.0.0.
+
+You can put your files to `esp` directory to read them in the OS.
+
+## Demo
+
+![](assets/img/demo1.png)
+![](assets/img/demo2.png)
+![](assets/img/demo3.png)
 
 ## Reference
 
