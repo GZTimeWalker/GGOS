@@ -6,6 +6,8 @@ pub struct Stdin;
 pub struct Stdout;
 pub struct Stderr;
 
+pub struct Random(u8);
+
 impl Stdin {
     fn new() -> Self {
         Self
@@ -67,6 +69,38 @@ impl Stderr {
 
     pub fn write(&self, s: &str) {
         sys_write(2, s.as_bytes());
+    }
+}
+
+impl Random {
+    pub fn new() -> Self {
+        Self(sys_open("/dev/random", FileMode::ReadOnly))
+    }
+
+    pub fn next_u32(&self) -> u32 {
+        let mut buf = vec![0; 4];
+        if let Some(bytes) = sys_read(self.0, &mut buf) {
+            if bytes > 0 {
+                return u32::from_le_bytes(buf[..bytes].try_into().unwrap());
+            }
+        }
+        0
+    }
+
+    pub fn next_u64(&self) -> u64 {
+        let mut buf = vec![0; 8];
+        if let Some(bytes) = sys_read(self.0, &mut buf) {
+            if bytes > 0 {
+                return u64::from_le_bytes(buf[..bytes].try_into().unwrap());
+            }
+        }
+        0
+    }
+}
+
+impl Drop for Random {
+    fn drop(&mut self) {
+        sys_close(self.0);
     }
 }
 

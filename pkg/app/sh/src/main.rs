@@ -7,7 +7,6 @@ mod services;
 mod consts;
 
 use lib::*;
-use lib::io::stdin;
 use alloc::vec::Vec;
 use alloc::string::String;
 

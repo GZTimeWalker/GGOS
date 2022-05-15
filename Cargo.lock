@@ -193,7 +193,7 @@ dependencies = [
 
 [[package]]
 name = "ggos_kernel"
-version = "0.7.3"
+version = "0.8.0"
 dependencies = [
  "bit_field",
  "bitflags",
@@ -222,6 +222,13 @@ dependencies = [
 [[package]]
 name = "ggos_sh"
 version = "0.2.0"
+dependencies = [
+ "gglib",
+]
+
+[[package]]
+name = "ggos_ttt"
+version = "0.1.0"
 dependencies = [
  "gglib",
 ]
