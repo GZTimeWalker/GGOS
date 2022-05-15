@@ -114,7 +114,7 @@ pub fn exec(path: &str, root_dir: &str) {
     let pid = sys_spawn(path.as_str());
 
     if pid == 0 {
-        errln!("[!] failed to spawn process: {}", path);
+        errln!("failed to spawn process: {}", path);
         return;
     } else {
         println!("[+] spawned process: {}#{}", path, pid);
