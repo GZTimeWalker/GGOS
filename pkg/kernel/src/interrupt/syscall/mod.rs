@@ -43,19 +43,33 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
     );
 
     match args.syscall {
+        // path: &str (arg0 as *const u8, arg1 as len) -> pid: u16
         Syscall::SpawnProcess   => regs.set_rax(spawn_process(&args)),
+        // pid: arg0 as u16
         Syscall::ExitProcess    => exit_process(&args, regs, sf),
+        // fd: arg0 as u8, buf: &[u8] (arg1 as *const u8, arg2 as len)
         Syscall::Read           => regs.set_rax(sys_read(&args)),
+        // fd: arg0 as u8, buf: &[u8] (arg1 as *const u8, arg2 as len)
         Syscall::Write          => regs.set_rax(sys_write(&args)),
+        // path: &str (arg0 as *const u8, arg1 as len), mode: arg2 as u8 -> fd: u8
         Syscall::Open           => regs.set_rax(sys_open(&args)),
+        // fd: arg0 as u8 -> success: bool
         Syscall::Close          => regs.set_rax(sys_close(&args)),
+        // None
         Syscall::Stat           => list_process(),
+        // None -> time: usize
         Syscall::Time           => regs.set_rax(sys_clock() as usize),
+        // path: &str (arg0 as *const u8, arg1 as len)
         Syscall::DirectoryList  => list_dir(&args),
+        // layout: arg0 as *const Layout -> ptr: *mut u8
         Syscall::Allocate       => regs.set_rax(sys_allocate(&args)),
+        // ptr: arg0 as *mut u8
         Syscall::Deallocate     => sys_deallocate(&args),
+        // x: arg0 as i32, y: arg1 as i32, color: arg2 as u32
         Syscall::Draw           => sys_draw(&args),
+        // pid: arg0 as u16 -> status: isize
         Syscall::WaitPid        => regs.set_rax(sys_wait_pid(&args)),
+        // None
         Syscall::None           => {}
     }
 }
