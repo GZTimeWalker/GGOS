@@ -1,5 +1,5 @@
 [build]
-target = "../config/x86_64-unknown-ggos.json"
+target = "config/x86_64-unknown-ggos.json"
 
 [unstable]
 build-std-features = ["compiler-builtins-mem"]
