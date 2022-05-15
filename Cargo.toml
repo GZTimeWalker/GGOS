@@ -9,3 +9,7 @@ members = [
     "pkg/app/hello",
     "pkg/app/ttt"
 ]
+
+[profile.release-with-debug]
+inherits = "release"
+debug = true

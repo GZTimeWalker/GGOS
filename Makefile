@@ -6,18 +6,17 @@ MODE ?= release
 RUN_MODE ?=
 CUR_PATH := $(shell pwd)
 APP_PATH := $(CUR_PATH)/pkg/app
-DBG_ARGS :=
 
 APPS := $(shell find $(APP_PATH) -maxdepth 1 -type d)
 APPS := $(filter-out $(APP_PATH),$(patsubst $(APP_PATH)/%, %, $(APPS)))
 APPS := $(filter-out config,$(APPS))
 APPS := $(filter-out .cargo,$(APPS))
 
-ifeq ("", ${DEBUG_INFO})
-	DBG_ARGS := --profile=release-with-debug
-else
-	ifeq (${MODE}, release)
-		BUILD_ARGS += --release
+ifeq (${MODE}, release)
+	BUILD_ARGS := --release
+
+	ifeq (${DEBUG_INFO}, true)
+		BUILD_ARGS := --profile=release-with-debug
 	endif
 endif
 
