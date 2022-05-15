@@ -5,10 +5,9 @@ members = [
     "pkg/fs",
     "pkg/kernel",
     "pkg/lib",
-    "pkg/app/sh",
-    "pkg/app/hello",
-    "pkg/app/ttt"
+    "pkg/app/*"
 ]
+exclude = ["pkg/app/config", "pkg/app/.cargo"]
 
 [profile.release-with-debug]
 inherits = "release"
