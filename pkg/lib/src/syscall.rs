@@ -95,5 +95,9 @@ pub fn sys_get_pid() -> u16 {
 }
 
 pub fn sys_fork() -> u16 {
-    syscall!(Syscall::Fork) as u16
+    let pid = syscall!(Syscall::Fork);
+    unsafe {
+        core::arch::asm!("hlt");
+    }
+    pid as u16
 }

@@ -5,6 +5,7 @@ use x86_64::VirtAddr;
 
 pub const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 pub const SYSCALL_IST_INDEX: u16 = 1;
+pub const PAGE_FAULT_IST_INDEX: u16 = 2;
 pub const CONTEXT_SWITCH_IST_INDEX: u16 = 0;
 
 lazy_static! {
@@ -23,7 +24,15 @@ lazy_static! {
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_end = stack_start + STACK_SIZE;
-            info!("Syscall IST:      0x{:016x}-0x{:016x}", stack_start.as_u64(), stack_end.as_u64());
+            info!("Syscall IST     : 0x{:016x}-0x{:016x}", stack_start.as_u64(), stack_end.as_u64());
+            stack_end
+        };
+        tss.interrupt_stack_table[PAGE_FAULT_IST_INDEX as usize] = {
+            const STACK_SIZE: usize = 0x2000;
+            static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
+            let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
+            let stack_end = stack_start + STACK_SIZE;
+            info!("Page Fault IST  : 0x{:016x}-0x{:016x}", stack_start.as_u64(), stack_end.as_u64());
             stack_end
         };
         tss

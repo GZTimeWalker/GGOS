@@ -12,9 +12,7 @@ use core::intrinsics::copy_nonoverlapping;
 use x86_64::registers::control::{Cr3, Cr3Flags};
 use x86_64::registers::rflags::RFlags;
 use x86_64::structures::idt::{InterruptStackFrame, InterruptStackFrameValue};
-use x86_64::structures::paging::FrameAllocator;
-use x86_64::structures::paging::PageTableFlags;
-use x86_64::structures::paging::{OffsetPageTable, PageTable, PhysFrame};
+use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
 use xmas_elf::ElfFile;
 
@@ -175,11 +173,12 @@ impl Process {
     ) -> Self {
         let name = name.to_ascii_lowercase();
 
+        // 1. create page table
         let (page_table, page_table_addr) = Self::clone_page_table(page_table_source, frame_alloc);
 
         trace!("Alloc page table for {}: {:?}", name, page_table_addr);
 
-        // 4. create context
+        // 2. create context
         let status = ProgramStatus::Created;
         let stack_frame = InterruptStackFrameValue {
             instruction_pointer: VirtAddr::new_truncate(0),
@@ -192,7 +191,7 @@ impl Process {
         let ticks_passed = 0;
         let pid = ProcessId::new();
 
-        debug!("New process {}#{} created.", name, pid);
+        trace!("New process {}#{} created.", name, pid);
 
         // 3. create process object
         Self {
@@ -222,25 +221,57 @@ impl Process {
         self.parent
     }
 
+    fn clone_stack(&self, offset: u64) {
+        // assume that every thread stack is the same size (STACK_PAGES * PAGE_SIZE)
+        let cur_stack_start = self.stack_frame.stack_pointer.as_u64() & STACK_START_MASK;
+        let offset_stack_start = cur_stack_start + offset;
+
+        trace!(
+            "Clone stack: {:#x} -> {:#x}",
+            cur_stack_start, offset_stack_start
+        );
+
+        // copy stack
+        unsafe {
+            copy_nonoverlapping::<u8>(
+                cur_stack_start as *mut u8,
+                offset_stack_start as *mut u8,
+                STACK_SIZE as usize,
+            );
+        }
+    }
+
     pub fn fork(&mut self) -> Process {
-        // set all page entry to readonly
-        self.page_table
-            .take()
-            .unwrap()
-            .level_4_table()
-            .iter_mut()
-            .for_each(|page| {
-                page.flags().remove(PageTableFlags::WRITABLE);
-            });
+        // deep clone page is not impl yet, so we put the thread stack to a new mem
+        let frame_alloc = &mut *get_frame_alloc_for_sure();
 
-        let alloc = &mut *get_frame_alloc_for_sure();
+        // use the same page table with the parent, but remap stack with offset
+        let offset = (self.children.len() + 1) as u64 * STACK_SIZE;
 
-        let (mut page_table, page_table_addr) =
-            Self::clone_page_table(self.page_table_addr.0, alloc);
+        trace!("Map thread stack to: {:#x}", STACK_BOT + offset);
+        elf::map_stack(
+            STACK_BOT + offset,
+            STACK_PAGES,
+            self.page_table.as_mut().unwrap(),
+            frame_alloc,
+        ).unwrap();
 
-        // remap
-        elf::unmap_stack(STACK_BOT, STACK_PAGES, &mut page_table, alloc, false).unwrap();
-        elf::map_stack(STACK_BOT, STACK_PAGES, &mut page_table, alloc).unwrap();
+        self.clone_stack(offset);
+
+        let mut new_stack_frame = self.stack_frame.clone();
+        new_stack_frame.stack_pointer += offset;
+
+        let page_table_raw = unsafe {
+            (physical_to_virtual(self.page_table_addr.0.start_address().as_u64()) as *mut PageTable)
+                .as_mut()
+        }.unwrap();
+
+        let owned_page_table = unsafe {
+            OffsetPageTable::new(
+                page_table_raw,
+                VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET as u64),
+            )
+        };
 
         let mut child = Self {
             pid: ProcessId::new(),
@@ -248,10 +279,10 @@ impl Process {
             parent: self.pid,
             status: ProgramStatus::Created,
             ticks_passed: 0,
-            stack_frame: self.stack_frame.clone(),
+            stack_frame: new_stack_frame,
             regs: self.regs.clone(),
-            page_table_addr: (page_table_addr, Cr3::read().1),
-            page_table: Some(page_table),
+            page_table_addr: (self.page_table_addr.0, Cr3::read().1),
+            page_table: Some(owned_page_table),
             children: Vec::new(),
             proc_data: self.proc_data.clone(),
         };
@@ -261,12 +292,12 @@ impl Process {
         self.regs.rax = u16::from(child.pid) as usize;
         child.regs.rax = 0;
 
-        debug!(
+        trace!(
             "Thread {}#{} forked to {}#{}.",
             self.name, self.pid, child.name, child.pid
         );
-        debug!("{:?}", self);
-        debug!("{:?}", &child);
+        trace!("{:#?}", self);
+        trace!("{:#?}", &child);
 
         return child;
     }
@@ -299,28 +330,20 @@ impl Drop for Process {
 
 impl core::fmt::Debug for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "Process {{\n")?;
-        write!(f, "    pid: {},\n", self.pid)?;
-        write!(f, "    name: {},\n", self.name)?;
-        write!(f, "    parent: {},\n", self.parent)?;
-        write!(f, "    status: {:?},\n", self.status)?;
-        write!(f, "    ticks_passed: {},\n", self.ticks_passed)?;
-        write!(f, "    children: {:?}\n", self.children)?;
-        write!(f, "    page_table_addr: {:?},\n", self.page_table_addr)?;
-        write!(
-            f,
-            "    stack_top: 0x{:016x},\n",
-            self.stack_frame.stack_pointer.as_u64()
-        )?;
-        write!(f, "    cpu_flags: 0x{:04x},\n", self.stack_frame.cpu_flags)?;
-        write!(
-            f,
-            "    instruction_pointer: 0x{:016x}\n",
-            self.stack_frame.instruction_pointer.as_u64()
-        )?;
-        write!(f, "    regs: {:?}\n", self.regs)?;
-        write!(f, "}}")?;
-        Ok(())
+        let mut f = f.debug_struct("Process");
+        f.field("pid", &self.pid);
+        f.field("name", &self.name);
+        f.field("parent", &self.parent);
+        f.field("status", &self.status);
+        f.field("ticks_passed", &self.ticks_passed);
+        f.field("children", &self.children);
+        f.field("page_table_addr", &self.page_table_addr);
+        f.field("status", &self.status);
+        f.field("stack_top", &self.stack_frame.stack_pointer);
+        f.field("cpu_flags", &self.stack_frame.cpu_flags);
+        f.field("instruction_pointer", &self.stack_frame.instruction_pointer);
+        f.field("regs", &self.regs);
+        f.finish()
     }
 }
 

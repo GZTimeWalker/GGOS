@@ -58,21 +58,21 @@ impl fmt::Debug for Registers {
 impl fmt::Debug for RegistersValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Registers\n")?;
-        write!(f, "    r15: 0x{:016x}, ", self.r15)?;
-        write!(f, "    r14: 0x{:016x}, ", self.r14)?;
-        write!(f, "    r13: 0x{:016x},\n", self.r13)?;
-        write!(f, "    r12: 0x{:016x}, ", self.r12)?;
-        write!(f, "    r11: 0x{:016x}, ", self.r11)?;
-        write!(f, "    r10: 0x{:016x},\n", self.r10)?;
-        write!(f, "    r9 : 0x{:016x}, ", self.r9)?;
-        write!(f, "    r8 : 0x{:016x}, ", self.r8)?;
-        write!(f, "    rdi: 0x{:016x},\n", self.rdi)?;
-        write!(f, "    rsi: 0x{:016x}, ", self.rsi)?;
-        write!(f, "    rdx: 0x{:016x}, ", self.rdx)?;
-        write!(f, "    rcx: 0x{:016x},\n", self.rcx)?;
-        write!(f, "    rbx: 0x{:016x}, ", self.rbx)?;
-        write!(f, "    rax: 0x{:016x}, ", self.rax)?;
-        write!(f, "    rbp: 0x{:016x}\n", self.rbp)?;
+        write!(f, "r15: 0x{:016x}, ", self.r15)?;
+        write!(f, "r14: 0x{:016x}, ", self.r14)?;
+        write!(f, "r13: 0x{:016x},\n", self.r13)?;
+        write!(f, "r12: 0x{:016x}, ", self.r12)?;
+        write!(f, "r11: 0x{:016x}, ", self.r11)?;
+        write!(f, "r10: 0x{:016x},\n", self.r10)?;
+        write!(f, "r9 : 0x{:016x}, ", self.r9)?;
+        write!(f, "r8 : 0x{:016x}, ", self.r8)?;
+        write!(f, "rdi: 0x{:016x},\n", self.rdi)?;
+        write!(f, "rsi: 0x{:016x}, ", self.rsi)?;
+        write!(f, "rdx: 0x{:016x}, ", self.rdx)?;
+        write!(f, "rcx: 0x{:016x},\n", self.rcx)?;
+        write!(f, "rbx: 0x{:016x}, ", self.rbx)?;
+        write!(f, "rax: 0x{:016x}, ", self.rax)?;
+        write!(f, "rbp: 0x{:016x}", self.rbp)?;
         Ok(())
     }
 }

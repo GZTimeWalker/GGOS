@@ -116,8 +116,6 @@ pub fn exec(path: &str, root_dir: &str) {
     if pid == 0 {
         errln!("failed to spawn process: {}", path);
         return;
-    } else {
-        println!("[+] spawned process: {}#{}", path, pid);
     }
 
     let ret = sys_wait_pid(pid);

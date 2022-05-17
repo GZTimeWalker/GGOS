@@ -65,7 +65,7 @@ pub fn map_stack(
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) -> Result<(), MapToError<Size4KiB>> {
-    trace!("mapping stack at {:#x}", addr);
+    trace!("Mapping stack at {:#x}", addr);
     // create a stack
     let stack_start = Page::containing_address(VirtAddr::new(addr));
     let stack_end = stack_start + pages;
@@ -83,6 +83,8 @@ pub fn map_stack(
         }
     }
 
+    trace!("Stack hint: {:#x} -> {:#x}", addr, page_table.translate_page(stack_start).unwrap().start_address());
+
     Ok(())
 }
 
@@ -94,9 +96,12 @@ pub fn unmap_stack(
     frame_deallocator: &mut impl FrameDeallocator<Size4KiB>,
     do_dealloc: bool,
 ) -> Result<(), UnmapError> {
-    trace!("unmapping stack at {:#x}", addr);
+    trace!("Unmapping stack at {:#x}", addr);
 
     let stack_start = Page::containing_address(VirtAddr::new(addr));
+
+    trace!("Stack hint: {:#x} -> {:#x}", addr, page_table.translate_page(stack_start).unwrap().start_address());
+
     let stack_end = stack_start + pages;
 
     for page in Page::range(stack_start, stack_end) {
@@ -135,13 +140,16 @@ fn map_segment(
 
     let flags = segment.flags();
     let mut page_table_flags = PageTableFlags::PRESENT;
-    if !flags.is_execute() {
-        page_table_flags |= PageTableFlags::NO_EXECUTE
-    };
-    if flags.is_write() {
-        page_table_flags |= PageTableFlags::WRITABLE
-    };
 
+    if !flags.is_execute() {
+        page_table_flags |= PageTableFlags::NO_EXECUTE;
+    }
+
+    if flags.is_write() {
+        page_table_flags |= PageTableFlags::WRITABLE;
+    }
+
+    trace!("Segment page table flag: {:?}", page_table_flags);
     for frame in PhysFrame::range_inclusive(start_frame, end_frame) {
         let offset = frame - start_frame;
         let page = start_page + offset;

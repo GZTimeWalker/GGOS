@@ -1,6 +1,7 @@
 use super::*;
 use crate::utils::Registers;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
+use x86_64::registers::control::Cr2;
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.divide_error.set_handler_fn(divide_error_handler);
@@ -24,8 +25,10 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
         .set_handler_fn(stack_segment_fault_handler);
     idt.general_protection_fault
         .set_handler_fn(general_protection_fault_handler);
+
     idt.page_fault.set_handler_fn(page_fault_handler)
-        .set_stack_index(crate::gdt::SYSCALL_IST_INDEX);
+        .set_stack_index(crate::gdt::PAGE_FAULT_IST_INDEX);
+
     idt.alignment_check.set_handler_fn(alignment_check_handler);
     idt.machine_check.set_handler_fn(machine_check_handler);
     idt.simd_floating_point
@@ -157,13 +160,11 @@ pub extern "C" fn syscall(mut regs: Registers, mut sf: InterruptStackFrame) {
 as_handler!(syscall);
 
 pub extern "x86-interrupt" fn page_fault_handler(
-    mut stack_frame: InterruptStackFrame,
+    stack_frame: InterruptStackFrame,
     err_code: PageFaultErrorCode,
 ) {
-    if let Err(_) = crate::process::try_resolve_page_fault(err_code, &mut stack_frame) {
-        panic!(
-            "EXCEPTION: PAGE FAULT, ERROR_CODE: {:?}\n\n{:#?}",
-            err_code, stack_frame
-        );
-    }
+    panic!(
+        "EXCEPTION: PAGE FAULT, ERROR_CODE: {:?}\n\nTrying to access: {:#x}\n{:#?}",
+        err_code, Cr2::read(), stack_frame
+    );
 }

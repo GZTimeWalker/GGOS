@@ -22,8 +22,9 @@ use x86_64::structures::idt::PageFaultErrorCode;
 use self::manager::init_PROCESS_MANAGER;
 
 const STACK_BOT: u64 = 0x0000_2000_0000_0000;
-const STACK_PAGES: u64 = 512;
-const STACK_TOP: u64 = STACK_BOT + STACK_PAGES * 0x1000;
+const STACK_PAGES: u64 = 0x200;
+const STACK_SIZE: u64 = STACK_PAGES * crate::memory::PAGE_SIZE;
+const STACK_START_MASK: u64 = !(STACK_SIZE - 1);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ProgramStatus {
@@ -34,7 +35,7 @@ pub enum ProgramStatus {
     Dead,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ProcessId(pub u16);
 
 impl ProcessId {
@@ -45,6 +46,12 @@ impl ProcessId {
 }
 
 impl core::fmt::Display for ProcessId {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl core::fmt::Debug for ProcessId {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.0)
     }
@@ -130,13 +137,13 @@ pub fn current_pid() -> ProcessId {
     })
 }
 
-pub fn try_resolve_page_fault(err_code: PageFaultErrorCode, sf: &mut InterruptStackFrame) -> Result<(),()> {
+pub fn try_resolve_page_fault(_err_code: PageFaultErrorCode, _sf: &mut InterruptStackFrame) -> Result<(),()> {
     let addr = Cr2::read();
     debug!("Trying to access address: {:?}", addr);
 
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager_for_sure();
-        debug!("Current process: {:?}", manager.current());
+        debug!("Current process: {:#?}", manager.current());
     });
 
     Err(())
