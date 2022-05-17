@@ -23,10 +23,20 @@ impl Stdin {
         None
     }
 
+    pub fn read_char_with_buf(&self, buf: &mut [u8]) -> Option<char> {
+        if let Some(bytes) = sys_read(0, buf) {
+            if bytes > 0 {
+                return Some(String::from_utf8_lossy(&buf[..bytes]).to_string().remove(0));
+            }
+        }
+        None
+    }
+
     pub fn read_line(&self) -> String {
         let mut string = String::new();
+        let mut buf = vec![0; 4];
         loop {
-            if let Some(k) = self.read_char() {
+            if let Some(k) = self.read_char_with_buf(&mut buf[..4]) {
                 match k {
                     '\n' => {
                         stdout().write("\n");

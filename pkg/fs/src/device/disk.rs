@@ -87,7 +87,7 @@ where
             .read_block(offset + self.meta.begin_lba() as usize);
 
         if let Ok(block_value) = block {
-            trace!("{:?}", block_value);
+            // trace!("{:?}", block_value);
             return Ok(block_value);
         }
 

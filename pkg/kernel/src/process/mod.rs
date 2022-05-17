@@ -12,17 +12,17 @@ pub use process::ProcessData;
 pub use scheduler::*;
 
 use crate::{filesystem::get_volume, Registers, Resource};
-use alloc::string::String;
+use alloc::{string::String, vec};
 use x86_64::{
     registers::control::{Cr3, Cr2},
-    structures::{idt::InterruptStackFrame, paging::FrameAllocator}
+    structures::idt::InterruptStackFrame,
 };
 use x86_64::structures::idt::PageFaultErrorCode;
 
 use self::manager::init_PROCESS_MANAGER;
 
 const STACK_BOT: u64 = 0x0000_2000_0000_0000;
-const STACK_PAGES: u64 = 0x200;
+const STACK_PAGES: u64 = 0x100;
 const STACK_SIZE: u64 = STACK_PAGES * crate::memory::PAGE_SIZE;
 const STACK_START_MASK: u64 = !(STACK_SIZE - 1);
 
@@ -151,28 +151,11 @@ pub fn try_resolve_page_fault(_err_code: PageFaultErrorCode, _sf: &mut Interrupt
 
 pub fn spawn(file: &File) -> Result<ProcessId, String> {
     let size = file.length();
-    let data = {
-        let pages = (size as usize + 0x1000 - 1) / 0x1000;
-        let allocator = &mut *crate::memory::get_frame_alloc_for_sure();
+    let pages = (size as usize + 0x1000 - 1) / 0x1000;
+    let mut buf = vec![0u8; (pages * 0x1000) as usize];
 
-        let mem_start = allocator.allocate_frame().unwrap().start_address().as_u64();
-
-        trace!("alloc = 0x{:016x}", mem_start);
-
-        for _ in 1..pages {
-            let addr = allocator.allocate_frame().unwrap().start_address().as_u64();
-            trace!("alloc = 0x{:016x}", addr);
-        }
-
-        let mut buf =
-            unsafe { core::slice::from_raw_parts_mut(mem_start as *mut u8, pages * 0x1000) };
-
-        fs::read_to_buf(get_volume(), file, &mut buf).expect("Failed to read file");
-        debug!("Elf buf: {:#x}", mem_start);
-        &mut buf[..pages * 0x1000]
-    };
-
-    let elf = xmas_elf::ElfFile::new(&data).expect("Failed to parse ELF file");
+    fs::read_to_buf(get_volume(), file, &mut buf).expect("Failed to read file");
+    let elf = xmas_elf::ElfFile::new(&buf).expect("Failed to parse ELF file");
 
     let pid = x86_64::instructions::interrupts::without_interrupts(|| {
         let mut manager = get_process_manager_for_sure();

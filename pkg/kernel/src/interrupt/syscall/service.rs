@@ -21,13 +21,11 @@ pub fn sys_draw(args: &SyscallArgs) {
 
 pub fn sys_allocate(args: &SyscallArgs) -> usize {
     let layout = unsafe { (args.arg0 as *const Layout).as_ref().unwrap() };
-    trace!("sys_allocate: \n{:#?}", layout);
     let ptr = crate::allocator::ALLOCATOR
         .lock()
         .allocate_first_fit(layout.clone())
         .unwrap()
         .as_ptr();
-    trace!("allocated {:x}", ptr as u64);
     ptr as usize
 }
 
@@ -40,7 +38,6 @@ pub fn sys_deallocate(args: &SyscallArgs) {
             .lock()
             .deallocate(core::ptr::NonNull::new_unchecked(ptr), layout.clone());
     }
-    trace!("deallocated {:x}", ptr as u64);
 }
 
 pub fn spawn_process(args: &SyscallArgs) -> usize {

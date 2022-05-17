@@ -155,6 +155,7 @@ impl ProcessManager {
             proc_data,
         );
         p.pause();
+        trace!("Init stack frame with: \n    entry: {:#x}\n    stack: {:#x}", elf.header.pt2.entry_point(), STACK_BOT + STACK_SIZE);
         p.init_stack_frame(
             VirtAddr::new_truncate(elf.header.pt2.entry_point()),
             VirtAddr::new_truncate(STACK_BOT + STACK_SIZE),

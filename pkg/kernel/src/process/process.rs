@@ -333,7 +333,7 @@ impl Process {
 
         let mut page_table = self.page_table.take().unwrap();
 
-        elf::map_elf(elf, &mut page_table, alloc).unwrap();
+        elf::load_elf(elf, &mut page_table, alloc).unwrap();
         elf::map_stack(STACK_BOT, STACK_PAGES, &mut page_table, alloc).unwrap();
 
         self.page_table = Some(page_table);
@@ -362,8 +362,6 @@ impl Drop for Process {
             unsafe {
                 for entry in page_table.level_4_table().iter() {
                     if let Ok(frame) = entry.frame() {
-                        // core::slice::from_raw_parts_mut(frame.start_address().as_u64() as *mut u8, 0x1000).fill(0);
-                        // TODO: fill them with 0?
                         frame_deallocator.deallocate_frame(frame);
                     }
                 }

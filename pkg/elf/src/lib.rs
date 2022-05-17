@@ -3,6 +3,8 @@
 #[macro_use]
 extern crate log;
 
+use core::intrinsics::{copy_nonoverlapping, write_bytes};
+
 use x86_64::structures::paging::{mapper::*, *};
 use x86_64::{align_up, PhysAddr, VirtAddr};
 use xmas_elf::{program, ElfFile};
@@ -34,7 +36,7 @@ pub fn map_physical_memory(
 
 /// Map ELF file
 ///
-/// for each segment, load code to new frame and set page table
+/// for each segment, map current frame and set page table
 pub fn map_elf(
     elf: &ElfFile,
     page_table: &mut impl Mapper<Size4KiB>,
@@ -44,6 +46,21 @@ pub fn map_elf(
     let start = PhysAddr::new(elf.input.as_ptr() as u64);
     for segment in elf.program_iter() {
         map_segment(&segment, start, page_table, frame_allocator)?;
+    }
+    Ok(())
+}
+
+/// Load & Map ELF file
+///
+/// for each segment, load code to new frame and set page table
+pub fn load_elf(
+    elf: &ElfFile,
+    page_table: &mut impl Mapper<Size4KiB>,
+    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+) -> Result<(), MapToError<Size4KiB>> {
+    trace!("Loading ELF file...{:?}", elf.input.as_ptr());
+    for segment in elf.program_iter() {
+        load_segment(elf, &segment, page_table, frame_allocator)?;
     }
     Ok(())
 }
@@ -83,7 +100,14 @@ pub fn map_stack(
         }
     }
 
-    trace!("Stack hint: {:#x} -> {:#x}", addr, page_table.translate_page(stack_start).unwrap().start_address());
+    trace!(
+        "Stack hint: {:#x} -> {:#x}",
+        addr,
+        page_table
+            .translate_page(stack_start)
+            .unwrap()
+            .start_address()
+    );
 
     Ok(())
 }
@@ -100,7 +124,14 @@ pub fn unmap_stack(
 
     let stack_start = Page::containing_address(VirtAddr::new(addr));
 
-    trace!("Stack hint: {:#x} -> {:#x}", addr, page_table.translate_page(stack_start).unwrap().start_address());
+    trace!(
+        "Stack hint: {:#x} -> {:#x}",
+        addr,
+        page_table
+            .translate_page(stack_start)
+            .unwrap()
+            .start_address()
+    );
 
     let stack_end = stack_start + pages;
 
@@ -150,6 +181,7 @@ fn map_segment(
     }
 
     trace!("Segment page table flag: {:?}", page_table_flags);
+    // DONT MAP ADDR DIRECTLY, ALLOCATE THEN COPY DATA
     for frame in PhysFrame::range_inclusive(start_frame, end_frame) {
         let offset = frame - start_frame;
         let page = start_page + offset;
@@ -204,6 +236,118 @@ fn map_segment(
         let start_page: Page =
             Page::containing_address(VirtAddr::new(align_up(zero_start.as_u64(), Size4KiB::SIZE)));
         let end_page = Page::containing_address(zero_end);
+        for page in Page::range_inclusive(start_page, end_page) {
+            let frame = frame_allocator
+                .allocate_frame()
+                .ok_or(MapToError::FrameAllocationFailed)?;
+            unsafe {
+                page_table
+                    .map_to(page, frame, page_table_flags, frame_allocator)?
+                    .flush();
+            }
+        }
+
+        // zero bss
+        unsafe {
+            core::ptr::write_bytes(
+                zero_start.as_mut_ptr::<u8>(),
+                0,
+                (mem_size - file_size) as usize,
+            );
+        }
+    }
+    Ok(())
+}
+
+// load segments to new allocated frames
+fn load_segment(
+    elf: &ElfFile,
+    segment: &program::ProgramHeader,
+    page_table: &mut impl Mapper<Size4KiB>,
+    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+) -> Result<(), MapToError<Size4KiB>> {
+    if segment.get_type().unwrap() != program::Type::Load {
+        return Ok(());
+    }
+
+    trace!("Loading & mapping segment: {:#x?}", segment);
+    let mem_size = segment.mem_size();
+    let file_size = segment.file_size();
+    let file_offset = segment.offset() & !0xfff;
+    let virt_start_addr = VirtAddr::new(segment.virtual_addr());
+
+    let flags = segment.flags();
+    let mut page_table_flags = PageTableFlags::PRESENT;
+
+    if !flags.is_execute() {
+        page_table_flags |= PageTableFlags::NO_EXECUTE;
+    }
+
+    if flags.is_write() {
+        page_table_flags |= PageTableFlags::WRITABLE;
+    }
+
+    trace!("Segment page table flag: {:?}", page_table_flags);
+
+    let pages = {
+        let start_page = Page::containing_address(virt_start_addr);
+        let end_page = Page::containing_address(virt_start_addr + file_size - 1u64);
+        Page::range_inclusive(start_page, end_page)
+    };
+
+    let data = unsafe {
+         elf.input.as_ptr().add(file_offset as usize)
+    };
+
+    for (idx, page) in pages.enumerate() {
+        let frame = frame_allocator
+            .allocate_frame()
+            .ok_or(MapToError::FrameAllocationFailed)?;
+
+        let offset = idx as u64 * page.size();
+        let count = if file_size - offset < page.size() {
+            file_size - offset
+        } else {
+            page.size()
+        };
+
+        trace!("Map page: {:#x} -> {:#x} ({}/{})", page.start_address().as_u64(), frame.start_address().as_u64(), offset, file_size);
+
+        unsafe {
+            trace!("Copying data: {:#x} -> {:#x}", data as u64 + idx as u64 * page.size(), frame.start_address().as_u64());
+
+            copy_nonoverlapping(
+                data.add(idx * page.size() as usize),
+                frame.start_address().as_u64() as *mut u8,
+                count as usize,
+            );
+
+            page_table
+                .map_to(page, frame, page_table_flags, frame_allocator)?
+                .flush();
+
+            if count < page.size() {
+                // zero the rest of the page
+                trace!("Zeroing rest of the page: {:#x}", page.start_address().as_u64());
+                write_bytes(
+                    (frame.start_address().as_u64() + count) as *mut u8,
+                    0,
+                    (page.size() - count) as usize,
+                );
+            }
+        }
+    }
+
+    if mem_size > file_size {
+        // .bss section (or similar), which needs to be zeroed
+        let zero_start = virt_start_addr + file_size;
+        let zero_end = virt_start_addr + mem_size;
+
+        // Map additional frames.
+        let start_page: Page =
+            Page::containing_address(VirtAddr::new(align_up(zero_start.as_u64(), Size4KiB::SIZE)));
+        let end_page = Page::containing_address(zero_end);
+
         for page in Page::range_inclusive(start_page, end_page) {
             let frame = frame_allocator
                 .allocate_frame()
