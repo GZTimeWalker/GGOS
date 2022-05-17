@@ -18,8 +18,6 @@ fn main() {
         println!("I am the child process");
         unsafe {
             println!("child read value of M: {:#x}", &M);
-        }
-        unsafe {
             M = 0x2333;
             println!("child changed the value of M: {:#x}", &M);
         }
