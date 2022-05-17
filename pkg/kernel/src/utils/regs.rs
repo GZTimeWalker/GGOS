@@ -57,7 +57,7 @@ impl fmt::Debug for Registers {
 
 impl fmt::Debug for RegistersValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Registers {{\n")?;
+        write!(f, "Registers\n")?;
         write!(f, "    r15: 0x{:016x}, ", self.r15)?;
         write!(f, "    r14: 0x{:016x}, ", self.r14)?;
         write!(f, "    r13: 0x{:016x},\n", self.r13)?;
@@ -73,7 +73,6 @@ impl fmt::Debug for RegistersValue {
         write!(f, "    rbx: 0x{:016x}, ", self.rbx)?;
         write!(f, "    rax: 0x{:016x}, ", self.rax)?;
         write!(f, "    rbp: 0x{:016x}\n", self.rbp)?;
-        write!(f, "}}")?;
         Ok(())
     }
 }

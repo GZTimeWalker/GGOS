@@ -22,6 +22,8 @@ pub enum Syscall {
     Deallocate = 11,
     Draw = 12,
     WaitPid = 13,
+    GetPid = 14,
+    Fork = 15,
     #[num_enum(default)]
     None = 255,
 }
@@ -69,6 +71,10 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         Syscall::Draw           => sys_draw(&args),
         // pid: arg0 as u16 -> status: isize
         Syscall::WaitPid        => regs.set_rax(sys_wait_pid(&args)),
+        // None -> pid: u16
+        Syscall::GetPid         => regs.set_rax(sys_get_pid() as usize),
+        // None -> pid: u16 (diff from parent and child)
+        Syscall::Fork           => sys_fork(regs, sf),
         // None
         Syscall::None           => {}
     }

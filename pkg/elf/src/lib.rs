@@ -86,6 +86,32 @@ pub fn map_stack(
     Ok(())
 }
 
+/// 卸载 ELF 文件栈
+pub fn unmap_stack(
+    addr: u64,
+    pages: u64,
+    page_table: &mut impl Mapper<Size4KiB>,
+    frame_deallocator: &mut impl FrameDeallocator<Size4KiB>,
+    do_dealloc: bool,
+) -> Result<(), UnmapError> {
+    trace!("unmapping stack at {:#x}", addr);
+
+    let stack_start = Page::containing_address(VirtAddr::new(addr));
+    let stack_end = stack_start + pages;
+
+    for page in Page::range(stack_start, stack_end) {
+        let info = page_table.unmap(page)?;
+        if do_dealloc {
+            unsafe {
+                frame_deallocator.deallocate_frame(info.0);
+            }
+        }
+        info.1.flush();
+    }
+
+    Ok(())
+}
+
 fn map_segment(
     segment: &program::ProgramHeader,
     start: PhysAddr,

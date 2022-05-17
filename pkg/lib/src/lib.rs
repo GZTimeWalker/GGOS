@@ -34,6 +34,8 @@ pub enum Syscall {
     Deallocate = 11,
     Draw = 12,
     WaitPid = 13,
+    GetPid = 14,
+    Fork = 15,
 }
 
 #[macro_export]

@@ -13,7 +13,7 @@ use alloc::string::String;
 extern crate lib;
 
 fn main() {
-
+    sys_spawn("/APP/FORK");
     let mut root_dir = String::from("/APP/");
     println!("<<< Welcome to GGOS shell >>>");
     loop {

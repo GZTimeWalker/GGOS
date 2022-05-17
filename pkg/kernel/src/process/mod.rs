@@ -14,9 +14,10 @@ pub use scheduler::*;
 use crate::{filesystem::get_volume, Registers, Resource};
 use alloc::string::String;
 use x86_64::{
-    registers::control::Cr3,
-    structures::{idt::InterruptStackFrame, paging::FrameAllocator},
+    registers::control::{Cr3, Cr2},
+    structures::{idt::InterruptStackFrame, paging::FrameAllocator}
 };
+use x86_64::structures::idt::PageFaultErrorCode;
 
 use self::manager::init_PROCESS_MANAGER;
 
@@ -123,6 +124,24 @@ pub fn still_alive(pid: ProcessId) -> bool {
     })
 }
 
+pub fn current_pid() -> ProcessId {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager_for_sure().current_pid()
+    })
+}
+
+pub fn try_resolve_page_fault(err_code: PageFaultErrorCode, sf: &mut InterruptStackFrame) -> Result<(),()> {
+    let addr = Cr2::read();
+    debug!("Trying to access address: {:?}", addr);
+
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let manager = get_process_manager_for_sure();
+        debug!("Current process: {:?}", manager.current());
+    });
+
+    Err(())
+}
+
 pub fn spawn(file: &File) -> Result<ProcessId, String> {
     let size = file.length();
     let data = {
@@ -166,4 +185,13 @@ pub fn spawn(file: &File) -> Result<ProcessId, String> {
     });
 
     Ok(pid)
+}
+
+pub fn fork(regs: &mut Registers, sf: &mut InterruptStackFrame) {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let mut manager = get_process_manager_for_sure();
+        manager.save_current(regs, sf);
+        manager.fork();
+        manager.switch_next(regs, sf);
+    })
 }

@@ -6,6 +6,7 @@ MODE ?= release
 RUN_MODE ?=
 CUR_PATH := $(shell pwd)
 APP_PATH := $(CUR_PATH)/pkg/app
+DBG_INFO := false
 
 APPS := $(shell find $(APP_PATH) -maxdepth 1 -type d)
 APPS := $(filter-out $(APP_PATH),$(patsubst $(APP_PATH)/%, %, $(APPS)))
@@ -14,10 +15,6 @@ APPS := $(filter-out .cargo,$(APPS))
 
 ifeq (${MODE}, release)
 	BUILD_ARGS := --release
-
-	ifeq (${DEBUG_INFO}, true)
-		BUILD_ARGS := --profile=release-with-debug
-	endif
 endif
 
 ifeq (${RUN_MODE}, nographic)
@@ -81,7 +78,7 @@ $(ESP)/APP: target/x86_64-unknown-ggos/$(MODE)
 target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi: pkg/boot
 	cd pkg/boot && cargo build $(BUILD_ARGS)
 target/x86_64-unknown-none/$(MODE)/ggos_kernel: pkg/kernel
-	cd pkg/kernel && cargo build $(BUILD_ARGS) $(DBG_ARGS)
+	cd pkg/kernel && cargo build $(if $(ifeq($(DBG_INFO), true)), --profile=release-with-debug, $(BUILD_ARGS))
 target/x86_64-unknown-ggos/$(MODE):
 	@for app in $(APPS); do \
 		echo "Building $$app"; \

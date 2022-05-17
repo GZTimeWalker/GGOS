@@ -1,5 +1,7 @@
+use super::ProcessId;
 use super::*;
 use crate::filesystem::StdIO;
+use crate::memory::get_frame_alloc_for_sure;
 use crate::memory::physical_to_virtual;
 use crate::memory::BootInfoFrameAllocator;
 use crate::utils::{Registers, RegistersValue, Resource};
@@ -11,10 +13,10 @@ use x86_64::registers::control::{Cr3, Cr3Flags};
 use x86_64::registers::rflags::RFlags;
 use x86_64::structures::idt::{InterruptStackFrame, InterruptStackFrameValue};
 use x86_64::structures::paging::FrameAllocator;
+use x86_64::structures::paging::PageTableFlags;
 use x86_64::structures::paging::{OffsetPageTable, PageTable, PhysFrame};
 use x86_64::VirtAddr;
 use xmas_elf::ElfFile;
-use super::ProcessId;
 
 pub struct Process {
     pid: ProcessId,
@@ -120,7 +122,7 @@ impl Process {
             (RFlags::IOPL_HIGH | RFlags::IOPL_LOW | RFlags::INTERRUPT_FLAG).bits();
     }
 
-    pub fn open(&mut self, res: Resource) -> u8{
+    pub fn open(&mut self, res: Resource) -> u8 {
         let fd = self.proc_data.file_handles.len() as u8;
         self.proc_data.file_handles.insert(fd, res);
         fd
@@ -130,19 +132,13 @@ impl Process {
         self.proc_data.file_handles.remove(&fd).is_some()
     }
 
-    pub fn new(
-        frame_alloc: &mut BootInfoFrameAllocator,
-        name: String,
-        parent: ProcessId,
+    fn clone_page_table(
         page_table_source: PhysFrame,
-        proc_data: Option<ProcessData>,
-    ) -> Self {
-        let name = name.to_ascii_lowercase();
-        // 1. alloc a page table for process
+        frame_alloc: &mut BootInfoFrameAllocator,
+    ) -> (OffsetPageTable<'static>, PhysFrame) {
         let page_table_addr = frame_alloc
             .allocate_frame()
             .expect("Cannot alloc page table for new process.");
-        trace!("Alloc page table for {}: {:?}", name, page_table_addr);
 
         // 2. copy current page table to new page table
         unsafe {
@@ -166,6 +162,22 @@ impl Process {
                 VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET as u64),
             )
         };
+
+        (page_table, page_table_addr)
+    }
+
+    pub fn new(
+        frame_alloc: &mut BootInfoFrameAllocator,
+        name: String,
+        parent: ProcessId,
+        page_table_source: PhysFrame,
+        proc_data: Option<ProcessData>,
+    ) -> Self {
+        let name = name.to_ascii_lowercase();
+
+        let (page_table, page_table_addr) = Self::clone_page_table(page_table_source, frame_alloc);
+
+        trace!("Alloc page table for {}: {:?}", name, page_table_addr);
 
         // 4. create context
         let status = ProgramStatus::Created;
@@ -210,8 +222,65 @@ impl Process {
         self.parent
     }
 
+    pub fn fork(&mut self) -> Process {
+        // set all page entry to readonly
+        self.page_table
+            .take()
+            .unwrap()
+            .level_4_table()
+            .iter_mut()
+            .for_each(|page| {
+                page.flags().remove(PageTableFlags::WRITABLE);
+            });
+
+        let alloc = &mut *get_frame_alloc_for_sure();
+
+        let (mut page_table, page_table_addr) =
+            Self::clone_page_table(self.page_table_addr.0, alloc);
+
+        // remap
+        elf::unmap_stack(STACK_BOT, STACK_PAGES, &mut page_table, alloc, false).unwrap();
+        elf::map_stack(STACK_BOT, STACK_PAGES, &mut page_table, alloc).unwrap();
+
+        let mut child = Self {
+            pid: ProcessId::new(),
+            name: self.name.clone(),
+            parent: self.pid,
+            status: ProgramStatus::Created,
+            ticks_passed: 0,
+            stack_frame: self.stack_frame.clone(),
+            regs: self.regs.clone(),
+            page_table_addr: (page_table_addr, Cr3::read().1),
+            page_table: Some(page_table),
+            children: Vec::new(),
+            proc_data: self.proc_data.clone(),
+        };
+
+        self.add_child(child.pid);
+
+        self.regs.rax = u16::from(child.pid) as usize;
+        child.regs.rax = 0;
+
+        debug!(
+            "Thread {}#{} forked to {}#{}.",
+            self.name, self.pid, child.name, child.pid
+        );
+        debug!("{:?}", self);
+        debug!("{:?}", &child);
+
+        return child;
+    }
+
+    pub fn set_parent(&mut self, pid: ProcessId) {
+        self.parent = pid;
+    }
+
+    pub fn children(&self) -> Vec<ProcessId> {
+        self.children.clone()
+    }
+
     pub fn init_elf(&mut self, elf: &ElfFile) {
-        let alloc = &mut *crate::memory::get_frame_alloc_for_sure();
+        let alloc = &mut *get_frame_alloc_for_sure();
 
         let mut page_table = self.page_table.take().unwrap();
 
@@ -249,6 +318,7 @@ impl core::fmt::Debug for Process {
             "    instruction_pointer: 0x{:016x}\n",
             self.stack_frame.instruction_pointer.as_u64()
         )?;
+        write!(f, "    regs: {:?}\n", self.regs)?;
         write!(f, "}}")?;
         Ok(())
     }
@@ -259,7 +329,10 @@ impl core::fmt::Display for Process {
         write!(
             f,
             " #{:-3} | #{:-3} | {:12} | {}",
-            u16::from(self.pid), u16::from(self.parent), self.name, self.ticks_passed
+            u16::from(self.pid),
+            u16::from(self.parent),
+            self.name,
+            self.ticks_passed
         )?;
         Ok(())
     }

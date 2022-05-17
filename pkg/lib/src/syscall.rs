@@ -89,3 +89,11 @@ pub fn sys_open(path: &str, mode: crate::FileMode) -> u8 {
 pub fn sys_close(fd: u8) -> bool {
     syscall!(Syscall::Close, fd as u64) != 0
 }
+
+pub fn sys_get_pid() -> u16 {
+    syscall!(Syscall::GetPid) as u16
+}
+
+pub fn sys_fork() -> u16 {
+    syscall!(Syscall::Fork) as u16
+}

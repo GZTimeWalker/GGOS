@@ -111,9 +111,9 @@ impl ProcessManager {
 
     pub fn open(&mut self, path: &str, mode: u8) -> Option<u8> {
         let res = match path {
-            "/dev/random" => {
-                Resource::Random(fs::Random::new(crate::utils::clock::now().timestamp() as u64))
-            }
+            "/dev/random" => Resource::Random(fs::Random::new(
+                crate::utils::clock::now().timestamp() as u64,
+            )),
             path => {
                 let file = crate::filesystem::try_get_file(path, fs::Mode::try_from(mode).unwrap());
 
@@ -198,18 +198,32 @@ impl ProcessManager {
         print!("{}", output);
     }
 
-    pub fn kill(&mut self, ret: isize) {
-        debug!("Killing process {}", self.cur_pid);
+    pub fn fork(&mut self) {
+        let mut p = self.current_mut().fork();
+        p.pause();
+        self.processes.push(p);
+    }
 
-        let p = self.current().parent();
+    pub fn kill(&mut self, ret: isize) {
+        debug!("Killing process #{} with ret code: {}", self.cur_pid, ret);
+
+        let p = self.current();
+        let parent = p.parent();
+        let children = p.children();
+
+        self.processes.iter_mut().for_each(|x| {
+            if children.contains(&x.pid()) {
+                x.set_parent(parent);
+            }
+        });
 
         self.processes.retain(|p| !p.is_running());
 
         if let Err(_) = self.exit_code.try_insert(self.cur_pid, ret) {
-            error!("Process {} already exited", self.cur_pid);
+            error!("Process #{} already exited", self.cur_pid);
         }
 
-        if let Some(proc) = self.processes.iter_mut().find(|x| x.pid() == p) {
+        if let Some(proc) = self.processes.iter_mut().find(|x| x.pid() == parent) {
             proc.remove_child(self.cur_pid);
         }
     }

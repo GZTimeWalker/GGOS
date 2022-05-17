@@ -96,6 +96,14 @@ pub fn sys_write(args: &SyscallArgs) -> usize {
     }
 }
 
+pub fn sys_get_pid() -> u16 {
+    u16::from(crate::process::current_pid())
+}
+
+pub fn sys_fork(regs: &mut Registers, sf: &mut InterruptStackFrame) {
+    crate::process::fork(regs, sf)
+}
+
 pub fn sys_open(args: &SyscallArgs) -> usize {
     let path = unsafe {
         core::str::from_utf8_unchecked(core::slice::from_raw_parts(

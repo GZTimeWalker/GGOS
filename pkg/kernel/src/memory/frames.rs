@@ -1,8 +1,9 @@
 // reference: https://github.com/phil-opp/blog_os/blob/post-09/src/memory.rs
 // reference: https://github.com/xfoxfu/rust-xos/blob/main/kernel/src/memory.rs
 
+use alloc::vec::Vec;
 use boot::{MemoryMap, MemoryType};
-use x86_64::structures::paging::{FrameAllocator, PhysFrame, Size4KiB};
+use x86_64::structures::paging::{FrameAllocator, PhysFrame, Size4KiB, FrameDeallocator};
 use x86_64::PhysAddr;
 
 once_mutex!(pub FRAME_ALLOCATOR: BootInfoFrameAllocator);
@@ -16,6 +17,7 @@ type BootInfoFrameIter = impl Iterator<Item = PhysFrame>;
 /// A FrameAllocator that returns usable frames from the bootloader's memory map.
 pub struct BootInfoFrameAllocator {
     frames: BootInfoFrameIter,
+    recycled: Vec<PhysFrame>,
 }
 
 impl BootInfoFrameAllocator {
@@ -27,13 +29,24 @@ impl BootInfoFrameAllocator {
     pub unsafe fn init(memory_map: &MemoryMap) -> Self {
         BootInfoFrameAllocator {
             frames: create_frame_iter(memory_map),
+            recycled: Vec::new(),
         }
     }
 }
 
 unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
     fn allocate_frame(&mut self) -> Option<PhysFrame> {
-        self.frames.next()
+        if let Some(frame) = self.recycled.pop() {
+            Some(frame)
+        } else {
+            self.frames.next()
+        }
+    }
+}
+
+impl FrameDeallocator<Size4KiB> for BootInfoFrameAllocator {
+    unsafe fn deallocate_frame(&mut self, frame: PhysFrame) {
+        self.recycled.push(frame);
     }
 }
 
