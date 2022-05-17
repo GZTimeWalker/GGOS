@@ -133,8 +133,8 @@ impl ProcessManager {
     }
 
     pub fn close(&mut self, fd: u8) -> bool {
-        if fd < 3 {
-            false // stdin, stdout, stderr are reserved
+        if fd < 4 {
+            false // stdin, stdout, stderr, exec file are reserved
         } else {
             self.current_mut().close(fd)
         }
@@ -160,7 +160,7 @@ impl ProcessManager {
             VirtAddr::new_truncate(elf.header.pt2.entry_point()),
             VirtAddr::new_truncate(STACK_BOT + STACK_SIZE),
         );
-        p.init_elf(elf);
+        p.init_elf(&elf);
         // info!("Spawn process: {}#{}", p.name(), p.pid());
         // info!("Spawn process:\n\n{:?}\n", p);
         let pid = p.pid();

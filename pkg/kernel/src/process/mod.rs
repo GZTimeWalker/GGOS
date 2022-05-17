@@ -72,7 +72,7 @@ pub fn init() {
         String::from("kernel"),
         ProcessId(0),
         Cr3::read().0,
-        None,
+        None
     );
     kproc.resume();
     kproc.set_page_table_with_cr3();

@@ -14,7 +14,7 @@ extern crate lib;
 
 fn main() -> usize {
     let mut root_dir = String::from("/APP/");
-    println!("<<< Welcome to GGOS shell >>>");
+    println!("          <<< Welcome to GGOS shell >>>          ");
     loop {
         print!("[{}] ", root_dir);
         let input = stdin().read_line();

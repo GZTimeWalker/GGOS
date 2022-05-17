@@ -2,9 +2,12 @@
 
 #[macro_use]
 extern crate log;
+extern crate alloc;
 
 use core::intrinsics::{copy_nonoverlapping, write_bytes};
 
+use alloc::vec::Vec;
+use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::structures::paging::{mapper::*, *};
 use x86_64::{align_up, PhysAddr, VirtAddr};
 use xmas_elf::{program, ElfFile};
@@ -46,21 +49,6 @@ pub fn map_elf(
     let start = PhysAddr::new(elf.input.as_ptr() as u64);
     for segment in elf.program_iter() {
         map_segment(&segment, start, page_table, frame_allocator)?;
-    }
-    Ok(())
-}
-
-/// Load & Map ELF file
-///
-/// for each segment, load code to new frame and set page table
-pub fn load_elf(
-    elf: &ElfFile,
-    page_table: &mut impl Mapper<Size4KiB>,
-    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-) -> Result<(), MapToError<Size4KiB>> {
-    trace!("Loading ELF file...{:?}", elf.input.as_ptr());
-    for segment in elf.program_iter() {
-        load_segment(elf, &segment, page_table, frame_allocator)?;
     }
     Ok(())
 }
@@ -259,17 +247,28 @@ fn map_segment(
     Ok(())
 }
 
+/// Load & Map ELF file
+///
+/// for each segment, load code to new frame and set page table
+pub fn load_elf(
+    elf: &ElfFile,
+    page_table: &mut impl Mapper<Size4KiB>,
+    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+) -> Result<Vec<PageRangeInclusive>, MapToError<Size4KiB>> {
+    trace!("Loading ELF file...{:?}", elf.input.as_ptr());
+    elf.program_iter()
+        .filter(|segment| segment.get_type().unwrap() == program::Type::Load)
+        .map(|segment| load_segment(elf, &segment, page_table, frame_allocator))
+        .collect()
+}
+
 // load segments to new allocated frames
 fn load_segment(
     elf: &ElfFile,
     segment: &program::ProgramHeader,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
-) -> Result<(), MapToError<Size4KiB>> {
-    if segment.get_type().unwrap() != program::Type::Load {
-        return Ok(());
-    }
-
+) -> Result<PageRangeInclusive, MapToError<Size4KiB>> {
     trace!("Loading & mapping segment: {:#x?}", segment);
     let mem_size = segment.mem_size();
     let file_size = segment.file_size();
@@ -289,15 +288,11 @@ fn load_segment(
 
     trace!("Segment page table flag: {:?}", page_table_flags);
 
-    let pages = {
-        let start_page = Page::containing_address(virt_start_addr);
-        let end_page = Page::containing_address(virt_start_addr + file_size - 1u64);
-        Page::range_inclusive(start_page, end_page)
-    };
+    let start_page = Page::containing_address(virt_start_addr);
+    let end_page = Page::containing_address(virt_start_addr + file_size - 1u64);
+    let pages = Page::range_inclusive(start_page, end_page);
 
-    let data = unsafe {
-         elf.input.as_ptr().add(file_offset as usize)
-    };
+    let data = unsafe { elf.input.as_ptr().add(file_offset as usize) };
 
     for (idx, page) in pages.enumerate() {
         let frame = frame_allocator
@@ -311,10 +306,20 @@ fn load_segment(
             page.size()
         };
 
-        trace!("Map page: {:#x} -> {:#x} ({}/{})", page.start_address().as_u64(), frame.start_address().as_u64(), offset, file_size);
+        trace!(
+            "Map page: {:#x} -> {:#x} ({}/{})",
+            page.start_address().as_u64(),
+            frame.start_address().as_u64(),
+            offset,
+            file_size
+        );
 
         unsafe {
-            trace!("Copying data: {:#x} -> {:#x}", data as u64 + idx as u64 * page.size(), frame.start_address().as_u64());
+            trace!(
+                "Copying data: {:#x} -> {:#x}",
+                data as u64 + idx as u64 * page.size(),
+                frame.start_address().as_u64()
+            );
 
             copy_nonoverlapping(
                 data.add(idx * page.size() as usize),
@@ -328,7 +333,10 @@ fn load_segment(
 
             if count < page.size() {
                 // zero the rest of the page
-                trace!("Zeroing rest of the page: {:#x}", page.start_address().as_u64());
+                trace!(
+                    "Zeroing rest of the page: {:#x}",
+                    page.start_address().as_u64()
+                );
                 write_bytes(
                     (frame.start_address().as_u64() + count) as *mut u8,
                     0,
@@ -368,7 +376,9 @@ fn load_segment(
             );
         }
     }
-    Ok(())
+
+    let end_page = Page::containing_address(virt_start_addr + mem_size - 1u64);
+    Ok(Page::range_inclusive(start_page, end_page))
 }
 
 fn unmap_segment(

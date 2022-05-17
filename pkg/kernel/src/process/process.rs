@@ -11,8 +11,9 @@ use x86_64::registers::control::{Cr3, Cr3Flags};
 use x86_64::registers::rflags::RFlags;
 use x86_64::structures::idt::{InterruptStackFrame, InterruptStackFrameValue};
 use x86_64::structures::paging::mapper::CleanUp;
+use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::structures::paging::*;
-use x86_64::{VirtAddr, PhysAddr};
+use x86_64::{PhysAddr, VirtAddr};
 use xmas_elf::ElfFile;
 
 pub struct Process {
@@ -32,6 +33,7 @@ pub struct Process {
 #[derive(Clone, Debug, Default)]
 pub struct ProcessData {
     env: BTreeMap<String, String>,
+    code_segements: Option<Vec<PageRangeInclusive>>,
     file_handles: BTreeMap<u8, Resource>,
 }
 
@@ -44,7 +46,12 @@ impl ProcessData {
         file_handles.insert(1, Resource::Console(StdIO::Stdout));
         file_handles.insert(2, Resource::Console(StdIO::Stderr));
         // 3 is the file self
-        Self { env, file_handles }
+        let code_segements = None;
+        Self {
+            env,
+            code_segements,
+            file_handles,
+        }
     }
 
     pub fn add_file(mut self, file: &File) -> Self {
@@ -333,10 +340,11 @@ impl Process {
 
         let mut page_table = self.page_table.take().unwrap();
 
-        elf::load_elf(elf, &mut page_table, alloc).unwrap();
+        let code_segements = elf::load_elf(elf, &mut page_table, alloc).unwrap();
         elf::map_stack(STACK_BOT, STACK_PAGES, &mut page_table, alloc).unwrap();
 
         self.page_table = Some(page_table);
+        self.proc_data.code_segements = Some(code_segements);
     }
 }
 
@@ -346,7 +354,7 @@ impl Drop for Process {
         let frame_deallocator = &mut *get_frame_alloc_for_sure();
         let start_count = frame_deallocator.recycled_count();
 
-        debug!("Free stack for {}#{}", self.name, self.pid);
+        trace!("Free stack for {}#{}", self.name, self.pid);
         // only free stack, 0 is set by manager
         let stack_start = self.stack_frame.stack_pointer.as_u64() & STACK_START_MASK;
         elf::unmap_stack(
@@ -355,14 +363,20 @@ impl Drop for Process {
             page_table,
             frame_deallocator,
             true,
-        ).unwrap();
+        )
+        .unwrap();
 
         if self.page_table_addr.0.start_address().as_u64() != 0 {
-            debug!("Clean up page_table for {}#{}", self.name, self.pid);
+            trace!("Clean up page_table for {}#{}", self.name, self.pid);
             unsafe {
-                for entry in page_table.level_4_table().iter() {
-                    if let Ok(frame) = entry.frame() {
-                        frame_deallocator.deallocate_frame(frame);
+                if let Some(ref mut segements) = self.proc_data.code_segements {
+                    for range in segements {
+                        for page in range {
+                            if let Ok(ret) = page_table.unmap(page) {
+                                frame_deallocator.deallocate_frame(ret.0);
+                                ret.1.flush();
+                            }
+                        }
                     }
                 }
                 // free P1-P3
@@ -374,9 +388,11 @@ impl Drop for Process {
 
         let end_count = frame_deallocator.recycled_count();
         debug!(
-            "Recycled {}({}KiB) frames, {}({}KiB) in total.",
-            end_count - start_count, (end_count - start_count) * 4,
-            end_count, end_count * 4
+            "Recycled {}({}KiB) frames, {}({}KiB) frames in total.",
+            end_count - start_count,
+            (end_count - start_count) * 4,
+            end_count,
+            end_count * 4
         );
     }
 }
