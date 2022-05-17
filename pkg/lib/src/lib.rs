@@ -21,8 +21,8 @@ pub use syscall::*;
 
 #[derive(Clone, Debug)]
 pub enum Syscall {
-    SpawnProcess = 1,
-    ExitProcess = 2,
+    Spawn = 1,
+    Exit = 2,
     Read = 3,
     Write = 4,
     Open = 5,
@@ -36,6 +36,7 @@ pub enum Syscall {
     WaitPid = 13,
     GetPid = 14,
     Fork = 15,
+    Kill = 16,
 }
 
 #[macro_export]

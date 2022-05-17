@@ -33,10 +33,11 @@ impl ProcessManager {
     }
 
     fn current_mut(&mut self) -> &mut Process {
-        self.processes
-            .iter_mut()
-            .find(|x| x.pid() == self.cur_pid)
-            .unwrap()
+        self.processes.iter_mut().find(|x| x.pid() == self.cur_pid).unwrap()
+    }
+
+    fn pid_mut(&mut self, pid: ProcessId) -> &mut Process {
+        self.processes.iter_mut().find(|x| x.pid() == pid).unwrap()
     }
 
     pub fn current(&self) -> &Process {
@@ -155,7 +156,11 @@ impl ProcessManager {
             proc_data,
         );
         p.pause();
-        trace!("Init stack frame with: \n    entry: {:#x}\n    stack: {:#x}", elf.header.pt2.entry_point(), STACK_BOT + STACK_SIZE);
+        trace!(
+            "Init stack frame with: \n    entry: {:#x}\n    stack: {:#x}",
+            elf.header.pt2.entry_point(),
+            STACK_BOT + STACK_SIZE
+        );
         p.init_stack_frame(
             VirtAddr::new_truncate(elf.header.pt2.entry_point()),
             VirtAddr::new_truncate(STACK_BOT + STACK_SIZE),
@@ -205,13 +210,24 @@ impl ProcessManager {
         self.processes.push(p);
     }
 
-    pub fn kill(&mut self, ret: isize) {
-        debug!("Killing process #{} with ret code: {}", self.cur_pid, ret);
+    pub fn kill_self(&mut self, ret: isize) {
+        self.kill(self.cur_pid, ret);
+    }
 
-        let p = self.current();
+    pub fn kill(&mut self, pid: ProcessId, ret: isize) {
+        debug!("Killing process #{} with ret code: {}", pid, ret);
+
+        let p = self.processes.iter().find(|x| x.pid() == pid);
+
+        if p.is_none() {
+            warn!("Process #{} not found", pid);
+            return;
+        }
+
+        let p = p.unwrap();
+
         let parent = p.parent();
         let children = p.children();
-        let cur_pid = p.pid();
         let cur_page_table_addr = p.page_table_addr().start_address().as_u64();
 
         self.processes.iter_mut().for_each(|x| {
@@ -221,21 +237,26 @@ impl ProcessManager {
         });
 
         let not_drop_page_table = self.processes.iter().any(|x| {
-            x.page_table_addr().start_address().as_u64() == cur_page_table_addr && cur_pid != x.pid()
+            x.page_table_addr().start_address().as_u64() == cur_page_table_addr && pid != x.pid()
         });
 
         if not_drop_page_table {
-            self.current_mut().not_drop_page_table();
+            self.pid_mut(pid).not_drop_page_table();
         }
 
-        self.processes.retain(|p| !p.is_running());
-
-        if let Err(_) = self.exit_code.try_insert(self.cur_pid, ret) {
-            error!("Process #{} already exited", self.cur_pid);
-        }
+        self.processes.retain(|p| p.pid() != pid);
 
         if let Some(proc) = self.processes.iter_mut().find(|x| x.pid() == parent) {
-            proc.remove_child(self.cur_pid);
+            proc.remove_child(pid);
+        }
+
+        if ret == !0xdeadbeef {
+            // killed by other process
+            return;
+        }
+
+        if let Err(_) = self.exit_code.try_insert(pid, ret) {
+            error!("Process #{} already exited", pid);
         }
     }
 }

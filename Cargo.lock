@@ -176,6 +176,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ggos_clock"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "embedded-graphics",
+ "gglib",
+ "micromath 2.0.0",
+]
+
+[[package]]
 name = "ggos_elf"
 version = "0.1.0"
 dependencies = [
@@ -228,7 +238,7 @@ dependencies = [
 
 [[package]]
 name = "ggos_sh"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "gglib",
 ]

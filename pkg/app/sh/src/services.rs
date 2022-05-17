@@ -123,3 +123,20 @@ pub fn exec(path: &str, root_dir: &str) {
 
     println!("[+] process exited with code {} @ {}s", ret, time.num_seconds());
 }
+
+pub fn nohup(path: &str, root_dir: &str) {
+    let path = format!("{}{}", root_dir, path);
+
+    let pid = sys_spawn(path.as_str());
+
+    if pid == 0 {
+        errln!("failed to spawn process: {}", path);
+        return;
+    }
+
+    println!("[+] process {}#{} spawned", path, pid);
+}
+
+pub fn kill(pid: u16) {
+    sys_kill(pid);
+}

@@ -9,8 +9,8 @@ use service::*;
 #[repr(u8)]
 #[derive(Clone, Debug, TryFromPrimitive)]
 pub enum Syscall {
-    SpawnProcess = 1,
-    ExitProcess = 2,
+    Spawn = 1,
+    Exit = 2,
     Read = 3,
     Write = 4,
     Open = 5,
@@ -24,6 +24,7 @@ pub enum Syscall {
     WaitPid = 13,
     GetPid = 14,
     Fork = 15,
+    Kill = 16,
     #[num_enum(default)]
     None = 255,
 }
@@ -46,9 +47,9 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
 
     match args.syscall {
         // path: &str (arg0 as *const u8, arg1 as len) -> pid: u16
-        Syscall::SpawnProcess   => regs.set_rax(spawn_process(&args)),
+        Syscall::Spawn   => regs.set_rax(spawn_process(&args)),
         // pid: arg0 as u16
-        Syscall::ExitProcess    => exit_process(&args, regs, sf),
+        Syscall::Exit    => exit_process(&args, regs, sf),
         // fd: arg0 as u8, buf: &[u8] (arg1 as *const u8, arg2 as len)
         Syscall::Read           => regs.set_rax(sys_read(&args)),
         // fd: arg0 as u8, buf: &[u8] (arg1 as *const u8, arg2 as len)
@@ -75,6 +76,8 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         Syscall::GetPid         => regs.set_rax(sys_get_pid() as usize),
         // None -> pid: u16 (diff from parent and child)
         Syscall::Fork           => sys_fork(regs, sf),
+        // pid: arg0 as u16
+        Syscall::Kill           => sys_kill(&args, regs, sf),
         // None
         Syscall::None           => {}
     }

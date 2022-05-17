@@ -8,6 +8,8 @@ Usage:
     cd <path>   | change directory
     cat <file>  | show file content
     exec <file> | execute file
+    nohup <file>| execute file in background
+    kill <pid>  | kill process
     exit        | exit shell
 
 "#)

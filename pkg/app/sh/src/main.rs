@@ -8,7 +8,7 @@ mod consts;
 
 use lib::*;
 use alloc::vec::Vec;
-use alloc::string::String;
+use alloc::string::{String, ToString};
 
 extern crate lib;
 
@@ -47,6 +47,28 @@ fn main() -> usize {
                 }
 
                 services::exec(line[1], root_dir.as_str());
+            }
+            "nohup" => {
+                if line.len() < 2 {
+                    println!("Usage: nohup <file>");
+                    continue;
+                }
+
+                services::nohup(line[1], root_dir.as_str());
+            }
+            "kill" => {
+                if line.len() < 2 {
+                    println!("Usage: kill <pid>");
+                    continue;
+                }
+                let pid = line[1].to_string().parse::<u16>();
+
+                if pid.is_err() {
+                    errln!("Cannot parse pid");
+                    continue;
+                }
+
+                services::kill(pid.unwrap());
             }
             "help" => print!("{}", consts::help_text()),
             _ => println!("[=] you said \"{}\"", input),

@@ -32,7 +32,7 @@ pub fn sys_deallocate(ptr: *mut u8, layout: &core::alloc::Layout) -> usize {
 }
 
 pub fn sys_exit(code: usize) {
-    syscall!(Syscall::ExitProcess, code);
+    syscall!(Syscall::Exit, code);
 }
 
 pub fn sys_wait_pid(pid: u16) -> isize {
@@ -67,7 +67,7 @@ pub fn sys_stat() {
 
 pub fn sys_spawn(path: &str) -> u16 {
     let pid = syscall!(
-        Syscall::SpawnProcess,
+        Syscall::Spawn,
         path.as_ptr() as u64,
         path.len() as u64
     ) as u16;
@@ -100,4 +100,8 @@ pub fn sys_fork() -> u16 {
         core::arch::asm!("hlt");
     }
     pid as u16
+}
+
+pub fn sys_kill(pid: u16) {
+    syscall!(Syscall::Kill, pid as u64);
 }

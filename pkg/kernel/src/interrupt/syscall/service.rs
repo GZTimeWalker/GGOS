@@ -154,3 +154,8 @@ pub fn sys_wait_pid(args: &SyscallArgs) -> usize {
     let ret = crate::process::wait_pid(pid);
     ret as usize
 }
+
+pub fn sys_kill(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
+    let pid = ProcessId(args.arg0 as u16);
+    crate::process::kill(pid, regs, sf);
+}

@@ -96,7 +96,7 @@ pub fn env(key: &str) -> Option<String> {
 pub fn process_exit(ret: isize, regs: &mut Registers, sf: &mut InterruptStackFrame) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let mut manager = get_process_manager_for_sure();
-        manager.kill(ret);
+        manager.kill_self(ret);
         manager.switch_next(regs, sf);
     })
 }
@@ -134,6 +134,18 @@ pub fn still_alive(pid: ProcessId) -> bool {
 pub fn current_pid() -> ProcessId {
     x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager_for_sure().current_pid()
+    })
+}
+
+pub fn kill(pid: ProcessId, regs: &mut Registers, sf: &mut InterruptStackFrame) {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let mut manager = get_process_manager_for_sure();
+        if pid == manager.current_pid() {
+            manager.kill_self(!0xdeadbeef);
+            manager.switch_next(regs, sf);
+        } else {
+            manager.kill(pid, !0xdeadbeef);
+        }
     })
 }
 

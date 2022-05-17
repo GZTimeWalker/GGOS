@@ -6,7 +6,12 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let graphic = &boot_info.graphic_info;
     init_DISPLAY(GOPDisplay::new(graphic));
 
-    get_display_for_sure().clear(None, 0);
+    let mut display = get_display_for_sure();
+    
+    display.clear(None, 0);
+    let (x, y) = display.resolution();
+
+    info!("Display: {}x{}", x, y);
     info!("VGA Display Initialized.");
 }
 
