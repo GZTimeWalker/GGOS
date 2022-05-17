@@ -210,7 +210,7 @@ dependencies = [
 
 [[package]]
 name = "ggos_kernel"
-version = "0.8.5"
+version = "0.8.6"
 dependencies = [
  "bit_field",
  "bitflags",
@@ -234,6 +234,13 @@ dependencies = [
  "x86",
  "x86_64",
  "xmas-elf",
+]
+
+[[package]]
+name = "ggos_mutex"
+version = "0.1.0"
+dependencies = [
+ "gglib",
 ]
 
 [[package]]

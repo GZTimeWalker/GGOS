@@ -364,17 +364,16 @@ fn load_segment(
                 page_table
                     .map_to(page, frame, page_table_flags, frame_allocator)?
                     .flush();
+            // zero bss
+
+                write_bytes(
+                    frame.start_address().as_u64() as *mut u8,
+                    0,
+                    page.size() as usize,
+                );
             }
         }
 
-        // zero bss
-        unsafe {
-            core::ptr::write_bytes(
-                zero_start.as_mut_ptr::<u8>(),
-                0,
-                (mem_size - file_size) as usize,
-            );
-        }
     }
 
     let end_page = Page::containing_address(virt_start_addr + mem_size - 1u64);

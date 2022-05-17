@@ -194,3 +194,12 @@ pub fn fork(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         manager.switch_next(regs, sf);
     })
 }
+
+pub fn force_show_info() {
+
+    unsafe {
+        manager::PROCESS_MANAGER.get().unwrap().force_unlock();
+    }
+
+    debug!("{:#?}", get_process_manager_for_sure().current())
+}
