@@ -136,16 +136,16 @@ impl DirEntry {
         })
     }
 
-    fn humanized_size(&self) -> (u32, String) {
-        let bytes = self.size;
-        if bytes < 1024 {
+    fn humanized_size(&self) -> (f32, String) {
+        let bytes = self.size as f32;
+        if bytes < 1024f32 {
             (bytes, String::from("B"))
-        } else if bytes >> 10 < 1024 {
-            (bytes >> 10, String::from("K"))
-        } else if bytes >> 20 < 1024 {
-            (bytes >> 20, String::from("M"))
+        } else if (bytes / (1 << 10) as f32) < 1024f32 {
+            (bytes / (1 << 10) as f32, String::from("K"))
+        } else if (bytes / (1 << 20) as f32) < 1024f32 {
+            (bytes / (1 << 20) as f32, String::from("M"))
         } else {
-            (bytes >> 30, String::from("G"))
+            (bytes / (1 << 30) as f32, String::from("G"))
         }
     }
 }
@@ -287,8 +287,8 @@ impl core::fmt::Display for DirEntry {
         let (size, unit) = self.humanized_size();
         write!(
             f,
-            "{:4}{} | {} | {}{}",
-           size, unit, self.moditified_time.format("%Y/%m/%d %H:%M:%S"), self.filename,
+            "{:>5.*}{} | {} | {}{}",
+           1, size, unit, self.moditified_time.format("%Y/%m/%d %H:%M:%S"), self.filename,
            if self.is_directory() { "/" } else { "" }
         )
     }

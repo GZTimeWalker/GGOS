@@ -387,12 +387,13 @@ impl Drop for Process {
         }
 
         let end_count = frame_deallocator.recycled_count();
+
         debug!(
-            "Recycled {}({}KiB) frames, {}({}KiB) frames in total.",
+            "Recycled {}({:.3}MiB) frames, {}({:.3}MiB) frames in total.",
             end_count - start_count,
-            (end_count - start_count) * 4,
+            ((end_count - start_count) * 4) as f32 / 1024.0,
             end_count,
-            end_count * 4
+            (end_count * 4) as f32 / 1024.0
         );
     }
 }

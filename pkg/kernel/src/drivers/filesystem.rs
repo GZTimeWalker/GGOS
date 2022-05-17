@@ -86,7 +86,7 @@ pub fn ls(root_path: &str) {
         None => return,
     };
 
-    println!(" Size | Last Modified       | Name");
+    println!("  Size | Last Modified       | Name");
 
     if let Err(err) = fs::iterate_dir(get_volume(), &root, |entry| {
         println!("{}", entry);
