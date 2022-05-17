@@ -12,7 +12,7 @@ use alloc::string::String;
 
 extern crate lib;
 
-fn main() {
+fn main() -> usize {
     let mut root_dir = String::from("/APP/");
     println!("<<< Welcome to GGOS shell >>>");
     loop {
@@ -52,7 +52,7 @@ fn main() {
         }
     }
 
-    lib::sys_exit(0);
+    0
 }
 
 entry!(main);

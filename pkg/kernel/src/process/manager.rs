@@ -210,12 +210,22 @@ impl ProcessManager {
         let p = self.current();
         let parent = p.parent();
         let children = p.children();
+        let cur_pid = p.pid();
+        let cur_page_table_addr = p.page_table_addr().start_address().as_u64();
 
         self.processes.iter_mut().for_each(|x| {
             if children.contains(&x.pid()) {
                 x.set_parent(parent);
             }
         });
+
+        let not_drop_page_table = self.processes.iter().any(|x| {
+            x.page_table_addr().start_address().as_u64() == cur_page_table_addr && cur_pid != x.pid()
+        });
+
+        if not_drop_page_table {
+            self.current_mut().not_drop_page_table();
+        }
 
         self.processes.retain(|p| !p.is_running());
 

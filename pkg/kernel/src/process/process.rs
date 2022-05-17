@@ -1,9 +1,7 @@
 use super::ProcessId;
 use super::*;
 use crate::filesystem::StdIO;
-use crate::memory::get_frame_alloc_for_sure;
-use crate::memory::physical_to_virtual;
-use crate::memory::BootInfoFrameAllocator;
+use crate::memory::*;
 use crate::utils::{Registers, RegistersValue, Resource};
 use alloc::collections::btree_map::BTreeMap;
 use alloc::string::String;
@@ -12,8 +10,9 @@ use core::intrinsics::copy_nonoverlapping;
 use x86_64::registers::control::{Cr3, Cr3Flags};
 use x86_64::registers::rflags::RFlags;
 use x86_64::structures::idt::{InterruptStackFrame, InterruptStackFrameValue};
+use x86_64::structures::paging::mapper::CleanUp;
 use x86_64::structures::paging::*;
-use x86_64::VirtAddr;
+use x86_64::{VirtAddr, PhysAddr};
 use xmas_elf::ElfFile;
 
 pub struct Process {
@@ -44,7 +43,14 @@ impl ProcessData {
         file_handles.insert(0, Resource::Console(StdIO::Stdin));
         file_handles.insert(1, Resource::Console(StdIO::Stdout));
         file_handles.insert(2, Resource::Console(StdIO::Stderr));
+        // 3 is the file self
         Self { env, file_handles }
+    }
+
+    pub fn add_file(mut self, file: &File) -> Self {
+        let fd = self.file_handles.len() as u8;
+        self.file_handles.insert(fd, Resource::File(file.clone()));
+        self
     }
 
     pub fn set_env(mut self, key: &str, val: &str) -> Self {
@@ -79,7 +85,7 @@ impl Process {
     }
 
     pub fn page_table_addr(&self) -> PhysFrame {
-        self.page_table_addr.0
+        self.page_table_addr.0.clone()
     }
 
     pub fn is_running(&self) -> bool {
@@ -228,7 +234,8 @@ impl Process {
 
         trace!(
             "Clone stack: {:#x} -> {:#x}",
-            cur_stack_start, offset_stack_start
+            cur_stack_start,
+            offset_stack_start
         );
 
         // copy stack
@@ -254,7 +261,8 @@ impl Process {
             STACK_PAGES,
             self.page_table.as_mut().unwrap(),
             frame_alloc,
-        ).unwrap();
+        )
+        .unwrap();
 
         self.clone_stack(offset);
 
@@ -264,7 +272,8 @@ impl Process {
         let page_table_raw = unsafe {
             (physical_to_virtual(self.page_table_addr.0.start_address().as_u64()) as *mut PageTable)
                 .as_mut()
-        }.unwrap();
+        }
+        .unwrap();
 
         let owned_page_table = unsafe {
             OffsetPageTable::new(
@@ -294,7 +303,10 @@ impl Process {
 
         trace!(
             "Thread {}#{} forked to {}#{}.",
-            self.name, self.pid, child.name, child.pid
+            self.name,
+            self.pid,
+            child.name,
+            child.pid
         );
         trace!("{:#?}", self);
         trace!("{:#?}", &child);
@@ -308,6 +320,12 @@ impl Process {
 
     pub fn children(&self) -> Vec<ProcessId> {
         self.children.clone()
+    }
+
+    pub fn not_drop_page_table(&mut self) {
+        unsafe {
+            self.page_table_addr.0 = PhysFrame::from_start_address_unchecked(PhysAddr::new(0))
+        }
     }
 
     pub fn init_elf(&mut self, elf: &ElfFile) {
@@ -324,7 +342,44 @@ impl Process {
 
 impl Drop for Process {
     fn drop(&mut self) {
-        // TODO: deallocate memory
+        let page_table = self.page_table.as_mut().unwrap();
+        let frame_deallocator = &mut *get_frame_alloc_for_sure();
+        let start_count = frame_deallocator.recycled_count();
+
+        debug!("Free stack for {}#{}", self.name, self.pid);
+        // only free stack, 0 is set by manager
+        let stack_start = self.stack_frame.stack_pointer.as_u64() & STACK_START_MASK;
+        elf::unmap_stack(
+            stack_start,
+            STACK_PAGES,
+            page_table,
+            frame_deallocator,
+            true,
+        ).unwrap();
+
+        if self.page_table_addr.0.start_address().as_u64() != 0 {
+            debug!("Clean up page_table for {}#{}", self.name, self.pid);
+            unsafe {
+                for entry in page_table.level_4_table().iter() {
+                    if let Ok(frame) = entry.frame() {
+                        // core::slice::from_raw_parts_mut(frame.start_address().as_u64() as *mut u8, 0x1000).fill(0);
+                        // TODO: fill them with 0?
+                        frame_deallocator.deallocate_frame(frame);
+                    }
+                }
+                // free P1-P3
+                page_table.clean_up(frame_deallocator);
+                // free P4
+                frame_deallocator.deallocate_frame(self.page_table_addr.0);
+            }
+        }
+
+        let end_count = frame_deallocator.recycled_count();
+        debug!(
+            "Recycled {}({}KiB) frames, {}({}KiB) in total.",
+            end_count - start_count, (end_count - start_count) * 4,
+            end_count, end_count * 4
+        );
     }
 }
 

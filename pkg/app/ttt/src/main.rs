@@ -18,7 +18,7 @@ enum CellState {
     StateComputer,
 }
 
-fn main() {
+fn main() -> usize {
     let mut state = [
         CellState::StateEmpty,
         CellState::StateEmpty,
@@ -73,7 +73,7 @@ fn main() {
     // draw final game board
     draw_board(&state);
 
-    sys_exit(0);
+    0
 }
 
 fn check_win(state: &[CellState; 9], who: CellState) -> bool {

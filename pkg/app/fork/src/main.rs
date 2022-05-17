@@ -7,7 +7,7 @@ use lib::*;
 
 static mut M: u64 = 0xdeadbeef;
 
-fn main() {
+fn main() -> usize {
     let mut c = 32;
 
     // do not alloc heap before `fork`
@@ -39,7 +39,8 @@ fn main() {
 
         c += 1024;
     }
-    sys_exit(c);
+
+    c
 }
 
 entry!(main);

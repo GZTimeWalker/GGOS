@@ -168,14 +168,11 @@ pub fn spawn(file: &File) -> Result<ProcessId, String> {
             unsafe { core::slice::from_raw_parts_mut(mem_start as *mut u8, pages * 0x1000) };
 
         fs::read_to_buf(get_volume(), file, &mut buf).expect("Failed to read file");
+        debug!("Elf buf: {:#x}", mem_start);
         &mut buf[..pages * 0x1000]
     };
 
     let elf = xmas_elf::ElfFile::new(&data).expect("Failed to parse ELF file");
-
-    const STACK_BOT: u64 = 0x0000_2000_0000_0000;
-    const STACK_PAGES: u64 = 512;
-    const STACK_TOP: u64 = STACK_BOT + STACK_PAGES * 0x1000;
 
     let pid = x86_64::instructions::interrupts::without_interrupts(|| {
         let mut manager = get_process_manager_for_sure();
@@ -185,7 +182,7 @@ pub fn spawn(file: &File) -> Result<ProcessId, String> {
             &elf,
             file.entry.filename(),
             parent,
-            Some(ProcessData::new()),
+            Some(ProcessData::new().add_file(file)),
         );
 
         pid

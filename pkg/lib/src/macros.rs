@@ -74,7 +74,8 @@ macro_rules! entry {
     ($fn:ident) => {
         #[export_name = "_start"]
         pub extern "C" fn __impl_start() {
-            $fn();
+            let ret = $fn();
+            lib::sys_exit(ret);
         }
     };
 }

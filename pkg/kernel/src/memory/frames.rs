@@ -32,6 +32,10 @@ impl BootInfoFrameAllocator {
             recycled: Vec::new(),
         }
     }
+
+    pub fn recycled_count(&self) -> usize {
+        self.recycled.len()
+    }
 }
 
 unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
