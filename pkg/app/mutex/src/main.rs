@@ -5,9 +5,6 @@ use lib::*;
 
 extern crate lib;
 
-mod sync;
-use sync::SpinLock;
-
 static mut LOCK: SpinLock = SpinLock::new();
 static mut BURGER: isize = 0;
 static mut BURGER_SEM: isize = 0;
@@ -21,6 +18,7 @@ fn main() -> usize {
         try_spin();
         sys_wait_pid(pid);
     }
+
     0
 }
 
@@ -47,12 +45,7 @@ unsafe fn mother_spin() {
 
     println!("Mother - SPIN : Oh, I have to hang clothes out.");
 
-    let now = sys_time();
-    let mut current = now;
-    while current - now < lib::Duration::seconds(3) {
-        core::hint::spin_loop();
-        current = sys_time();
-    }
+    sleep(3000);
 
     println!(
         "Mother - SPIN : Oh, Jesus! There are {} cheese burgers",
@@ -63,13 +56,7 @@ unsafe fn mother_spin() {
 }
 
 unsafe fn boy_spin() {
-
-    let now = sys_time();
-    let mut current = now;
-    while current - now < lib::Duration::milliseconds(200) {
-        core::hint::spin_loop();
-        current = sys_time();
-    }
+    sleep(200);
 
     LOCK.lock();
 
@@ -80,7 +67,7 @@ unsafe fn boy_spin() {
 }
 
 fn try_semaphore() {
-    sys_new_sem(0x2323);
+    sys_new_sem(0x2323, 1);
 
     let pid = sys_fork();
 
@@ -105,12 +92,7 @@ unsafe fn mother_semaphore() {
 
     println!("Mother - SEMA : Oh, I have to hang clothes out.");
 
-    let now = sys_time();
-    let mut current = now;
-    while current - now < lib::Duration::seconds(3) {
-        core::hint::spin_loop();
-        current = sys_time();
-    }
+    sleep(3000);
 
     println!(
         "Mother - SEMA : Oh, Jesus! There are {} cheese burgers",
@@ -121,13 +103,7 @@ unsafe fn mother_semaphore() {
 }
 
 unsafe fn boy_semaphore() {
-
-    let now = sys_time();
-    let mut current = now;
-    while current - now < lib::Duration::milliseconds(200) {
-        core::hint::spin_loop();
-        current = sys_time();
-    }
+    sleep(200);
 
     sys_sem_down(0x2323);
 

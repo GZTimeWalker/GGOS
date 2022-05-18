@@ -152,56 +152,56 @@ pub fn kill(pid: ProcessId, regs: &mut Registers, sf: &mut InterruptStackFrame) 
     })
 }
 
-pub fn new_sem(key: u32) -> isize {
+pub fn new_sem(key: u32, value: usize) -> isize {
     if let Some(mut sems) = get_sem_manager() {
         let sid = SemaphoreId::new(key);
-        trace!("New Semaphore#{}", key);
+        // trace!("New Semaphore#{}", key);
         if !sems.contains_key(&sid) {
-            sems.insert(sid, Semaphore::new());
-            0
-        } else {
-            -1
+            sems.insert(sid, Semaphore::new(value));
+            return 0;
         }
-    } else {
-        -1
     }
+    return 1;
 }
 
 pub fn sem_up(key: u32) -> isize {
     if let Some(mut sems) = get_sem_manager() {
-        let key = SemaphoreId::new(key);
-        if let Some(sem) = sems.get_mut(&key) {
-            debug!("{}", sem);
+        let sid = SemaphoreId::new(key);
+        if let Some(sem) = sems.get_mut(&sid) {
+            // debug!("<{:#x}>{}", key, sem);
             if let Some(pid) = sem.up() {
-                debug!("Semaphore up -> unblock process: #{}", pid);
+                debug!("Semaphore #{:#x} up -> unblock process: #{}", key, pid);
                 let mut manager = get_process_manager_for_sure();
                 manager.unblock(pid);
             }
             return 0;
         }
     }
-    return -1;
+    return 1;
 }
 
 pub fn sem_down(key: u32, regs: &mut Registers, sf: &mut InterruptStackFrame) {
     if let Some(mut sems) = get_sem_manager() {
-        let key = SemaphoreId::new(key);
-        if let Some(sem) = sems.get_mut(&key) {
-            debug!("{}", sem);
+        let sid = SemaphoreId::new(key);
+        if let Some(sem) = sems.get_mut(&sid) {
+            // debug!("<{:#x}>{}", key, sem);
             let mut manager = get_process_manager_for_sure();
             let pid = manager.current_pid();
             if let Err(()) = sem.down(pid) {
-                debug!("Semaphore down -> block process: #{}", pid);
+                debug!("Semaphore #{:#x} down -> block process: #{}", key, pid);
                 regs.set_rax(0);
                 manager.save_current(regs, sf);
                 manager.block(pid);
                 manager.switch_next(regs, sf);
+            } else {
+                regs.set_rax(0);
             }
-            regs.set_rax(0);
+        } else {
+            regs.set_rax(1);
         }
+    } else {
+        regs.set_rax(1);
     }
-    regs.set_rax(usize::MAX);
-
 }
 
 pub fn remove_sem(key: u32) -> isize {
@@ -210,10 +210,10 @@ pub fn remove_sem(key: u32) -> isize {
         if let Some(_) = sems.remove(&key) {
             0
         } else {
-            -1
+            1
         }
     } else {
-        -1
+        1
     }
 }
 

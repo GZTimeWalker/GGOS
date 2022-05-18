@@ -18,14 +18,14 @@ impl SemaphoreId {
 }
 
 pub struct Semaphore {
-    count: Mutex<u64>,
+    count: Mutex<usize>,
     wait_queue: Vec<ProcessId>,
 }
 
 impl Semaphore {
-    pub fn new() -> Self {
+    pub fn new(value: usize) -> Self {
         Self {
-            count: Mutex::new(1),
+            count: Mutex::new(value),
             wait_queue: Vec::new()
         }
     }

@@ -11,6 +11,10 @@ pub mod macros;
 #[macro_use]
 pub mod io;
 mod syscall;
+mod utils;
+
+#[macro_use]
+mod sync;
 pub mod allocator;
 
 use core::fmt::*;
@@ -19,6 +23,8 @@ use alloc::format;
 pub use io::*;
 pub use syscall::*;
 pub use chrono::*;
+pub use utils::*;
+pub use sync::*;
 
 #[derive(Clone, Debug)]
 pub enum Syscall {

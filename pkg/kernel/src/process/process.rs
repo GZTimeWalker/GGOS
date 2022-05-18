@@ -435,11 +435,12 @@ impl core::fmt::Display for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(
             f,
-            " #{:-3} | #{:-3} | {:12} | {}",
+            " #{:-3} | #{:-3} | {:12} | {:8} | {:?}",
             u16::from(self.pid),
             u16::from(self.parent),
             self.name,
-            self.ticks_passed
+            self.ticks_passed,
+            self.status
         )?;
         Ok(())
     }

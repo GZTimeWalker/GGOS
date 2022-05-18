@@ -162,7 +162,7 @@ pub fn sys_kill(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStac
 
 pub fn sys_sem(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
     match args.arg0 {
-        0 => regs.set_rax(crate::process::new_sem(args.arg1 as u32) as usize),
+        0 => regs.set_rax(crate::process::new_sem(args.arg1 as u32, args.arg2) as usize),
         1 => regs.set_rax(crate::process::sem_up(args.arg1 as u32) as usize),
         2 => crate::process::sem_down(args.arg1 as u32, regs, sf),
         3 => regs.set_rax(crate::process::remove_sem(args.arg1 as u32) as usize),

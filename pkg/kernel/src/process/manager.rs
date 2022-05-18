@@ -200,7 +200,7 @@ impl ProcessManager {
     }
 
     pub fn print_process_list(&self) {
-        let mut output = String::from("  PID | PPID | Name         | Ticks\n");
+        let mut output = String::from("  PID | PPID | Name         |    Ticks | Status\n");
         for p in self.processes.iter() {
             output = output + format!("{}\n", p).as_str();
         }

@@ -186,6 +186,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ggos_dining"
+version = "0.1.0"
+dependencies = [
+ "gglib",
+]
+
+[[package]]
 name = "ggos_elf"
 version = "0.1.0"
 dependencies = [
@@ -234,6 +241,13 @@ dependencies = [
  "x86",
  "x86_64",
  "xmas-elf",
+]
+
+[[package]]
+name = "ggos_mq"
+version = "0.1.0"
+dependencies = [
+ "gglib",
 ]
 
 [[package]]

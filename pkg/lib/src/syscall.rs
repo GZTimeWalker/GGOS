@@ -31,8 +31,9 @@ pub fn sys_deallocate(ptr: *mut u8, layout: &core::alloc::Layout) -> usize {
     syscall!(Syscall::Deallocate, ptr, layout as *const _)
 }
 
-pub fn sys_exit(code: usize) {
+pub fn sys_exit(code: usize) -> ! {
     syscall!(Syscall::Exit, code);
+    unreachable!();
 }
 
 pub fn sys_wait_pid(pid: u16) -> isize {
@@ -106,8 +107,8 @@ pub fn sys_kill(pid: u16) {
     syscall!(Syscall::Kill, pid as u64);
 }
 
-pub fn sys_new_sem(key: u32) -> isize {
-    syscall!(Syscall::Sem, 0, key as usize) as isize
+pub fn sys_new_sem(key: u32, value: usize) -> isize {
+    syscall!(Syscall::Sem, 0, key as usize, value) as isize
 }
 
 pub fn sys_sem_up(key: u32) -> isize {
@@ -119,5 +120,5 @@ pub fn sys_sem_down(key: u32) -> isize {
 }
 
 pub fn sys_rm_sem(key: u32) -> isize {
-    syscall!(Syscall::Sem, 2, key as usize) as isize
+    syscall!(Syscall::Sem, 3, key as usize) as isize
 }
