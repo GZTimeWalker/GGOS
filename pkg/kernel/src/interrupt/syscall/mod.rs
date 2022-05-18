@@ -25,6 +25,7 @@ pub enum Syscall {
     GetPid = 14,
     Fork = 15,
     Kill = 16,
+    Sem = 17,
     #[num_enum(default)]
     None = 255,
 }
@@ -78,6 +79,8 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         Syscall::Fork           => sys_fork(regs, sf),
         // pid: arg0 as u16
         Syscall::Kill           => sys_kill(&args, regs, sf),
+        // op: u8, key: u32, val: usize -> ret: any
+        Syscall::Sem            => sys_sem(&args, regs, sf),
         // None
         Syscall::None           => {}
     }

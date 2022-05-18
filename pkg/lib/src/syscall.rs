@@ -105,3 +105,19 @@ pub fn sys_fork() -> u16 {
 pub fn sys_kill(pid: u16) {
     syscall!(Syscall::Kill, pid as u64);
 }
+
+pub fn sys_new_sem(key: u32) -> isize {
+    syscall!(Syscall::Sem, 0, key as usize) as isize
+}
+
+pub fn sys_sem_up(key: u32) -> isize {
+    syscall!(Syscall::Sem, 1, key as usize) as isize
+}
+
+pub fn sys_sem_down(key: u32) -> isize {
+    syscall!(Syscall::Sem, 2, key as usize) as isize
+}
+
+pub fn sys_rm_sem(key: u32) -> isize {
+    syscall!(Syscall::Sem, 2, key as usize) as isize
+}

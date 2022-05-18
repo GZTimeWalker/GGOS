@@ -65,22 +65,24 @@ impl ProcessManager {
     }
 
     fn get_next_pos(&self) -> usize {
-        let next_pos = self
+        let cur_pos = self
             .processes
             .iter()
             .position(|x| x.pid() == self.cur_pid)
-            .unwrap_or(0)
-            + 1;
-        if next_pos >= self.processes.len() {
-            0
-        } else {
-            next_pos
+            .unwrap_or(0);
+
+        let mut next_pos = (cur_pos + 1) % self.processes.len();
+
+        while self.processes[next_pos].status() != ProgramStatus::Ready {
+            next_pos = (next_pos + 1) % self.processes.len();
         }
+
+        next_pos
     }
 
     pub fn wait_pid(&mut self, pid: ProcessId) -> isize {
         if self.exit_code.contains_key(&pid) {
-            self.exit_code.remove(&pid).unwrap()
+            *self.exit_code.get(&pid).unwrap()
         } else {
             -1
         }
@@ -166,6 +168,7 @@ impl ProcessManager {
             VirtAddr::new_truncate(STACK_BOT + STACK_SIZE),
         );
         p.init_elf(&elf);
+        trace!("{:#?}", &p);
         // info!("Spawn process: {}#{}", p.name(), p.pid());
         // info!("Spawn process:\n\n{:?}\n", p);
         let pid = p.pid();
@@ -214,8 +217,24 @@ impl ProcessManager {
         self.kill(self.cur_pid, ret);
     }
 
+    pub fn unblock(&mut self, pid: ProcessId) {
+        self.processes.iter_mut().for_each(|p| {
+            if p.pid() == pid {
+                p.pause()
+            }
+        });
+    }
+
+    pub fn block(&mut self, pid: ProcessId) {
+        self.processes.iter_mut().for_each(|p| {
+            if p.pid() == pid {
+                p.block()
+            }
+        });
+    }
+
     pub fn kill(&mut self, pid: ProcessId, ret: isize) {
-        debug!("Killing process #{} with ret code: {}", pid, ret);
+        trace!("Killing process #{} with ret code: {}", pid, ret);
 
         let p = self.processes.iter().find(|x| x.pid() == pid);
 

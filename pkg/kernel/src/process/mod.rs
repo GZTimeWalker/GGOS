@@ -1,18 +1,20 @@
 mod manager;
 mod process;
 mod scheduler;
+mod sync;
 
 use core::sync::atomic::{AtomicU16, Ordering};
 
 use fs::File;
 use manager::*;
 use process::*;
+use sync::*;
 
 pub use process::ProcessData;
 pub use scheduler::*;
 
 use crate::{filesystem::get_volume, Registers, Resource};
-use alloc::{string::String, vec};
+use alloc::{string::String, vec, collections::BTreeMap};
 use x86_64::{
     registers::control::{Cr3, Cr2},
     structures::idt::InterruptStackFrame,
@@ -20,6 +22,7 @@ use x86_64::{
 use x86_64::structures::idt::PageFaultErrorCode;
 
 use self::manager::init_PROCESS_MANAGER;
+use self::sync::init_SEMAPHORES;
 
 const STACK_BOT: u64 = 0x0000_2000_0000_0000;
 const STACK_PAGES: u64 = 0x100;
@@ -77,7 +80,7 @@ pub fn init() {
     kproc.resume();
     kproc.set_page_table_with_cr3();
     init_PROCESS_MANAGER(ProcessManager::new(kproc));
-
+    init_SEMAPHORES(BTreeMap::new());
     info!("Process Manager Initialized.");
 }
 
@@ -147,6 +150,71 @@ pub fn kill(pid: ProcessId, regs: &mut Registers, sf: &mut InterruptStackFrame) 
             manager.kill(pid, !0xdeadbeef);
         }
     })
+}
+
+pub fn new_sem(key: u32) -> isize {
+    if let Some(mut sems) = get_sem_manager() {
+        let sid = SemaphoreId::new(key);
+        trace!("New Semaphore#{}", key);
+        if !sems.contains_key(&sid) {
+            sems.insert(sid, Semaphore::new());
+            0
+        } else {
+            -1
+        }
+    } else {
+        -1
+    }
+}
+
+pub fn sem_up(key: u32) -> isize {
+    if let Some(mut sems) = get_sem_manager() {
+        let key = SemaphoreId::new(key);
+        if let Some(sem) = sems.get_mut(&key) {
+            trace!("{}", sem);
+            if let Some(pid) = sem.up() {
+                debug!("Semaphore up -> unblock process: #{}", pid);
+                let mut manager = get_process_manager_for_sure();
+                manager.unblock(pid);
+            }
+            return 0;
+        }
+    }
+    return -1;
+}
+
+pub fn sem_down(key: u32, regs: &mut Registers, sf: &mut InterruptStackFrame) {
+    if let Some(mut sems) = get_sem_manager() {
+        let key = SemaphoreId::new(key);
+        if let Some(sem) = sems.get_mut(&key) {
+            trace!("{}", sem);
+            let mut manager = get_process_manager_for_sure();
+            let pid = manager.current_pid();
+            if let Err(()) = sem.down(pid) {
+                debug!("Semaphore down -> block process: #{}", pid);
+                regs.set_rax(0);
+                manager.save_current(regs, sf);
+                manager.block(pid);
+                manager.switch_next(regs, sf);
+            }
+            regs.set_rax(0);
+        }
+    }
+    regs.set_rax(usize::MAX);
+
+}
+
+pub fn remove_sem(key: u32) -> isize {
+    if let Some(mut sems) = get_sem_manager() {
+        let key = SemaphoreId::new(key);
+        if let Some(_) = sems.remove(&key) {
+            0
+        } else {
+            -1
+        }
+    } else {
+        -1
+    }
 }
 
 pub fn try_resolve_page_fault(_err_code: PageFaultErrorCode, _sf: &mut InterruptStackFrame) -> Result<(),()> {

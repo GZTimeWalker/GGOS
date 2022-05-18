@@ -38,6 +38,7 @@ pub enum Syscall {
     GetPid = 14,
     Fork = 15,
     Kill = 16,
+    Sem = 17,
 }
 
 #[macro_export]

@@ -79,12 +79,20 @@ impl Process {
         self.ticks_passed += 1;
     }
 
+    pub fn status(&self) -> ProgramStatus {
+        self.status
+    }
+
     pub fn pause(&mut self) {
         self.status = ProgramStatus::Ready;
     }
 
     pub fn resume(&mut self) {
         self.status = ProgramStatus::Running;
+    }
+
+    pub fn block(&mut self) {
+        self.status = ProgramStatus::Blocked;
     }
 
     pub fn set_page_table_with_cr3(&mut self) {
@@ -237,7 +245,7 @@ impl Process {
     fn clone_stack(&self, offset: u64) {
         // assume that every thread stack is the same size (STACK_PAGES * PAGE_SIZE)
         let cur_stack_start = self.stack_frame.stack_pointer.as_u64() & STACK_START_MASK;
-        let offset_stack_start = cur_stack_start + offset;
+        let offset_stack_start = STACK_BOT + offset;
 
         trace!(
             "Clone stack: {:#x} -> {:#x}",
@@ -260,21 +268,28 @@ impl Process {
         let frame_alloc = &mut *get_frame_alloc_for_sure();
 
         // use the same page table with the parent, but remap stack with offset
-        let offset = (self.children.len() + 1) as u64 * STACK_SIZE;
+        // offset to STACK_BOT
+        let mut offset = (self.children.len() as u64 + 1) * STACK_SIZE;
 
-        trace!("Map thread stack to: {:#x}", STACK_BOT + offset);
-        elf::map_stack(
+        while let Err(_) = elf::map_stack(
             STACK_BOT + offset,
             STACK_PAGES,
             self.page_table.as_mut().unwrap(),
             frame_alloc,
-        )
-        .unwrap();
+        ) {
+            trace!("Map thread stack to {:#x} failed.", STACK_BOT + offset);
+            offset += STACK_SIZE;
+        }
+
+        trace!("Map thread stack to {:#x} succeed.", STACK_BOT + offset);
 
         self.clone_stack(offset);
 
         let mut new_stack_frame = self.stack_frame.clone();
-        new_stack_frame.stack_pointer += offset;
+
+        // offset to current stack_start
+        let offset = STACK_BOT + offset - self.stack_frame.stack_pointer.as_u64() & STACK_START_MASK;
+        new_stack_frame.stack_pointer += offset + STACK_SIZE;
 
         let page_table_raw = unsafe {
             (physical_to_virtual(self.page_table_addr.0.start_address().as_u64()) as *mut PageTable)
@@ -315,7 +330,6 @@ impl Process {
             child.name,
             child.pid
         );
-        trace!("{:#?}", self);
         trace!("{:#?}", &child);
 
         return child;
