@@ -32,7 +32,7 @@ const STACK_MAX_BOT: u64 = 0x0000_4000_0000_0000;
 // allow 0x2000 (4096) threads run as a time
 // 0x????_2000_????_???? -> 0x????_4000_????_????
 // init alloc stack has size of 0x2000 (2 frames)
-// every time we meet a page fault, we will alloc 2 frames, again
+// every time we meet a page fault, we alloc more frames
 const STACK_MAX_PAGES: u64 = 0x100000;
 const STACK_MAX_SIZE: u64 = STACK_MAX_PAGES * crate::memory::PAGE_SIZE;
 const STACK_START_MASK: u64 = !(STACK_MAX_SIZE - 1);
