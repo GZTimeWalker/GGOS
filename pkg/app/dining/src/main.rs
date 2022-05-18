@@ -15,7 +15,6 @@ fn main() -> usize {
         CHOPSTICK[i].init(1);
     }
 
-
     for i in 0..5 {
         let pid = sys_fork();
         if pid == 0 {
@@ -30,7 +29,7 @@ fn main() -> usize {
     println!("#{} holds threads: {:?}", cpid, &pids);
 
     sys_stat();
-    
+
     for i in 0..5 {
         println!("#{} Waiting for #{}...", cpid, pids[i]);
         sys_wait_pid(pids[i]);
@@ -40,18 +39,19 @@ fn main() -> usize {
 }
 
 fn philosopher(id: usize) -> ! {
+    let pid = sys_get_pid();
     for _ in 0..20 {
         if id == 0 {
-            println!("philosopher #{} is sleeping...", id);
+            println!("philosopher #{}({}) is sleeping...", id, pid);
             core::hint::spin_loop();
         }
 
-        println!("philosopher #{} is thinking...", id);
+        println!("philosopher #{}({}) is thinking...", id, pid);
 
         CHOPSTICK[id].acquire();
         CHOPSTICK[(id + 1) % 5].acquire();
 
-        println!("philosopher #{} is eating...", id);
+        println!("philosopher #{}({}) is eating...", id, pid);
 
         CHOPSTICK[(id + 1) % 5].release();
         CHOPSTICK[id].release();

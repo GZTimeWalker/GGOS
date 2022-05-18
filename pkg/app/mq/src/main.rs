@@ -39,7 +39,7 @@ fn main() -> usize {
 
 
     sys_stat();
-    
+
     for i in 0..QUEUE_COUNT {
         println!("#{} Waiting for #{}...", cpid, pids[i]);
         sys_wait_pid(pids[i]);
@@ -53,12 +53,13 @@ fn main() -> usize {
 }
 
 unsafe fn producer(id: usize) -> ! {
-    println!("New producer #{}", id);
+    let pid = sys_get_pid();
+    println!("New producer #{}({})", id, pid);
     for _ in 0..20 {
         IS_NOT_FULL.acquire();
         MUTEX.acquire();
         COUNT += 1;
-        println!("Produced by #{} count={}", id, &COUNT);
+        println!("Produced by #{}({}) count={}", id, pid, &COUNT);
         MUTEX.release();
         IS_NOT_EMPTY.release();
     }
@@ -66,12 +67,13 @@ unsafe fn producer(id: usize) -> ! {
 }
 
 unsafe fn consumer(id: usize) -> ! {
-    println!("New consumer #{}", id);
+    let pid = sys_get_pid();
+    println!("New consumer #{}({})", id, pid);
     for _ in 0..20 {
         IS_NOT_EMPTY.acquire();
         MUTEX.acquire();
         COUNT -= 1;
-        println!("Consumed by #{} count={}", id, &COUNT);
+        println!("Consumed by #{}({}) count={}", id, pid, &COUNT);
         MUTEX.release();
         IS_NOT_FULL.release();
     }

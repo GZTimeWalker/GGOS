@@ -200,7 +200,7 @@ impl ProcessManager {
     }
 
     pub fn print_process_list(&self) {
-        let mut output = String::from("  PID | PPID | Name         |    Ticks | Status\n");
+        let mut output = String::from("  PID | PPID | Name          |    Ticks | Status\n");
         for p in self.processes.iter() {
             output = output + format!("{}\n", p).as_str();
         }
@@ -234,8 +234,6 @@ impl ProcessManager {
     }
 
     pub fn kill(&mut self, pid: ProcessId, ret: isize) {
-        trace!("Killing process #{} with ret code: {}", pid, ret);
-
         let p = self.processes.iter().find(|x| x.pid() == pid);
 
         if p.is_none() {
@@ -244,6 +242,8 @@ impl ProcessManager {
         }
 
         let p = p.unwrap();
+
+        debug!("Killing process {}#{} with ret code: {}", p.name(), pid, ret);
 
         let parent = p.parent();
         let children = p.children();
