@@ -37,7 +37,7 @@ impl Semaphore {
                 Err(())
             } else {
                 *count -= 1;
-                trace!("Semaphore down: {}", count);
+                // trace!("Semaphore down: {}", count);
                 Ok(())
             }
         } else {
@@ -47,11 +47,11 @@ impl Semaphore {
 
     pub fn up(&mut self) -> Option<ProcessId> {
         if let Some(mut count) = self.count.try_lock() {
-            *count += 1;
-            trace!("Semaphore up: {}", count);
+            // trace!("Semaphore up: {}", count);
             if !self.wait_queue.is_empty() {
                 Some(self.wait_queue.pop().unwrap())
             } else {
+                *count += 1;
                 None
             }
         } else {

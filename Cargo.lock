@@ -210,7 +210,7 @@ dependencies = [
 
 [[package]]
 name = "ggos_kernel"
-version = "0.8.7"
+version = "0.9.0"
 dependencies = [
  "bit_field",
  "bitflags",

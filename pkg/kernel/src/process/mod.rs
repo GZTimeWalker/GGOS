@@ -171,7 +171,7 @@ pub fn sem_up(key: u32) -> isize {
     if let Some(mut sems) = get_sem_manager() {
         let key = SemaphoreId::new(key);
         if let Some(sem) = sems.get_mut(&key) {
-            trace!("{}", sem);
+            debug!("{}", sem);
             if let Some(pid) = sem.up() {
                 debug!("Semaphore up -> unblock process: #{}", pid);
                 let mut manager = get_process_manager_for_sure();
@@ -187,7 +187,7 @@ pub fn sem_down(key: u32, regs: &mut Registers, sf: &mut InterruptStackFrame) {
     if let Some(mut sems) = get_sem_manager() {
         let key = SemaphoreId::new(key);
         if let Some(sem) = sems.get_mut(&key) {
-            trace!("{}", sem);
+            debug!("{}", sem);
             let mut manager = get_process_manager_for_sure();
             let pid = manager.current_pid();
             if let Err(()) = sem.down(pid) {
