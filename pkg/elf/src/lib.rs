@@ -74,8 +74,10 @@ pub fn map_stack(
     // create a stack
     let stack_start = Page::containing_address(VirtAddr::new(addr));
     let stack_end = stack_start + pages;
+    trace!("Page Range: {:?}({})", Page::range(stack_start, stack_end), pages);
 
     let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
+    trace!("Flags: {:?}", flags);
 
     for page in Page::range(stack_start, stack_end) {
         let frame = frame_allocator

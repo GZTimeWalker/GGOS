@@ -17,17 +17,29 @@ use crate::{filesystem::get_volume, Registers, Resource};
 use alloc::{string::String, vec, collections::BTreeMap};
 use x86_64::{
     registers::control::{Cr3, Cr2},
-    structures::idt::InterruptStackFrame,
+    structures::idt::InterruptStackFrame, VirtAddr,
 };
 use x86_64::structures::idt::PageFaultErrorCode;
 
 use self::manager::init_PROCESS_MANAGER;
 use self::sync::init_SEMAPHORES;
 
-const STACK_BOT: u64 = 0x0000_2000_0000_0000;
-const STACK_PAGES: u64 = 0x100;
-const STACK_SIZE: u64 = STACK_PAGES * crate::memory::PAGE_SIZE;
-const STACK_START_MASK: u64 = !(STACK_SIZE - 1);
+// 0xffff_ff00_0000_0000 is the kernel's address space
+const STACK_MAX_BOT: u64 = 0x0000_4000_0000_0000;
+// stack max addr, every thread has a stack space
+// from 0x????_????_0000_0000 to 0x????_????_ffff_ffff
+// 0x100000000 bytes -> 4GiB
+// allow 0x2000 (4096) threads run as a time
+// 0x????_2000_????_???? -> 0x????_4000_????_????
+// init alloc stack has size of 0x2000 (2 frames)
+// every time we meet a page fault, we will alloc 2 frames, again
+const STACK_MAX_PAGES: u64 = 0x100000;
+const STACK_MAX_SIZE: u64 = STACK_MAX_PAGES * crate::memory::PAGE_SIZE;
+const STACK_START_MASK: u64 = !(STACK_MAX_SIZE - 1);
+// [bot..0x2000_0000_0000..top..0x4000_ffff_ffff]
+// init stack: [0x4000_ffff_e000_..0x4000_ffff_ffff]
+const STACT_INIT_BOT: u64 = STACK_MAX_BOT + STACK_MAX_SIZE - 0x2000;
+const STACK_INIT_TOP: u64 = STACK_MAX_BOT + STACK_MAX_SIZE - 1;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ProgramStatus {
@@ -270,4 +282,10 @@ pub fn force_show_info() {
     }
 
     debug!("{:#?}", get_process_manager_for_sure().current())
+}
+
+pub fn handle_page_fault(addr: VirtAddr, err_code: PageFaultErrorCode) -> Result<(), ()> {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager_for_sure().handle_page_fault(addr, err_code)
+    })
 }

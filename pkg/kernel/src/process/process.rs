@@ -10,7 +10,7 @@ use core::intrinsics::copy_nonoverlapping;
 use x86_64::registers::control::{Cr3, Cr3Flags};
 use x86_64::registers::rflags::RFlags;
 use x86_64::structures::idt::{InterruptStackFrame, InterruptStackFrameValue};
-use x86_64::structures::paging::mapper::CleanUp;
+use x86_64::structures::paging::mapper::{CleanUp, MapToError};
 use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::structures::paging::*;
 use x86_64::{PhysAddr, VirtAddr};
@@ -34,6 +34,7 @@ pub struct Process {
 pub struct ProcessData {
     env: BTreeMap<String, String>,
     code_segements: Option<Vec<PageRangeInclusive>>,
+    stack_segement: Option<PageRangeInclusive>,
     file_handles: BTreeMap<u8, Resource>,
 }
 
@@ -47,9 +48,11 @@ impl ProcessData {
         file_handles.insert(2, Resource::Console(StdIO::Stderr));
         // 3 is the file self
         let code_segements = None;
+        let stack_segement = None;
         Self {
             env,
             code_segements,
+            stack_segement,
             file_handles,
         }
     }
@@ -169,18 +172,7 @@ impl Process {
         }
 
         // 3. create page table object
-        let page_table_raw = unsafe {
-            (physical_to_virtual(page_table_addr.start_address().as_u64()) as *mut PageTable)
-                .as_mut()
-        }
-        .unwrap();
-
-        let page_table = unsafe {
-            OffsetPageTable::new(
-                page_table_raw,
-                VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET as u64),
-            )
-        };
+        let page_table = Self::page_table_from_phyframe(page_table_addr);
 
         (page_table, page_table_addr)
     }
@@ -242,24 +234,60 @@ impl Process {
         self.parent
     }
 
-    fn clone_stack(&self, offset: u64) {
-        // assume that every thread stack is the same size (STACK_PAGES * PAGE_SIZE)
-        let cur_stack_start = self.stack_frame.stack_pointer.as_u64() & STACK_START_MASK;
-        let offset_stack_start = STACK_BOT + offset;
+    pub fn is_on_stack(&self, addr: VirtAddr) -> bool {
+        if let Some(stack_range) = self.proc_data.stack_segement {
+            let addr = addr.as_u64();
+            let cur_stack_bot = stack_range.start.start_address().as_u64();
+            trace!("Current stack bot: {:#x}", cur_stack_bot);
+            trace!("Address to access: {:#x}", addr);
+            if addr & STACK_START_MASK != cur_stack_bot & STACK_START_MASK {
+                false // not in current stack range
+            } else {
+                true
+            }
+        } else {
+            false
+        }
+    }
 
+    pub fn try_alloc_new_stack_page(&mut self, addr: VirtAddr) -> Result<(), MapToError<Size4KiB>> {
+        let alloc = &mut *get_frame_alloc_for_sure();
+        let start_page = Page::<Size4KiB>::containing_address(addr);
+        let pages = self.proc_data.stack_segement.unwrap().start - start_page;
+        let page_table = self.page_table.as_mut().unwrap();
+        debug!("Fill missing pages...[{:?} -> {:?})", start_page, self.proc_data.stack_segement.unwrap().start);
+
+        elf::map_stack(addr.as_u64(), pages, page_table, alloc)?;
+
+        let end_page = self.proc_data.stack_segement.unwrap().end;
+        let new_stack = Page::range_inclusive(start_page, end_page);
+        self.proc_data.stack_segement = Some(new_stack);
+        Ok(())
+    }
+
+    fn clone_stack(&self, cur_stack_base: u64, new_stack_base: u64, stack_size: usize) {
         trace!(
             "Clone stack: {:#x} -> {:#x}",
-            cur_stack_start,
-            offset_stack_start
+            cur_stack_base,
+            new_stack_base
         );
-
-        // copy stack
         unsafe {
             copy_nonoverlapping::<u8>(
-                cur_stack_start as *mut u8,
-                offset_stack_start as *mut u8,
-                STACK_SIZE as usize,
+                cur_stack_base as *mut u8,
+                new_stack_base as *mut u8,
+                stack_size * Size4KiB::SIZE as usize,
             );
+        }
+    }
+
+    fn page_table_from_phyframe(frame: PhysFrame) -> OffsetPageTable<'static> {
+        unsafe {
+            OffsetPageTable::new(
+                (physical_to_virtual(frame.start_address().as_u64()) as *mut PageTable)
+                    .as_mut()
+                    .unwrap(),
+                VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET as u64),
+            )
         }
     }
 
@@ -267,43 +295,43 @@ impl Process {
         // deep clone page is not impl yet, so we put the thread stack to a new mem
         let frame_alloc = &mut *get_frame_alloc_for_sure();
 
-        // use the same page table with the parent, but remap stack with offset
-        // offset to STACK_BOT
-        let mut offset = (self.children.len() as u64 + 1) * STACK_SIZE;
+        // use the same page table with the parent, but remap stack with new offset
+        let stack_info = self.proc_data.stack_segement.unwrap();
+
+        let mut new_stack_base = stack_info.start.start_address().as_u64()
+            - (self.children.len() as u64 + 1) * STACK_MAX_SIZE;
 
         while let Err(_) = elf::map_stack(
-            STACK_BOT + offset,
-            STACK_PAGES,
+            new_stack_base,
+            stack_info.count() as u64,
             self.page_table.as_mut().unwrap(),
             frame_alloc,
         ) {
-            trace!("Map thread stack to {:#x} failed.", STACK_BOT + offset);
-            offset += STACK_SIZE;
+            trace!("Map thread stack to {:#x} failed.", new_stack_base);
+            new_stack_base -= STACK_MAX_SIZE; // stack grow down
         }
 
-        trace!("Map thread stack to {:#x} succeed.", STACK_BOT + offset);
+        trace!("Map thread stack to {:#x} succeed.", new_stack_base);
 
-        self.clone_stack(offset);
-
+        let cur_stack_base = stack_info.start.start_address().as_u64();
+        // make new stack frame
         let mut new_stack_frame = self.stack_frame.clone();
-
-        // offset to current stack_start
-        let offset = STACK_BOT + offset - self.stack_frame.stack_pointer.as_u64() & STACK_START_MASK;
-        new_stack_frame.stack_pointer += offset + STACK_SIZE;
-
-        let page_table_raw = unsafe {
-            (physical_to_virtual(self.page_table_addr.0.start_address().as_u64()) as *mut PageTable)
-                .as_mut()
-        }
-        .unwrap();
-
-        let owned_page_table = unsafe {
-            OffsetPageTable::new(
-                page_table_raw,
-                VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET as u64),
-            )
-        };
-
+        // cal new stack pointer
+        new_stack_frame.stack_pointer += new_stack_base - cur_stack_base;
+        // clone new stack content
+        self.clone_stack(cur_stack_base, new_stack_base, stack_info.count());
+        // create owned page table (same as parent)
+        let owned_page_table = Self::page_table_from_phyframe(self.page_table_addr.0);
+        // clone proc data
+        let mut owned_proc_data = self.proc_data.clone();
+        // record new stack range
+        owned_proc_data.stack_segement = Some(Page::range_inclusive(
+            Page::containing_address(VirtAddr::new_truncate(new_stack_base)),
+            Page::containing_address(VirtAddr::new_truncate(
+                new_stack_base + stack_info.count() as u64 * Size4KiB::SIZE - 1,
+            )),
+        ));
+        // create new process
         let mut child = Self {
             pid: ProcessId::new(),
             name: self.name.clone(),
@@ -315,11 +343,13 @@ impl Process {
             page_table_addr: (self.page_table_addr.0, Cr3::read().1),
             page_table: Some(owned_page_table),
             children: Vec::new(),
-            proc_data: self.proc_data.clone(),
+            proc_data: owned_proc_data,
         };
 
+        // record child pid
         self.add_child(child.pid);
 
+        // fork ret value
         self.regs.rax = u16::from(child.pid) as usize;
         child.regs.rax = 0;
 
@@ -355,10 +385,17 @@ impl Process {
         let mut page_table = self.page_table.take().unwrap();
 
         let code_segements = elf::load_elf(elf, &mut page_table, alloc).unwrap();
-        elf::map_stack(STACK_BOT, STACK_PAGES, &mut page_table, alloc).unwrap();
+
+        elf::map_stack(STACT_INIT_BOT, 2, &mut page_table, alloc).unwrap();
+
+        let stack_segement = Page::range_inclusive(
+            Page::containing_address(VirtAddr::new_truncate(STACT_INIT_BOT)),
+            Page::containing_address(VirtAddr::new_truncate(STACK_INIT_TOP)),
+        );
 
         self.page_table = Some(page_table);
         self.proc_data.code_segements = Some(code_segements);
+        self.proc_data.stack_segement = Some(stack_segement)
     }
 }
 
@@ -369,11 +406,11 @@ impl Drop for Process {
         let start_count = frame_deallocator.recycled_count();
 
         trace!("Free stack for {}#{}", self.name, self.pid);
-        // only free stack, 0 is set by manager
-        let stack_start = self.stack_frame.stack_pointer.as_u64() & STACK_START_MASK;
+
+        let stack = self.proc_data.stack_segement.unwrap();
         elf::unmap_stack(
-            stack_start,
-            STACK_PAGES,
+            stack.start.start_address().as_u64(),
+            stack.count() as u64,
             page_table,
             frame_deallocator,
             true,
@@ -426,6 +463,7 @@ impl core::fmt::Debug for Process {
         f.field("stack_top", &self.stack_frame.stack_pointer);
         f.field("cpu_flags", &self.stack_frame.cpu_flags);
         f.field("instruction_pointer", &self.stack_frame.instruction_pointer);
+        f.field("stack", &self.proc_data.stack_segement);
         f.field("regs", &self.regs);
         f.finish()
     }

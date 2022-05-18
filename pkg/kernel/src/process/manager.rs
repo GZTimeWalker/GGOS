@@ -33,7 +33,10 @@ impl ProcessManager {
     }
 
     fn current_mut(&mut self) -> &mut Process {
-        self.processes.iter_mut().find(|x| x.pid() == self.cur_pid).unwrap()
+        self.processes
+            .iter_mut()
+            .find(|x| x.pid() == self.cur_pid)
+            .unwrap()
     }
 
     fn pid_mut(&mut self, pid: ProcessId) -> &mut Process {
@@ -161,16 +164,14 @@ impl ProcessManager {
         trace!(
             "Init stack frame with: \n    entry: {:#x}\n    stack: {:#x}",
             elf.header.pt2.entry_point(),
-            STACK_BOT + STACK_SIZE
+            STACK_INIT_TOP
         );
         p.init_stack_frame(
             VirtAddr::new_truncate(elf.header.pt2.entry_point()),
-            VirtAddr::new_truncate(STACK_BOT + STACK_SIZE),
+            VirtAddr::new_truncate(STACK_INIT_TOP),
         );
         p.init_elf(&elf);
         trace!("{:#?}", &p);
-        // info!("Spawn process: {}#{}", p.name(), p.pid());
-        // info!("Spawn process:\n\n{:?}\n", p);
         let pid = p.pid();
         self.processes.push(p);
         pid
@@ -233,6 +234,26 @@ impl ProcessManager {
         });
     }
 
+    pub fn handle_page_fault(
+        &mut self,
+        addr: VirtAddr,
+        err_code: PageFaultErrorCode,
+    ) -> Result<(), ()> {
+        if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)
+        {
+            let cur_proc = self.current_mut();
+            trace!("Checking if {:#x} is on current process's stack", addr);
+            if cur_proc.is_on_stack(addr) {
+                cur_proc.try_alloc_new_stack_page(addr).unwrap();
+                Ok(())
+            } else {
+                Err(())
+            }
+        } else {
+            Err(())
+        }
+    }
+
     pub fn kill(&mut self, pid: ProcessId, ret: isize) {
         let p = self.processes.iter().find(|x| x.pid() == pid);
 
@@ -243,7 +264,12 @@ impl ProcessManager {
 
         let p = p.unwrap();
 
-        debug!("Killing process {}#{} with ret code: {}", p.name(), pid, ret);
+        debug!(
+            "Killing process {}#{} with ret code: {}",
+            p.name(),
+            pid,
+            ret
+        );
 
         let parent = p.parent();
         let children = p.children();
