@@ -13,6 +13,7 @@ pub fn init() {
     });
 
     info!("Current log level: {}", log::max_level());
+    
     info!("Logger Initialized.");
 }
 

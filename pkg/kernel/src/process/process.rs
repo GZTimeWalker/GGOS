@@ -165,8 +165,8 @@ impl Process {
         // 2. copy current page table to new page table
         unsafe {
             copy_nonoverlapping::<PageTable>(
-                page_table_source.start_address().as_u64() as *mut PageTable,
-                page_table_addr.start_address().as_u64() as *mut PageTable,
+                physical_to_virtual(page_table_source.start_address().as_u64()) as *mut PageTable,
+                physical_to_virtual(page_table_addr.start_address().as_u64()) as *mut PageTable,
                 1,
             );
         }
@@ -255,7 +255,7 @@ impl Process {
         let start_page = Page::<Size4KiB>::containing_address(addr);
         let pages = self.proc_data.stack_segement.unwrap().start - start_page;
         let page_table = self.page_table.as_mut().unwrap();
-        debug!("Fill missing pages...[{:?} -> {:?})", start_page, self.proc_data.stack_segement.unwrap().start);
+        debug!("Fill missing pages...[{:#x} -> {:#x})", start_page.start_address().as_u64(), self.proc_data.stack_segement.unwrap().start.start_address().as_u64());
 
         elf::map_stack(addr.as_u64(), pages, page_table, alloc)?;
 
@@ -311,7 +311,7 @@ impl Process {
             new_stack_base -= STACK_MAX_SIZE; // stack grow down
         }
 
-        trace!("Map thread stack to {:#x} succeed.", new_stack_base);
+        debug!("Map thread stack to {:#x} succeed.", new_stack_base);
 
         let cur_stack_base = stack_info.start.start_address().as_u64();
         // make new stack frame
@@ -353,7 +353,7 @@ impl Process {
         self.regs.rax = u16::from(child.pid) as usize;
         child.regs.rax = 0;
 
-        trace!(
+        debug!(
             "Thread {}#{} forked to {}#{}.",
             self.name,
             self.pid,
@@ -384,7 +384,7 @@ impl Process {
 
         let mut page_table = self.page_table.take().unwrap();
 
-        let code_segements = elf::load_elf(elf, &mut page_table, alloc).unwrap();
+        let code_segements = elf::load_elf(elf, PHYSICAL_OFFSET, &mut page_table, alloc).unwrap();
 
         elf::map_stack(STACT_INIT_BOT, 2, &mut page_table, alloc).unwrap();
 

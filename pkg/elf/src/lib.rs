@@ -254,19 +254,21 @@ fn map_segment(
 /// for each segment, load code to new frame and set page table
 pub fn load_elf(
     elf: &ElfFile,
+    physical_offset: u64,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
 ) -> Result<Vec<PageRangeInclusive>, MapToError<Size4KiB>> {
     trace!("Loading ELF file...{:?}", elf.input.as_ptr());
     elf.program_iter()
         .filter(|segment| segment.get_type().unwrap() == program::Type::Load)
-        .map(|segment| load_segment(elf, &segment, page_table, frame_allocator))
+        .map(|segment| load_segment(elf, physical_offset, &segment, page_table, frame_allocator))
         .collect()
 }
 
 // load segments to new allocated frames
 fn load_segment(
     elf: &ElfFile,
+    physical_offset: u64,
     segment: &program::ProgramHeader,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
@@ -320,12 +322,12 @@ fn load_segment(
             trace!(
                 "Copying data: {:#x} -> {:#x}",
                 data as u64 + idx as u64 * page.size(),
-                frame.start_address().as_u64()
+                frame.start_address().as_u64() + physical_offset
             );
 
             copy_nonoverlapping(
                 data.add(idx * page.size() as usize),
-                frame.start_address().as_u64() as *mut u8,
+                (frame.start_address().as_u64() + physical_offset) as *mut u8,
                 count as usize,
             );
 
@@ -340,7 +342,7 @@ fn load_segment(
                     page.start_address().as_u64()
                 );
                 write_bytes(
-                    (frame.start_address().as_u64() + count) as *mut u8,
+                    (frame.start_address().as_u64() + physical_offset + count) as *mut u8,
                     0,
                     (page.size() - count) as usize,
                 );
@@ -369,7 +371,7 @@ fn load_segment(
             // zero bss
 
                 write_bytes(
-                    frame.start_address().as_u64() as *mut u8,
+                    (frame.start_address().as_u64() + physical_offset) as *mut u8,
                     0,
                     page.size() as usize,
                 );
