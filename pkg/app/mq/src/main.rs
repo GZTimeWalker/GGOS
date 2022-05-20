@@ -24,9 +24,9 @@ fn main() -> usize {
         let pid = sys_fork();
         if pid == 0 {
             if i % 2 == 0 {
-                unsafe { producer(i) };
+                producer(i);
             } else {
-                unsafe { consumer(i) };
+                consumer(i);
             }
         } else {
             pids[i] = pid;
@@ -52,28 +52,28 @@ fn main() -> usize {
     0
 }
 
-unsafe fn producer(id: usize) -> ! {
+fn producer(id: usize) -> ! {
     let pid = sys_get_pid();
     println!("New producer #{}({})", id, pid);
     for _ in 0..20 {
         IS_NOT_FULL.acquire();
         MUTEX.acquire();
-        COUNT += 1;
-        println!("Produced by #{}({}) count={}", id, pid, &COUNT);
+        unsafe { COUNT += 1; }
+        println!("Produced by #{}({}) count={}", id, pid, unsafe{ &COUNT });
         MUTEX.release();
         IS_NOT_EMPTY.release();
     }
     sys_exit(0);
 }
 
-unsafe fn consumer(id: usize) -> ! {
+fn consumer(id: usize) -> ! {
     let pid = sys_get_pid();
     println!("New consumer #{}({})", id, pid);
     for _ in 0..20 {
         IS_NOT_EMPTY.acquire();
         MUTEX.acquire();
-        COUNT -= 1;
-        println!("Consumed by #{}({}) count={}", id, pid, &COUNT);
+        unsafe { COUNT -= 1; }
+        println!("Consumed by #{}({}) count={}", id, pid, unsafe{ &COUNT });
         MUTEX.release();
         IS_NOT_FULL.release();
     }

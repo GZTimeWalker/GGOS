@@ -3,6 +3,7 @@ use crate::alloc::string::ToString;
 use core::arch::asm;
 
 #[doc(hidden)]
+#[inline(always)]
 pub fn syscall0(n: Syscall) -> usize {
     let ret: usize;
     unsafe {
@@ -15,6 +16,7 @@ pub fn syscall0(n: Syscall) -> usize {
 }
 
 #[doc(hidden)]
+#[inline(always)]
 pub fn syscall1(n: Syscall, arg0: usize) -> usize {
     let ret: usize;
     unsafe {
@@ -28,6 +30,7 @@ pub fn syscall1(n: Syscall, arg0: usize) -> usize {
 }
 
 #[doc(hidden)]
+#[inline(always)]
 pub fn syscall2(n: Syscall, arg0: usize, arg1: usize) -> usize {
     let ret: usize;
     unsafe {
@@ -41,6 +44,7 @@ pub fn syscall2(n: Syscall, arg0: usize, arg1: usize) -> usize {
 }
 
 #[doc(hidden)]
+#[inline(always)]
 pub fn syscall3(n: Syscall, arg0: usize, arg1: usize, arg2: usize) -> usize {
     let ret: usize;
     unsafe {
