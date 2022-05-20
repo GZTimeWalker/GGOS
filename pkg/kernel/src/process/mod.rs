@@ -37,8 +37,10 @@ const STACK_MAX_PAGES: u64 = 0x100000;
 const STACK_MAX_SIZE: u64 = STACK_MAX_PAGES * crate::memory::PAGE_SIZE;
 const STACK_START_MASK: u64 = !(STACK_MAX_SIZE - 1);
 // [bot..0x2000_0000_0000..top..0x4000_ffff_ffff]
-// init stack: [0x4000_ffff_e000_..0x4000_ffff_ffff]
-const STACT_INIT_BOT: u64 = STACK_MAX_BOT + STACK_MAX_SIZE - 0x2000;
+// init stack
+const STACK_INIT_PAGE: u64 = 1;
+const STACK_INIT_SIZE: u64 = STACK_INIT_PAGE * crate::memory::PAGE_SIZE;
+const STACT_INIT_BOT: u64 = STACK_MAX_BOT + STACK_MAX_SIZE - STACK_INIT_SIZE;
 const STACK_INIT_TOP: u64 = STACK_MAX_BOT + STACK_MAX_SIZE - 1;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

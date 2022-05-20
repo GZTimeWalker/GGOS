@@ -7,7 +7,7 @@ use x86_64::structures::paging::{
 use x86_64::VirtAddr;
 
 pub const HEAP_START: usize = 0xFFFF_FF80_0000_0000;
-pub const HEAP_SIZE: usize = 32 * 1024 * 1024; // 32 MiB
+pub const HEAP_SIZE: usize = 1024 * 1024; // 1 MiB
 
 #[global_allocator]
 pub static ALLOCATOR: LockedHeap = LockedHeap::empty();
@@ -30,8 +30,8 @@ pub fn init_heap() -> Result<(), MapToError<Size4KiB>> {
         Page::range_inclusive(heap_start_page, heap_end_page)
     };
 
-    debug!("Page start: {:?}", page_range.start);
-    debug!("Page end  : {:?}", page_range.end);
+    debug!("Kernel Heap start: {:?}", page_range.start);
+    debug!("Kernel Heap end  : {:?}", page_range.end);
 
     for page in page_range {
         let frame = frame_allocator

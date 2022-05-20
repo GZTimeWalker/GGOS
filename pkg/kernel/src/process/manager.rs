@@ -1,4 +1,5 @@
 use super::*;
+use crate::memory::{allocator::{ALLOCATOR, HEAP_SIZE}, get_frame_alloc_for_sure};
 use crate::utils::Registers;
 use alloc::collections::BTreeMap;
 use alloc::format;
@@ -203,8 +204,30 @@ impl ProcessManager {
     pub fn print_process_list(&self) {
         let mut output = String::from("  PID | PPID | Name          |    Ticks | Status\n");
         for p in self.processes.iter() {
-            output = output + format!("{}\n", p).as_str();
+            output += format!("{}\n", p).as_str();
         }
+
+        let heap_used = ALLOCATOR.lock().used();
+        let heap_size = HEAP_SIZE;
+
+        let alloc = get_frame_alloc_for_sure();
+        let frames_used = alloc.frames_used();
+        let frames_recycled = alloc.recycled_count();
+
+        output += format!(
+            "Heap  : {:>7.*}/{:>7.*} KiB ({:>5.2}%)\n",
+            2, heap_used as f64 / 1024f64,
+            2, heap_size as f64 / 1024f64,
+            heap_used as f64 / heap_size as f64 * 100.0
+        ).as_str();
+
+        output += format!(
+            "Frames: {:>7.*}/{:>7.*} MiB ({:>5.2}%)\n",
+            2, (frames_recycled * 4) as f64 / 1024f64,
+            2, (frames_used * 4) as f64 / 1024f64,
+            frames_recycled as f64 / frames_used as f64 * 100.0
+        ).as_str();
+
         print!("{}", output);
     }
 

@@ -386,7 +386,7 @@ impl Process {
 
         let code_segements = elf::load_elf(elf, PHYSICAL_OFFSET, &mut page_table, alloc).unwrap();
 
-        elf::map_stack(STACT_INIT_BOT, 2, &mut page_table, alloc).unwrap();
+        elf::map_stack(STACT_INIT_BOT, STACK_INIT_PAGE, &mut page_table, alloc).unwrap();
 
         let stack_segement = Page::range_inclusive(
             Page::containing_address(VirtAddr::new_truncate(STACT_INIT_BOT)),

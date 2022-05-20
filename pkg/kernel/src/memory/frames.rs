@@ -17,6 +17,7 @@ type BootInfoFrameIter = impl Iterator<Item = PhysFrame>;
 /// A FrameAllocator that returns usable frames from the bootloader's memory map.
 pub struct BootInfoFrameAllocator {
     frames: BootInfoFrameIter,
+    used: usize,
     recycled: Vec<PhysFrame>,
 }
 
@@ -29,8 +30,13 @@ impl BootInfoFrameAllocator {
     pub unsafe fn init(memory_map: &MemoryMap) -> Self {
         BootInfoFrameAllocator {
             frames: create_frame_iter(memory_map),
+            used: 0,
             recycled: Vec::new(),
         }
+    }
+
+    pub fn frames_used(&self) -> usize {
+        self.used
     }
 
     pub fn recycled_count(&self) -> usize {
@@ -43,6 +49,7 @@ unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
         if let Some(frame) = self.recycled.pop() {
             Some(frame)
         } else {
+            self.used += 1;
             self.frames.next()
         }
     }
