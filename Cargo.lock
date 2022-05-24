@@ -157,7 +157,7 @@ dependencies = [
 
 [[package]]
 name = "gglib"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
 ]
@@ -217,7 +217,7 @@ dependencies = [
 
 [[package]]
 name = "ggos_kernel"
-version = "0.9.3"
+version = "0.9.4"
 dependencies = [
  "bit_field",
  "bitflags",
@@ -245,7 +245,7 @@ dependencies = [
 
 [[package]]
 name = "ggos_mq"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "gglib",
 ]

@@ -45,7 +45,7 @@ unsafe fn mother_spin() {
 
     println!("Mother - SPIN : Oh, I have to hang clothes out.");
 
-    sleep(3000);
+    sleep(1500);
 
     println!(
         "Mother - SPIN : Oh, Jesus! There are {} cheese burgers",
@@ -92,7 +92,7 @@ unsafe fn mother_semaphore() {
 
     println!("Mother - SEMA : Oh, I have to hang clothes out.");
 
-    sleep(3000);
+    sleep(1500);
 
     println!(
         "Mother - SEMA : Oh, Jesus! There are {} cheese burgers",

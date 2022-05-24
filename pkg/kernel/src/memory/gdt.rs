@@ -9,13 +9,21 @@ pub const SYSCALL_IST_INDEX: u16 = 1;
 pub const PAGE_FAULT_IST_INDEX: u16 = 2;
 pub const CONTEXT_SWITCH_IST_INDEX: u16 = 0;
 
-pub const IST_SIZES: [usize; 3] = [0x1000, 0x4000, 0x1000];
+pub const IST_SIZES: [usize; 4] = [0x1000, 0x1000, 0x4000, 0x1000];
 
 lazy_static! {
     static ref TSS: TaskStateSegment = {
         let mut tss = TaskStateSegment::new();
-        tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] = {
+        tss.privilege_stack_table[0] = {
             const STACK_SIZE: usize = IST_SIZES[0];
+            static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
+            let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
+            let stack_end = stack_start + STACK_SIZE;
+            info!("Privilege Stack : 0x{:016x}-0x{:016x}", stack_start.as_u64(), stack_end.as_u64());
+            stack_end
+        };
+        tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] = {
+            const STACK_SIZE: usize = IST_SIZES[1];
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_end = stack_start + STACK_SIZE;
@@ -23,7 +31,7 @@ lazy_static! {
             stack_end
         };
         tss.interrupt_stack_table[SYSCALL_IST_INDEX as usize] = {
-            const STACK_SIZE: usize = IST_SIZES[1];
+            const STACK_SIZE: usize = IST_SIZES[2];
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_end = stack_start + STACK_SIZE;
@@ -31,7 +39,7 @@ lazy_static! {
             stack_end
         };
         tss.interrupt_stack_table[PAGE_FAULT_IST_INDEX as usize] = {
-            const STACK_SIZE: usize = IST_SIZES[2];
+            const STACK_SIZE: usize = IST_SIZES[3];
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_end = stack_start + STACK_SIZE;
