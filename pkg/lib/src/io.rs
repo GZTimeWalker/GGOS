@@ -54,9 +54,7 @@ impl Stdin {
                     }
                 }
             }
-            unsafe {
-                core::arch::asm!("hlt");
-            }
+
         }
         string
     }

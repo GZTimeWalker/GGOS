@@ -36,7 +36,7 @@ pub enum Syscall {
     Close = 6,
     Stat = 7,
     Time = 8,
-    DirectoryList = 9,
+    ListDir = 9,
     Allocate = 10,
     Deallocate = 11,
     Draw = 12,

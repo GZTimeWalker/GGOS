@@ -49,9 +49,6 @@ pub fn sys_wait_pid(pid: u16) -> isize {
         if !ret.is_negative() {
             return ret;
         }
-        unsafe {
-            core::arch::asm!("hlt");
-        }
     }
 }
 
@@ -65,7 +62,7 @@ pub fn sys_time() -> NaiveDateTime {
 #[inline(always)]
 pub fn sys_list_dir(root: &str) {
     syscall!(
-        Syscall::DirectoryList,
+        Syscall::ListDir,
         root.as_ptr() as u64,
         root.len() as u64
     );
@@ -83,9 +80,6 @@ pub fn sys_spawn(path: &str) -> u16 {
         path.as_ptr() as u64,
         path.len() as u64
     ) as u16;
-    unsafe {
-        core::arch::asm!("hlt");
-    }
     pid
 }
 
@@ -112,9 +106,6 @@ pub fn sys_get_pid() -> u16 {
 #[inline(always)]
 pub fn sys_fork() -> u16 {
     let pid = syscall!(Syscall::Fork);
-    unsafe {
-        core::arch::asm!("hlt");
-    }
     pid as u16
 }
 

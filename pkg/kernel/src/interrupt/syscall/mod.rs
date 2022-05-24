@@ -1,4 +1,5 @@
 use crate::utils::*;
+use alloc::format;
 use x86_64::structures::idt::InterruptStackFrame;
 use num_enum::TryFromPrimitive;
 use core::convert::TryFrom;
@@ -17,7 +18,7 @@ pub enum Syscall {
     Close = 6,
     Stat = 7,
     Time = 8,
-    DirectoryList = 9,
+    ListDir = 9,
     Allocate = 10,
     Deallocate = 11,
     Draw = 12,
@@ -46,7 +47,7 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         regs.rdx
     );
 
-    debug!("{:?}", args);
+    trace!("{}", args);
 
     match args.syscall {
         // path: &str (arg0 as *const u8, arg1 as len) -> pid: u16
@@ -66,7 +67,7 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         // None -> time: usize
         Syscall::Time           => regs.set_rax(sys_clock() as usize),
         // path: &str (arg0 as *const u8, arg1 as len)
-        Syscall::DirectoryList  => list_dir(&args),
+        Syscall::ListDir        => list_dir(&args),
         // layout: arg0 as *const Layout -> ptr: *mut u8
         Syscall::Allocate       => regs.set_rax(sys_allocate(&args)),
         // ptr: arg0 as *mut u8
@@ -103,8 +104,8 @@ impl core::fmt::Display for SyscallArgs {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(
             f,
-            "SYSCALL: {:?} (0x{:016x}, 0x{:016x}, 0x{:016x})",
-            self.syscall, self.arg0, self.arg1, self.arg2
+            "SYSCALL: {:<10} (0x{:016x}, 0x{:016x}, 0x{:016x})",
+            format!("{:?}", self.syscall), self.arg0, self.arg1, self.arg2
         )
     }
 }
