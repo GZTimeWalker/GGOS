@@ -21,7 +21,7 @@ pub fn sys_draw(args: &SyscallArgs) {
 
 pub fn sys_allocate(args: &SyscallArgs) -> usize {
     let layout = unsafe { (args.arg0 as *const Layout).as_ref().unwrap() };
-    let ptr = crate::allocator::ALLOCATOR
+    let ptr = crate::memory::user::USER_ALLOCATOR
         .lock()
         .allocate_first_fit(layout.clone())
         .unwrap()
@@ -34,7 +34,7 @@ pub fn sys_deallocate(args: &SyscallArgs) {
     let layout = unsafe { (args.arg1 as *const Layout).as_ref().unwrap() };
 
     unsafe {
-        crate::allocator::ALLOCATOR
+        crate::memory::user::USER_ALLOCATOR
             .lock()
             .deallocate(core::ptr::NonNull::new_unchecked(ptr), layout.clone());
     }

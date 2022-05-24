@@ -7,13 +7,14 @@ use x86_64::structures::paging::{
 use x86_64::VirtAddr;
 
 pub const HEAP_START: usize = 0xFFFF_FF80_0000_0000;
-pub const HEAP_SIZE: usize = 1024 * 1024; // 1 MiB
+pub const HEAP_SIZE: usize = 512 * 1024; // 512 KiB
 
 #[global_allocator]
 pub static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 pub fn init() {
     init_heap().expect("Heap Initialization Failed.");
+    super::user::init_user_heap().expect("User Heap Initialization Failed.");
     info!("Heap Initialized.");
 }
 

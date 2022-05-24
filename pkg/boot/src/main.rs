@@ -95,11 +95,12 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     elf::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs))
         .expect("Failed to map ELF");
 
-    elf::map_stack(
+    elf::map_range(
         config.kernel_stack_address,
         config.kernel_stack_size,
         &mut page_table,
         &mut UEFIFrameAllocator(bs),
+        false
     ).expect("Failed to map stack");
 
     elf::map_physical_memory(

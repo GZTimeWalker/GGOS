@@ -2,6 +2,7 @@ use super::ProcessId;
 use super::*;
 use crate::filesystem::StdIO;
 use crate::memory::*;
+use crate::memory::gdt::get_user_selector;
 use crate::utils::{Registers, RegistersValue, Resource};
 use alloc::collections::btree_map::BTreeMap;
 use alloc::string::String;
@@ -11,7 +12,7 @@ use x86_64::registers::control::{Cr3, Cr3Flags};
 use x86_64::registers::rflags::RFlags;
 use x86_64::structures::idt::{InterruptStackFrame, InterruptStackFrameValue};
 use x86_64::structures::paging::mapper::{CleanUp, MapToError};
-use x86_64::structures::paging::page::PageRangeInclusive;
+use x86_64::structures::paging::page::{PageRangeInclusive, PageRange};
 use x86_64::structures::paging::*;
 use x86_64::{PhysAddr, VirtAddr};
 use xmas_elf::ElfFile;
@@ -34,7 +35,7 @@ pub struct Process {
 pub struct ProcessData {
     env: BTreeMap<String, String>,
     code_segements: Option<Vec<PageRangeInclusive>>,
-    stack_segement: Option<PageRangeInclusive>,
+    stack_segement: Option<PageRange>,
     file_handles: BTreeMap<u8, Resource>,
 }
 
@@ -53,7 +54,7 @@ impl ProcessData {
             env,
             code_segements,
             stack_segement,
-            file_handles,
+            file_handles
         }
     }
 
@@ -142,6 +143,10 @@ impl Process {
         self.stack_frame.instruction_pointer = entry;
         self.stack_frame.cpu_flags =
             (RFlags::IOPL_HIGH | RFlags::IOPL_LOW | RFlags::INTERRUPT_FLAG).bits();
+        let selector = get_user_selector();
+        self.stack_frame.code_segment = selector.user_code_selector.0 as u64;
+        self.stack_frame.stack_segment = selector.user_data_selector.0 as u64;
+        trace!("Init stack frame: {:#?}", &self.stack_frame);
     }
 
     pub fn open(&mut self, res: Resource) -> u8 {
@@ -198,7 +203,7 @@ impl Process {
             code_segment: 8,
             cpu_flags: 0,
             stack_pointer: VirtAddr::new_truncate(0),
-            stack_segment: 0,
+            stack_segment: 0
         };
         let regs = RegistersValue::default();
         let ticks_passed = 0;
@@ -257,25 +262,23 @@ impl Process {
         let page_table = self.page_table.as_mut().unwrap();
         debug!("Fill missing pages...[{:#x} -> {:#x})", start_page.start_address().as_u64(), self.proc_data.stack_segement.unwrap().start.start_address().as_u64());
 
-        elf::map_stack(addr.as_u64(), pages, page_table, alloc)?;
+        let new_stack = elf::map_range(addr.as_u64(), pages, page_table, alloc, true)?;
 
-        let end_page = self.proc_data.stack_segement.unwrap().end;
-        let new_stack = Page::range_inclusive(start_page, end_page);
         self.proc_data.stack_segement = Some(new_stack);
         Ok(())
     }
 
-    fn clone_stack(&self, cur_stack_base: u64, new_stack_base: u64, stack_size: usize) {
+    fn clone_range(&self, cur_addr: u64, dest_addr: u64, size: usize) {
         trace!(
-            "Clone stack: {:#x} -> {:#x}",
-            cur_stack_base,
-            new_stack_base
+            "Clone range: {:#x} -> {:#x}",
+            cur_addr,
+            dest_addr
         );
         unsafe {
             copy_nonoverlapping::<u8>(
-                cur_stack_base as *mut u8,
-                new_stack_base as *mut u8,
-                stack_size * Size4KiB::SIZE as usize,
+                cur_addr as *mut u8,
+                dest_addr as *mut u8,
+                size * Size4KiB::SIZE as usize,
             );
         }
     }
@@ -301,11 +304,12 @@ impl Process {
         let mut new_stack_base = stack_info.start.start_address().as_u64()
             - (self.children.len() as u64 + 1) * STACK_MAX_SIZE;
 
-        while let Err(_) = elf::map_stack(
+        while let Err(_) = elf::map_range(
             new_stack_base,
             stack_info.count() as u64,
             self.page_table.as_mut().unwrap(),
             frame_alloc,
+            true
         ) {
             trace!("Map thread stack to {:#x} failed.", new_stack_base);
             new_stack_base -= STACK_MAX_SIZE; // stack grow down
@@ -319,16 +323,17 @@ impl Process {
         // cal new stack pointer
         new_stack_frame.stack_pointer += new_stack_base - cur_stack_base;
         // clone new stack content
-        self.clone_stack(cur_stack_base, new_stack_base, stack_info.count());
+        self.clone_range(cur_stack_base, new_stack_base, stack_info.count());
+
         // create owned page table (same as parent)
         let owned_page_table = Self::page_table_from_phyframe(self.page_table_addr.0);
         // clone proc data
         let mut owned_proc_data = self.proc_data.clone();
         // record new stack range
-        owned_proc_data.stack_segement = Some(Page::range_inclusive(
+        owned_proc_data.stack_segement = Some(Page::range(
             Page::containing_address(VirtAddr::new_truncate(new_stack_base)),
             Page::containing_address(VirtAddr::new_truncate(
-                new_stack_base + stack_info.count() as u64 * Size4KiB::SIZE - 1,
+                new_stack_base + stack_info.count() as u64 * Size4KiB::SIZE,
             )),
         ));
         // create new process
@@ -384,18 +389,13 @@ impl Process {
 
         let mut page_table = self.page_table.take().unwrap();
 
-        let code_segements = elf::load_elf(elf, PHYSICAL_OFFSET, &mut page_table, alloc).unwrap();
+        let code_segements = elf::load_elf(elf, PHYSICAL_OFFSET, &mut page_table, alloc, true).unwrap();
 
-        elf::map_stack(STACT_INIT_BOT, STACK_INIT_PAGE, &mut page_table, alloc).unwrap();
-
-        let stack_segement = Page::range_inclusive(
-            Page::containing_address(VirtAddr::new_truncate(STACT_INIT_BOT)),
-            Page::containing_address(VirtAddr::new_truncate(STACK_INIT_TOP)),
-        );
+        let stack_segement = elf::map_range(STACT_INIT_BOT, STACK_INIT_PAGE, &mut page_table, alloc, true).unwrap();
 
         self.page_table = Some(page_table);
         self.proc_data.code_segements = Some(code_segements);
-        self.proc_data.stack_segement = Some(stack_segement)
+        self.proc_data.stack_segement = Some(stack_segement);
     }
 }
 
@@ -408,7 +408,7 @@ impl Drop for Process {
         trace!("Free stack for {}#{}", self.name, self.pid);
 
         let stack = self.proc_data.stack_segement.unwrap();
-        elf::unmap_stack(
+        elf::unmap_range(
             stack.start.start_address().as_u64(),
             stack.count() as u64,
             page_table,

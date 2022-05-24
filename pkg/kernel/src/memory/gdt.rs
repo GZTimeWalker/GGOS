@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use x86_64::registers::segmentation::Segment;
 use x86_64::structures::gdt::{Descriptor, GlobalDescriptorTable, SegmentSelector};
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::VirtAddr;
@@ -42,34 +43,50 @@ lazy_static! {
 }
 
 lazy_static! {
-    static ref GDT: (GlobalDescriptorTable, Selectors) = {
+    static ref GDT: (GlobalDescriptorTable, KernelSelectors, UserSelectors) = {
         let mut gdt = GlobalDescriptorTable::new();
         let code_selector = gdt.add_entry(Descriptor::kernel_code_segment());
+        let data_selector = gdt.add_entry(Descriptor::kernel_data_segment());
         let tss_selector = gdt.add_entry(Descriptor::tss_segment(&TSS));
+        let user_code_selector = gdt.add_entry(Descriptor::user_code_segment());
+        let user_data_selector = gdt.add_entry(Descriptor::user_data_segment());
         (
             gdt,
-            Selectors {
+            KernelSelectors {
                 code_selector,
+                data_selector,
                 tss_selector,
             },
+            UserSelectors {
+                user_code_selector,
+                user_data_selector,
+            }
         )
     };
 }
 
-struct Selectors {
+#[derive(Debug)]
+struct KernelSelectors {
     code_selector: SegmentSelector,
+    data_selector: SegmentSelector,
     tss_selector: SegmentSelector,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub struct UserSelectors {
+    pub user_code_selector: SegmentSelector,
+    pub user_data_selector: SegmentSelector,
+}
+
 pub fn init() {
-    use x86_64::instructions::segmentation::{Segment, CS, DS, ES, FS, GS, SS};
+    use x86_64::instructions::segmentation::{CS, DS, ES, FS, GS, SS};
     use x86_64::instructions::tables::load_tss;
     use x86_64::PrivilegeLevel;
 
     GDT.0.load();
     unsafe {
         CS::set_reg(GDT.1.code_selector);
-        DS::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
+        DS::set_reg(GDT.1.data_selector);
         SS::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
         ES::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
         FS::set_reg(SegmentSelector::new(0, PrivilegeLevel::Ring0));
@@ -85,5 +102,12 @@ pub fn init() {
 
     info!("Kernel IST Size : {} KiB", size / 1024);
 
+    trace!("{:#?}", &GDT.1);
+    trace!("{:#?}", &GDT.2);
+
     info!("GDT Initialized.");
+}
+
+pub fn get_user_selector() -> UserSelectors {
+    GDT.2
 }

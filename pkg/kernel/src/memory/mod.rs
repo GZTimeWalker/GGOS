@@ -4,6 +4,7 @@ mod paging;
 pub mod allocator;
 
 pub mod gdt;
+pub mod user;
 pub use frames::*;
 pub use paging::*;
 pub use address::*;

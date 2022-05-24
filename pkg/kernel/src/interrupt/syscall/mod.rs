@@ -46,6 +46,8 @@ pub fn dispatcher(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         regs.rdx
     );
 
+    debug!("{:?}", args);
+
     match args.syscall {
         // path: &str (arg0 as *const u8, arg1 as len) -> pid: u16
         Syscall::Spawn   => regs.set_rax(spawn_process(&args)),

@@ -1,5 +1,5 @@
 use super::*;
-use crate::memory::{allocator::{ALLOCATOR, HEAP_SIZE}, get_frame_alloc_for_sure};
+use crate::memory::{allocator::{ALLOCATOR, HEAP_SIZE}, get_frame_alloc_for_sure, user::{USER_ALLOCATOR, USER_HEAP_SIZE}};
 use crate::utils::Registers;
 use alloc::collections::BTreeMap;
 use alloc::format;
@@ -65,7 +65,7 @@ impl ProcessManager {
             current.tick();
             current.save(regs, sf);
         }
-        // debug!("Paused process #{}", self.cur_pid);
+        // trace!("Paused process #{}", self.cur_pid);
     }
 
     fn get_next_pos(&self) -> usize {
@@ -100,7 +100,7 @@ impl ProcessManager {
         let pos = self.get_next_pos();
         let p = &mut self.processes[pos];
 
-        // debug!("Next process {} #{}", p.name(), p.pid());
+        // trace!("Next process {} #{}", p.name(), p.pid());
         if p.pid() == self.cur_pid {
             // the next process to be resumed is the same as the current one
             p.resume();
@@ -162,17 +162,12 @@ impl ProcessManager {
             proc_data,
         );
         p.pause();
-        trace!(
-            "Init stack frame with: \n    entry: {:#x}\n    stack: {:#x}",
-            elf.header.pt2.entry_point(),
-            STACK_INIT_TOP
-        );
+        p.init_elf(&elf);
         p.init_stack_frame(
             VirtAddr::new_truncate(elf.header.pt2.entry_point()),
             VirtAddr::new_truncate(STACK_INIT_TOP),
         );
-        p.init_elf(&elf);
-        trace!("{:#?}", &p);
+        trace!("New {:#?}", &p);
         let pid = p.pid();
         self.processes.push(p);
         pid
@@ -210,6 +205,9 @@ impl ProcessManager {
         let heap_used = ALLOCATOR.lock().used();
         let heap_size = HEAP_SIZE;
 
+        let user_heap_used = USER_ALLOCATOR.lock().used();
+        let user_heap_size = USER_HEAP_SIZE;
+
         let alloc = get_frame_alloc_for_sure();
         let frames_used = alloc.frames_used();
         let frames_recycled = alloc.recycled_count();
@@ -219,6 +217,13 @@ impl ProcessManager {
             2, heap_used as f64 / 1024f64,
             2, heap_size as f64 / 1024f64,
             heap_used as f64 / heap_size as f64 * 100.0
+        ).as_str();
+
+        output += format!(
+            "User  : {:>7.*}/{:>7.*} KiB ({:>5.2}%)\n",
+            2, user_heap_used as f64 / 1024f64,
+            2, user_heap_size as f64 / 1024f64,
+            user_heap_used as f64 / user_heap_size as f64 * 100.0
         ).as_str();
 
         output += format!(
@@ -264,6 +269,8 @@ impl ProcessManager {
     ) -> Result<(), ()> {
         if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)
         {
+
+
             let cur_proc = self.current_mut();
             trace!("Checking if {:#x} is on current process's stack", addr);
             if cur_proc.is_on_stack(addr) {

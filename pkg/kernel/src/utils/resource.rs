@@ -24,6 +24,7 @@ impl Resource {
                         // TODO: get key async
                         if let Some(DecodedKey::Unicode(k)) = try_get_key() {
                             let s = k.encode_utf8(buf);
+                            debug!("Read from stdin: {:?}", s);
                             Ok(s.len())
                         } else {
                             Ok(0)
