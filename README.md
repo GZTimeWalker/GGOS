@@ -8,6 +8,7 @@ The basic development of this course operating system has been completed.
 
 Using `JetBrainsMono` as console font.
 
+See also: [GGOS 诞生记](https://blog.gztime.cc/posts/2022/2430028)
 
 ## Usage
 
