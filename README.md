@@ -25,6 +25,10 @@ You can put your files to `esp` directory to read them in the OS.
 ![](assets/img/demo3.png)
 ![](assets/img/demo4.png)
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/GZTimeWalker/GGOS.svg)](https://starchart.cc/GZTimeWalker/GGOS)
+
 ## Reference
 
 1. [rCore](https://github.com/rcore-os/rCore)
