@@ -51,5 +51,5 @@ pub fn init_heap() -> Result<(), MapToError<Size4KiB>> {
 
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
-    panic!("Allocation error: {:?}", layout)
+    panic!("Allocation error: {:?}", layout);
 }

@@ -18,10 +18,8 @@ pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
 
     // TODO: use executor.spawn() to spawn kernel tasks
 
-    ggos::process::print_process_list();
     debug!("Testing stack auto grow...");
     stack_test();
-    ggos::process::print_process_list();
 
     executor.run(spawn_init());
     ggos::shutdown(boot_info);
