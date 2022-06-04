@@ -27,10 +27,10 @@ impl BootInfoFrameAllocator {
     /// This function is unsafe because the caller must guarantee that the passed
     /// memory map is valid. The main requirement is that all frames that are marked
     /// as `USABLE` in it are really unused.
-    pub unsafe fn init(memory_map: &MemoryMap) -> Self {
+    pub unsafe fn init(memory_map: &MemoryMap, used: usize) -> Self {
         BootInfoFrameAllocator {
             frames: create_frame_iter(memory_map),
-            used: 0,
+            used,
             recycled: Vec::new(),
         }
     }

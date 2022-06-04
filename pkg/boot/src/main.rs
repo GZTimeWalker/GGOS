@@ -18,9 +18,10 @@ extern crate alloc;
 
 use alloc::boxed::Box;
 use alloc::vec;
+use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::{VirtAddr, PhysAddr};
 use core::arch::asm;
-use ggos_boot::{BootInfo, GraphicInfo};
+use ggos_boot::{BootInfo, GraphicInfo, KernelPages};
 use uefi::prelude::*;
 use uefi::proto::console::gop::GraphicsOutput;
 use uefi::proto::media::file::*;
@@ -31,6 +32,7 @@ use x86_64::structures::paging::*;
 use x86_64::registers::control::*;
 use x86_64::registers::model_specific::EferFlags;
 use xmas_elf::ElfFile;
+use xmas_elf::program::ProgramHeader;
 
 mod config;
 
@@ -40,6 +42,7 @@ const CONFIG_PATH: &str = "\\EFI\\BOOT\\boot.conf";
 fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status {
     uefi_services::init(&mut system_table).expect("Failed to initialize utilities");
 
+    log::set_max_level(log::LevelFilter::Info);
     info!("Running UEFI bootloader...");
 
     let bs = system_table.boot_services();
@@ -50,7 +53,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     };
 
     let graphic_info = init_graphic(bs);
-    // info!("config: {:#x?}", config);
+    info!("config: {:#x?}", config);
 
     let acpi2_addr = system_table
         .config_table()
@@ -78,6 +81,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         .memory_map(mmap_storage)
         .expect("Failed to get memory map")
         .1;
+
     let max_phys_addr = mmap_iter
         .map(|m| m.phys_start + m.page_count * 0x1000)
         .max()
@@ -95,9 +99,19 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     elf::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs))
         .expect("Failed to map ELF");
 
+    let (stack_start, stack_size) = if config.kernel_stack_auto_grow > 0 {
+        let stack_start = config.kernel_stack_address +
+            (config.kernel_stack_size - config.kernel_stack_auto_grow) * 0x1000;
+        (stack_start, config.kernel_stack_auto_grow)
+    } else {
+        (config.kernel_stack_address, config.kernel_stack_size)
+    };
+
+    info!("Kernel init stack: [0x{:x?} -> 0x{:x?})", stack_start, stack_start + stack_size * 0x1000);
+
     elf::map_range(
-        config.kernel_stack_address,
-        config.kernel_stack_size,
+        stack_start,
+        stack_size,
         &mut page_table,
         &mut UEFIFrameAllocator(bs),
         false
@@ -135,11 +149,13 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     // construct BootInfo
     let bootinfo = BootInfo {
         memory_map: mmap_iter.copied().collect(),
+        kernel_pages: get_page_usage(&elf),
         physical_memory_offset: config.physical_memory_offset,
         graphic_info,
         system_table: rt,
     };
-    let stacktop = config.kernel_stack_address + config.kernel_stack_size * 0x1000;
+
+    let stacktop = config.kernel_stack_address + config.kernel_stack_size * 0x1000 - 1;
 
     unsafe {
         jump_to_entry(&bootinfo, stacktop);
@@ -222,6 +238,22 @@ fn load_file(bs: &BootServices, file: &mut RegularFile) -> &'static mut [u8] {
     info!("File size={}", len);
     &mut buf[..len]
 }
+
+pub fn get_page_usage(elf: &ElfFile,) -> KernelPages {
+    elf.program_iter()
+        .filter(|segment| segment.get_type().unwrap() == xmas_elf::program::Type::Load)
+        .map(|segment| get_page_range(segment))
+        .collect()
+}
+
+fn get_page_range(header: ProgramHeader) -> PageRangeInclusive {
+    let virt_start_addr = VirtAddr::new(header.virtual_addr());
+    let mem_size = header.mem_size();
+    let start_page = Page::containing_address(virt_start_addr);
+    let end_page = Page::containing_address(virt_start_addr + mem_size - 1u64);
+    Page::range_inclusive(start_page, end_page)
+}
+
 
 /// The entry point of kernel, set by BSP.
 static mut ENTRY: usize = 0;

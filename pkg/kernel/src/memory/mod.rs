@@ -22,9 +22,18 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let (size, unit) = humanized_size(mem_size);
     info!("Physical Memory Size: {:.3} {}", size, unit);
 
+    let mut used = crate::process::KSTACK_DEF_PAGE as usize;
+
+    for page in &boot_info.kernel_pages {
+        used += page.count();
+    }
+
+    let (size, unit) = humanized_size(used as u64 * PAGE_SIZE);
+    info!("Kernel Used Memory: {:.3} {}", size, unit);
+
     unsafe {
         init_PAGE_TABLE(paging::init(physical_memory_offset));
-        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map));
+        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map, used));
     }
 }
 

@@ -1,18 +1,19 @@
 use super::ProcessId;
 use super::*;
 use crate::filesystem::StdIO;
-use crate::memory::*;
 use crate::memory::gdt::get_user_selector;
+use crate::memory::*;
 use crate::utils::{Registers, RegistersValue, Resource};
 use alloc::collections::btree_map::BTreeMap;
 use alloc::string::String;
 use alloc::vec::Vec;
+use boot::KernelPages;
 use core::intrinsics::copy_nonoverlapping;
 use x86_64::registers::control::{Cr3, Cr3Flags};
 use x86_64::registers::rflags::RFlags;
 use x86_64::structures::idt::{InterruptStackFrame, InterruptStackFrameValue};
 use x86_64::structures::paging::mapper::{CleanUp, MapToError};
-use x86_64::structures::paging::page::{PageRangeInclusive, PageRange};
+use x86_64::structures::paging::page::{PageRange, PageRangeInclusive};
 use x86_64::structures::paging::*;
 use x86_64::{PhysAddr, VirtAddr};
 use xmas_elf::ElfFile;
@@ -54,7 +55,7 @@ impl ProcessData {
             env,
             code_segements,
             stack_segement,
-            file_handles
+            file_handles,
         }
     }
 
@@ -66,6 +67,17 @@ impl ProcessData {
 
     pub fn set_env(mut self, key: &str, val: &str) -> Self {
         self.env.insert(key.into(), val.into());
+        self
+    }
+
+    pub fn set_stack(mut self, start: u64, size: u64) -> Self {
+        let start = Page::containing_address(VirtAddr::new(start));
+        self.stack_segement = Some(Page::range(start, start + size));
+        self
+    }
+
+    pub fn set_kernel_code(mut self, pages: &KernelPages) -> Self {
+        self.code_segements = Some(pages.into_iter().cloned().collect());
         self
     }
 }
@@ -203,7 +215,7 @@ impl Process {
             code_segment: 8,
             cpu_flags: 0,
             stack_pointer: VirtAddr::new_truncate(0),
-            stack_segment: 0
+            stack_segment: 0,
         };
         let regs = RegistersValue::default();
         let ticks_passed = 0;
@@ -260,7 +272,16 @@ impl Process {
         let start_page = Page::<Size4KiB>::containing_address(addr);
         let pages = self.proc_data.stack_segement.unwrap().start - start_page;
         let page_table = self.page_table.as_mut().unwrap();
-        debug!("Fill missing pages...[{:#x} -> {:#x})", start_page.start_address().as_u64(), self.proc_data.stack_segement.unwrap().start.start_address().as_u64());
+        debug!(
+            "Fill missing pages...[{:#x} -> {:#x})",
+            start_page.start_address().as_u64(),
+            self.proc_data
+                .stack_segement
+                .unwrap()
+                .start
+                .start_address()
+                .as_u64()
+        );
 
         let new_stack = elf::map_range(addr.as_u64(), pages, page_table, alloc, true)?;
 
@@ -269,11 +290,7 @@ impl Process {
     }
 
     fn clone_range(&self, cur_addr: u64, dest_addr: u64, size: usize) {
-        trace!(
-            "Clone range: {:#x} -> {:#x}",
-            cur_addr,
-            dest_addr
-        );
+        trace!("Clone range: {:#x} -> {:#x}", cur_addr, dest_addr);
         unsafe {
             copy_nonoverlapping::<u8>(
                 cur_addr as *mut u8,
@@ -309,7 +326,7 @@ impl Process {
             stack_info.count() as u64,
             self.page_table.as_mut().unwrap(),
             frame_alloc,
-            true
+            true,
         ) {
             trace!("Map thread stack to {:#x} failed.", new_stack_base);
             new_stack_base -= STACK_MAX_SIZE; // stack grow down
@@ -360,10 +377,7 @@ impl Process {
 
         debug!(
             "Thread {}#{} forked to {}#{}.",
-            self.name,
-            self.pid,
-            child.name,
-            child.pid
+            self.name, self.pid, child.name, child.pid
         );
         trace!("{:#?}", &child);
 
@@ -389,9 +403,11 @@ impl Process {
 
         let mut page_table = self.page_table.take().unwrap();
 
-        let code_segements = elf::load_elf(elf, PHYSICAL_OFFSET, &mut page_table, alloc, true).unwrap();
+        let code_segements =
+            elf::load_elf(elf, PHYSICAL_OFFSET, &mut page_table, alloc, true).unwrap();
 
-        let stack_segement = elf::map_range(STACT_INIT_BOT, STACK_INIT_PAGE, &mut page_table, alloc, true).unwrap();
+        let stack_segement =
+            elf::map_range(STACT_INIT_BOT, STACK_DEF_PAGE, &mut page_table, alloc, true).unwrap();
 
         self.page_table = Some(page_table);
         self.proc_data.code_segements = Some(code_segements);

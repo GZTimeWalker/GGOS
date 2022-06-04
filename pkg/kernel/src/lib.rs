@@ -50,7 +50,7 @@ pub fn init(boot_info: &'static BootInfo) {
     interrupt::init();          // init interrupts
     memory::init(boot_info);    // init memory manager
     allocator::init();          // init heap allocator
-    process::init();            // init process manager
+    process::init(boot_info);            // init process manager
     keyboard::init();           // init keyboard
     input::init();              // init input
     ata::init();                // init ata
@@ -64,13 +64,14 @@ pub fn init(boot_info: &'static BootInfo) {
     print_serial!("\x1b[?25h");
 }
 
-pub fn new_test_thread(id: &str) {
-    process::spawn_kernel_thread(
-        utils::func::test,
-        alloc::string::String::from(format!("test_{}", id)),
-        Some(process::ProcessData::new().set_env("id", id))
-    );
-}
+// DEPRECATED: do not spawn kernel thread
+// pub fn new_test_thread(id: &str) {
+//     process::spawn_kernel_thread(
+//         utils::func::test,
+//         alloc::string::String::from(format!("test_{}", id)),
+//         Some(process::ProcessData::new().set_env("id", id))
+//     );
+// }
 
 pub fn shutdown(boot_info: &'static BootInfo) -> ! {
     info!("GGOS shutting down.");

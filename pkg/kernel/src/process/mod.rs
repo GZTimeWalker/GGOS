@@ -25,7 +25,7 @@ use self::manager::init_PROCESS_MANAGER;
 use self::sync::init_SEMAPHORES;
 
 // 0xffff_ff00_0000_0000 is the kernel's address space
-const STACK_MAX: u64 = 0x0000_4000_0000_0000;
+pub const STACK_MAX: u64 = 0x0000_4000_0000_0000;
 // stack max addr, every thread has a stack space
 // from 0x????_????_0000_0000 to 0x????_????_ffff_ffff
 // 0x100000000 bytes -> 4GiB
@@ -33,16 +33,25 @@ const STACK_MAX: u64 = 0x0000_4000_0000_0000;
 // 0x????_2000_????_???? -> 0x????_3fff_????_????
 // init alloc stack has size of 0x2000 (2 frames)
 // every time we meet a page fault, we alloc more frames
-const STACK_MAX_PAGES: u64 = 0x100000;
-const STACK_MAX_SIZE: u64 = STACK_MAX_PAGES * crate::memory::PAGE_SIZE;
-const STACK_START_MASK: u64 = !(STACK_MAX_SIZE - 1);
+pub const STACK_MAX_PAGES: u64 = 0x100000;
+pub const STACK_MAX_SIZE: u64 = STACK_MAX_PAGES * crate::memory::PAGE_SIZE;
+pub const STACK_START_MASK: u64 = !(STACK_MAX_SIZE - 1);
 // [bot..0x2000_0000_0000..top..0x3fff_ffff_ffff]
 // init stack
-const STACK_INIT_BOT: u64 = STACK_MAX - STACK_MAX_SIZE;
-const STACK_INIT_PAGE: u64 = 1;
-const STACK_INIT_SIZE: u64 = STACK_INIT_PAGE * crate::memory::PAGE_SIZE;
-const STACT_INIT_BOT: u64 = STACK_INIT_BOT + STACK_MAX_SIZE - STACK_INIT_SIZE;
-const STACK_INIT_TOP: u64 = STACK_INIT_BOT + STACK_MAX_SIZE - 1;
+pub const STACK_DEF_BOT: u64 = STACK_MAX - STACK_MAX_SIZE;
+pub const STACK_DEF_PAGE: u64 = 1;
+pub const STACK_DEF_SIZE: u64 = STACK_DEF_PAGE * crate::memory::PAGE_SIZE;
+pub const STACT_INIT_BOT: u64 = STACK_MAX - STACK_DEF_SIZE;
+pub const STACK_INIT_TOP: u64 = STACK_MAX - 1;
+// [bot..0xffffff0100000000..top..0xffffff01ffffffff]
+// kernel stack
+pub const KSTACK_MAX: u64 = 0xffff_ff02_0000_0000;
+pub const KSTACK_DEF_BOT: u64 = KSTACK_MAX - STACK_MAX_SIZE;
+pub const KSTACK_DEF_PAGE: u64 = 8;
+pub const KSTACK_DEF_SIZE: u64 = KSTACK_DEF_PAGE * crate::memory::PAGE_SIZE;
+
+pub const KSTACK_INIT_BOT: u64 = KSTACK_MAX - KSTACK_DEF_SIZE;
+pub const KSTACK_INIT_TOP: u64 = KSTACK_MAX - 1;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ProgramStatus {
@@ -82,15 +91,19 @@ impl From<ProcessId> for u16 {
 }
 
 /// init process manager
-pub fn init() {
+pub fn init(boot_info: &'static boot::BootInfo) {
     let mut alloc = crate::memory::get_frame_alloc_for_sure();
+    let kproc_data = ProcessData::new()
+        .set_stack(KSTACK_INIT_BOT, KSTACK_DEF_PAGE)
+        .set_kernel_code(&boot_info.kernel_pages);
+    trace!("Init process data: {:#?}", kproc_data);
     // kernel process
     let mut kproc = Process::new(
         &mut *alloc,
         String::from("kernel"),
         ProcessId(0),
         Cr3::read().0,
-        None
+        Some(kproc_data),
     );
     kproc.resume();
     kproc.set_page_table_with_cr3();

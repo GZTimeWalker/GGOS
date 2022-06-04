@@ -227,10 +227,11 @@ impl ProcessManager {
         ).as_str();
 
         output += format!(
-            "Frames: {:>7.*}/{:>7.*} MiB ({:>5.2}%)\n",
+            "Frames: {:>7.*}/{:>7.*} MiB ({:>5.2}%) {} frames used\n",
             2, (frames_recycled * 4) as f64 / 1024f64,
             2, (frames_used * 4) as f64 / 1024f64,
-            frames_recycled as f64 / frames_used as f64 * 100.0
+            frames_recycled as f64 / frames_used as f64 * 100.0,
+            frames_used
         ).as_str();
 
         print!("{}", output);
@@ -269,8 +270,6 @@ impl ProcessManager {
     ) -> Result<(), ()> {
         if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)
         {
-
-
             let cur_proc = self.current_mut();
             trace!("Checking if {:#x} is on current process's stack", addr);
             if cur_proc.is_on_stack(addr) {
