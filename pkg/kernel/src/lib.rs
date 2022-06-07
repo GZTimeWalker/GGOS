@@ -50,7 +50,7 @@ pub fn init(boot_info: &'static BootInfo) {
     interrupt::init();          // init interrupts
     memory::init(boot_info);    // init memory manager
     allocator::init();          // init heap allocator
-    process::init(boot_info);            // init process manager
+    process::init(boot_info);   // init process manager
     keyboard::init();           // init keyboard
     input::init();              // init input
     ata::init();                // init ata

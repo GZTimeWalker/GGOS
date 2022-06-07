@@ -180,6 +180,23 @@ impl Bus {
         }
     }
 
+    fn write(&mut self, drive: u8, block: u32, buf: &[u8]) -> Result<(), ()> {
+        debug_assert!(buf.len() == fs::Block::SIZE);
+        self.setup_pio(drive, block)?;
+        self.write_command(ATACommand::WriteSectors)?;
+        for chunk in buf.chunks(2) {
+            let data = u16::from_le_bytes(chunk.try_into().unwrap());
+            self.write_data(data);
+        }
+        if self.is_error() {
+            debug!("ATA write: data error");
+            self.debug();
+            Err(())
+        } else {
+            Ok(())
+        }
+    }
+
     fn cylinder_low(&mut self) -> u8 {
         unsafe { self.cylinder_low.read() }
     }
@@ -302,9 +319,9 @@ impl Drive {
         let count = self.block_count().unwrap();
         let bytes = size * count;
         if bytes >> 20 < 1000 {
-            (bytes >> 20, String::from("MB"))
+            (bytes >> 20, String::from("MiB"))
         } else {
-            (bytes >> 30, String::from("GB"))
+            (bytes >> 30, String::from("GiB"))
         }
     }
 }
@@ -339,5 +356,12 @@ impl BlockDevice for Drive {
             .read(self.dsk, offset as u32, block.inner_mut())
             .map_err(|_| DeviceError::ReadError)?;
         Ok(block)
+    }
+
+    fn write_block(&mut self, offset: usize, block: &Block) -> Result<(), DeviceError> {
+        get_buses_for_sure()[self.bus as usize]
+            .write(self.dsk, offset as u32, block.inner())
+            .map_err(|_| DeviceError::WriteError)?;
+        Ok(())
     }
 }

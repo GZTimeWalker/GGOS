@@ -1,9 +1,13 @@
 mod random;
 
 pub mod disk;
+pub mod fat16;
 
 pub use disk::*;
+pub use fat16::*;
 pub use random::Random;
+
+use crate::dir_entry::FilenameError;
 
 use super::block::Block;
 
@@ -18,6 +22,22 @@ pub enum DeviceError {
     WithStatus(usize),
 }
 
+#[derive(Debug, Eq, PartialEq)]
+pub enum VolumeError {
+    NotInSector,
+    FileNotFound,
+    InvalidOperation,
+    BadCluster,
+    EndOfFile,
+    NotADirectory,
+    NotAFile,
+    ReadOnly,
+    Unsupported,
+    BufferTooSmall,
+    DeviceError(DeviceError),
+    FileNameError(FilenameError),
+}
+
 pub trait Device<T> {
     fn read(&self, buf: &mut [T], offset: usize, size: usize) -> Result<usize, DeviceError>;
     fn write(&mut self, buf: &[T], offset: usize, size: usize) -> Result<usize, DeviceError>;
@@ -26,6 +46,5 @@ pub trait Device<T> {
 pub trait BlockDevice: Device<Block> {
     fn block_count(&self) -> Result<usize, DeviceError>;
     fn read_block(&self, offset: usize) -> Result<Block, DeviceError>;
-
-    // TODO: implement write
+    fn write_block(&mut self, offset: usize, block: &Block) -> Result<(), DeviceError>;
 }

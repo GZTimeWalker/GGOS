@@ -31,8 +31,8 @@ pub fn init_heap() -> Result<(), MapToError<Size4KiB>> {
         Page::range_inclusive(heap_start_page, heap_end_page)
     };
 
-    debug!("Kernel Heap start: {:?}", page_range.start);
-    debug!("Kernel Heap end  : {:?}", page_range.end);
+    debug!("Kernel Heap Start : {:?}", page_range.start);
+    debug!("Kernel Heap End   : {:?}", page_range.end);
 
     for page in page_range {
         let frame = frame_allocator

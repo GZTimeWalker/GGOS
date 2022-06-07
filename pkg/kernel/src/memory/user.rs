@@ -20,12 +20,12 @@ pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
     let page_range = {
         let heap_start = VirtAddr::new(USER_HEAP_START as u64);
         let heap_start_page = Page::containing_address(heap_start);
-        let heap_end_page = heap_start_page + USER_HEAP_PAGE as u64;
+        let heap_end_page = heap_start_page + USER_HEAP_PAGE as u64 - 1u64;
         Page::range(heap_start_page, heap_end_page)
     };
 
-    debug!("User Heap start  : {:?}", page_range.start);
-    debug!("User Heap end    : {:?}", page_range.end);
+    debug!("User Heap Start   : {:?}", page_range.start);
+    debug!("User Heap End     : {:?}", page_range.end);
 
     for page in page_range {
         let frame = frame_allocator
