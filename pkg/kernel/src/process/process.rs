@@ -257,11 +257,7 @@ impl Process {
             let cur_stack_bot = stack_range.start.start_address().as_u64();
             trace!("Current stack bot: {:#x}", cur_stack_bot);
             trace!("Address to access: {:#x}", addr);
-            if addr & STACK_START_MASK != cur_stack_bot & STACK_START_MASK {
-                false // not in current stack range
-            } else {
-                true
-            }
+            addr & STACK_START_MASK == cur_stack_bot & STACK_START_MASK
         } else {
             false
         }

@@ -6,9 +6,6 @@ use ggos_kernel as ggos;
 
 extern crate alloc;
 
-#[macro_use]
-extern crate log;
-
 boot::entry_point!(kernal_main);
 
 pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
@@ -18,23 +15,8 @@ pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
 
     // TODO: use executor.spawn() to spawn kernel tasks
 
-    debug!("Testing stack auto grow...");
-    stack_test();
-
     executor.run(spawn_init());
     ggos::shutdown(boot_info);
-}
-
-pub fn stack_test() {
-    let mut stack = [0u64; 0x1000];
-
-    for i in 0..stack.len() {
-        stack[i] = i as u64;
-    }
-
-    for i in 0..stack.len() / 512 {
-        assert!(stack[i * 512] == i as u64 * 512);
-    }
 }
 
 pub fn spawn_init() -> ggos::process::ProcessId {

@@ -25,9 +25,10 @@ impl ProcessManager {
     pub fn new(init: Process) -> Self {
         let mut processes = Vec::<Process>::new();
         let exit_code = BTreeMap::new();
+        let cur_pid = init.pid();
         processes.push(init);
         Self {
-            cur_pid: ProcessId(0),
+            cur_pid,
             processes,
             exit_code,
         }

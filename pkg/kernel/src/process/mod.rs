@@ -101,7 +101,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let mut kproc = Process::new(
         &mut *alloc,
         String::from("kernel"),
-        ProcessId(0),
+        ProcessId::new(),
         Cr3::read().0,
         Some(kproc_data),
     );
