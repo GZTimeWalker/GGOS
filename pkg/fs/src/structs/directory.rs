@@ -1,8 +1,8 @@
 //! Directory
 //!
 //! reference:
-//! - https://wiki.osdev.org/FAT#Directories_on_FAT12.2F16.2F32
-//! - https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/filesystem.rs
+//! - <https://wiki.osdev.org/FAT#Directories_on_FAT12.2F16.2F32>
+//! - <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/filesystem.rs>
 
 use crate::dir_entry::*;
 

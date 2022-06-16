@@ -1,10 +1,10 @@
 //! FAT16 BIOS Parameter Block
 //!
 //! reference:
-//! - https://en.wikipedia.org/wiki/BIOS_parameter_block
-//! - https://wiki.osdev.org/FAT#Boot_Record
-//! - https://github.com/xfoxfu/rust-xos/blob/main/fatpart/src/struct/bpb.rs
-//! - https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/fat.rs
+//! - <https://en.wikipedia.org/wiki/BIOS_parameter_block>
+//! - <https://wiki.osdev.org/FAT#Boot_Record>
+//! - <https://github.com/xfoxfu/rust-xos/blob/main/fatpart/src/struct/bpb.rs>
+//! - <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/fat.rs>
 
 /// Represents a Boot Parameter Block. This is the first sector of a FAT 16
 /// formatted partition, and it describes various properties of the FAT 16

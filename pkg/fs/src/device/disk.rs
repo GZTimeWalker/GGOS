@@ -1,6 +1,6 @@
 //! Disk Device
 //!
-//! reference: https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/fat.rs#L1350
+//! reference: <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/fat.rs#L1350>
 
 use super::*;
 use crate::*;

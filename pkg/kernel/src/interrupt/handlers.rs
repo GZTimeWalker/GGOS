@@ -34,7 +34,7 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.simd_floating_point
         .set_handler_fn(simd_floating_point_handler);
 
-    idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Timer as u8) as usize]
+    idt[(consts::Interrupts::Irq0 as u8 + consts::Irq::Timer as u8) as usize]
         .set_handler_fn(clock_handler)
         .set_stack_index(crate::gdt::CONTEXT_SWITCH_IST_INDEX);
 
@@ -145,7 +145,7 @@ pub extern "x86-interrupt" fn simd_floating_point_handler(stack_frame: Interrupt
 }
 
 pub extern "C" fn clock(mut regs: Registers, mut sf: InterruptStackFrame) {
-    super::ack(consts::Interrupts::IRQ0 as u8);
+    super::ack(consts::Interrupts::Irq0 as u8);
     crate::process::switch(&mut regs, &mut sf);
 }
 

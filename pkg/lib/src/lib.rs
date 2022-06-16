@@ -18,7 +18,7 @@ mod sync;
 pub mod allocator;
 
 use core::fmt::*;
-use alloc::format;
+pub use alloc::*;
 
 pub use io::*;
 pub use syscall::*;

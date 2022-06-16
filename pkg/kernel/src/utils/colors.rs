@@ -3,8 +3,8 @@ use embedded_graphics::prelude::RgbColor;
 
 /// default background color
 ///
-/// #202020
-pub const BACKGROUND: Rgb888 = Rgb888::new(0x20, 0x20, 0x20);
+/// #101010
+pub const BACKGROUND: Rgb888 = Rgb888::new(0x10, 0x10, 0x10);
 
 /// default frontground color
 ///

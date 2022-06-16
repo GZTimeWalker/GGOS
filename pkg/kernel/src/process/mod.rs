@@ -1,6 +1,5 @@
 mod manager;
 mod process;
-mod scheduler;
 mod sync;
 
 use core::sync::atomic::{AtomicU16, Ordering};
@@ -11,7 +10,6 @@ use process::*;
 use sync::*;
 
 pub use process::ProcessData;
-pub use scheduler::*;
 
 use crate::{filesystem::get_volume, Registers, Resource};
 use alloc::{string::String, vec, collections::BTreeMap};
@@ -111,6 +109,15 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     init_SEMAPHORES(BTreeMap::new());
     info!("Process Manager Initialized.");
 }
+
+pub fn switch(regs: &mut Registers, sf: &mut InterruptStackFrame) {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        let mut manager = get_process_manager_for_sure();
+        manager.save_current(regs, sf);
+        manager.switch_next(regs, sf);
+    });
+}
+
 
 pub fn print_process_list() {
     x86_64::instructions::interrupts::without_interrupts(|| {
@@ -275,7 +282,7 @@ pub fn spawn(file: &File) -> Result<ProcessId, String> {
             parent,
             Some(ProcessData::new().add_file(file)),
         );
-
+        debug!("Spawned process: {}#{}", file.entry.filename().to_lowercase(), pid);
         pid
     });
 

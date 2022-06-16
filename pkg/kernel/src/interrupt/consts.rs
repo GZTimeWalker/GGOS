@@ -26,7 +26,7 @@ pub enum Interrupts {
     VirtualizationException = 20,
     SecurityException = 30,
 
-    IRQ0 = 32,
+    Irq0 = 0x20,
     Syscall = 0x80,
 }
 
@@ -34,7 +34,7 @@ pub enum Interrupts {
 /// https://wiki.osdev.org/IRQ
 /// https://github.com/qemu/qemu/blob/aab8cfd4c3614a049b60333a3747aedffbd04150/include/hw/i386/microvm.h#L30-L50
 #[repr(u8)]
-pub enum IRQ {
+pub enum Irq {
     Timer = 0,
     Keyboard = 1,
     Serial1 = 3,
@@ -46,11 +46,4 @@ pub enum IRQ {
     Ide1 = 15,
     Error = 19,
     Spurious = 31,
-}
-
-#[repr(u8)]
-pub enum SyscallInt {
-    Exit = 0x00,
-    IO = 0x01,
-    Misc = 0x02,
 }

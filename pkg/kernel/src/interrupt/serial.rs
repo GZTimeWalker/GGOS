@@ -4,12 +4,12 @@ use pc_keyboard::DecodedKey;
 use crate::{drivers::serial::get_serial_for_sure, push_key};
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
-    idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Serial0 as u8) as usize]
+    idt[(consts::Interrupts::Irq0 as u8 + consts::Irq::Serial0 as u8) as usize]
         .set_handler_fn(interrupt_handler);
 }
 
 pub fn init() {
-    super::enable_irq(consts::IRQ::Serial0 as u8);
+    super::enable_irq(consts::Irq::Serial0 as u8);
     debug!("Serial0(COM1) IRQ enabled.");
 }
 
@@ -28,7 +28,7 @@ pub fn receive() -> Option<DecodedKey> {
 }
 
 pub extern "x86-interrupt" fn interrupt_handler(_st: InterruptStackFrame) {
-    super::ack(super::consts::IRQ::Serial0 as u8);
+    super::ack(super::consts::Irq::Serial0 as u8);
     if let Some(key) = receive() {
         push_key(key);
     }

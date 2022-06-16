@@ -7,12 +7,12 @@ use pc_keyboard::DecodedKey;
 use crate::{keyboard::get_keyboard_for_sure, push_key};
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
-    idt[(consts::Interrupts::IRQ0 as u8 + consts::IRQ::Keyboard as u8) as usize]
+    idt[(consts::Interrupts::Irq0 as u8 + consts::Irq::Keyboard as u8) as usize]
         .set_handler_fn(interrupt_handler);
 }
 
 pub fn init() {
-    super::enable_irq(consts::IRQ::Keyboard as u8);
+    super::enable_irq(consts::Irq::Keyboard as u8);
     debug!("Keyboard IRQ enabled.");
 }
 
@@ -36,7 +36,7 @@ pub fn receive() -> Option<DecodedKey> {
 }
 
 pub extern "x86-interrupt" fn interrupt_handler(_st: InterruptStackFrame) {
-    super::ack(super::consts::IRQ::Keyboard as u8);
+    super::ack(super::consts::Irq::Keyboard as u8);
     if let Some(key) = receive() {
         push_key(key);
     }

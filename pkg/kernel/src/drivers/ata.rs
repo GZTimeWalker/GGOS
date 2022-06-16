@@ -14,11 +14,9 @@ once_mutex!(pub BUSES: Vec<Bus>);
 pub fn init() {
     init_BUSES(Vec::new());
 
-    {
-        let mut buses = get_buses_for_sure();
-        buses.push(Bus::new(0, 14, 0x1F0, 0x3F6));
-        buses.push(Bus::new(1, 15, 0x170, 0x376));
-    }
+    let mut buses = get_buses_for_sure();
+    buses.push(Bus::new(0, 14, 0x1F0, 0x3F6));
+    buses.push(Bus::new(1, 15, 0x170, 0x376));
 
     info!("Initialized ATA Buses.");
 }
@@ -226,7 +224,6 @@ impl Bus {
         }
     }
 
-    #[allow(dead_code)]
     fn debug(&mut self) {
         unsafe {
             debug!(
