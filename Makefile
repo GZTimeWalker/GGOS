@@ -1,4 +1,4 @@
-OVMF := /usr/share/ovmf/OVMF.fd
+OVMF := tools/OVMF.fd
 ESP := esp
 BUILD_ARGS :=
 QEMU_ARGS := -serial stdio
