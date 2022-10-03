@@ -6,6 +6,6 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4.16"
-x86_64 = "0.14.9"
+log = "0.4.17"
+x86_64 = "0.14.10"
 xmas-elf = "0.8"

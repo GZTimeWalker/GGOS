@@ -36,7 +36,7 @@ pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
     }
 
     unsafe {
-        USER_ALLOCATOR.lock().init(USER_HEAP_START, USER_HEAP_SIZE);
+        USER_ALLOCATOR.lock().init(USER_HEAP_START as *mut u8, USER_HEAP_SIZE);
     }
 
     Ok(())

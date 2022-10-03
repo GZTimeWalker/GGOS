@@ -18,8 +18,6 @@ extern crate alloc;
 
 use alloc::boxed::Box;
 use alloc::vec;
-use x86_64::structures::paging::page::PageRangeInclusive;
-use x86_64::{VirtAddr, PhysAddr};
 use core::arch::asm;
 use ggos_boot::{BootInfo, GraphicInfo, KernelPages};
 use uefi::prelude::*;
@@ -28,11 +26,13 @@ use uefi::proto::media::file::*;
 use uefi::proto::media::fs::SimpleFileSystem;
 use uefi::table::boot::*;
 use uefi::table::cfg::ACPI2_GUID;
-use x86_64::structures::paging::*;
 use x86_64::registers::control::*;
 use x86_64::registers::model_specific::EferFlags;
-use xmas_elf::ElfFile;
+use x86_64::structures::paging::page::PageRangeInclusive;
+use x86_64::structures::paging::*;
+use x86_64::{PhysAddr, VirtAddr};
 use xmas_elf::program::ProgramHeader;
+use xmas_elf::ElfFile;
 
 mod config;
 
@@ -74,7 +74,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     let max_mmap_size = system_table.boot_services().memory_map_size();
     let mmap_storage = Box::leak(
-        vec![0; max_mmap_size.map_size + 10 * max_mmap_size.entry_size].into_boxed_slice()
+        vec![0; max_mmap_size.map_size + 10 * max_mmap_size.entry_size].into_boxed_slice(),
     );
     let mmap_iter = system_table
         .boot_services()
@@ -96,26 +96,30 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         Efer::update(|f| f.insert(EferFlags::NO_EXECUTE_ENABLE));
     }
 
-    elf::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs))
-        .expect("Failed to map ELF");
+    elf::map_elf(&elf, &mut page_table, &mut UEFIFrameAllocator(bs)).expect("Failed to map ELF");
 
     let (stack_start, stack_size) = if config.kernel_stack_auto_grow > 0 {
-        let stack_start = config.kernel_stack_address +
-            (config.kernel_stack_size - config.kernel_stack_auto_grow) * 0x1000;
+        let stack_start = config.kernel_stack_address
+            + (config.kernel_stack_size - config.kernel_stack_auto_grow) * 0x1000;
         (stack_start, config.kernel_stack_auto_grow)
     } else {
         (config.kernel_stack_address, config.kernel_stack_size)
     };
 
-    info!("Kernel init stack: [0x{:x?} -> 0x{:x?})", stack_start, stack_start + stack_size * 0x1000);
+    info!(
+        "Kernel init stack: [0x{:x?} -> 0x{:x?})",
+        stack_start,
+        stack_start + stack_size * 0x1000
+    );
 
     elf::map_range(
         stack_start,
         stack_size,
         &mut page_table,
         &mut UEFIFrameAllocator(bs),
-        false
-    ).expect("Failed to map stack");
+        false,
+    )
+    .expect("Failed to map stack");
 
     elf::map_physical_memory(
         config.physical_memory_offset,
@@ -165,10 +169,15 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 /// If `resolution` is some, then set graphic mode matching the resolution.
 /// Return information of the final graphic mode.
 fn init_graphic(bs: &BootServices) -> GraphicInfo {
+    let handle = bs
+        .get_handle_for_protocol::<GraphicsOutput>()
+        .expect("Failed to get GOP handle");
     let gop = bs
-        .locate_protocol::<GraphicsOutput>()
+        .open_protocol_exclusive::<GraphicsOutput>(handle)
         .expect("Failed to get GraphicsOutput");
-    let gop = unsafe { &mut *gop.get() };
+
+    let mut gop = gop;
+
     GraphicInfo {
         mode: gop.current_mode_info(),
         fb_addr: gop.frame_buffer().as_mut_ptr() as u64,
@@ -205,11 +214,14 @@ fn open_file(bs: &BootServices, path: &str) -> RegularFile {
 
     let cstr_path = uefi::CStr16::from_str_with_buf(path, &mut buf).unwrap();
 
-    // FIXME: use LoadedImageProtocol to get the FileSystem of this image
+    let handle = bs
+        .get_handle_for_protocol::<SimpleFileSystem>()
+        .expect("Failed to get handle for SimpleFileSystem");
+
     let fs = bs
-        .locate_protocol::<SimpleFileSystem>()
+        .open_protocol_exclusive::<SimpleFileSystem>(handle)
         .expect("Failed to get FileSystem");
-    let fs = unsafe { &mut *fs.get() };
+    let mut fs = fs;
 
     let mut root = fs.open_volume().expect("Failed to open volume");
     let handle = root
@@ -239,7 +251,7 @@ fn load_file(bs: &BootServices, file: &mut RegularFile) -> &'static mut [u8] {
     &mut buf[..len]
 }
 
-pub fn get_page_usage(elf: &ElfFile,) -> KernelPages {
+pub fn get_page_usage(elf: &ElfFile) -> KernelPages {
     elf.program_iter()
         .filter(|segment| segment.get_type().unwrap() == xmas_elf::program::Type::Load)
         .map(|segment| get_page_range(segment))
@@ -253,7 +265,6 @@ fn get_page_range(header: ProgramHeader) -> PageRangeInclusive {
     let end_page = Page::containing_address(virt_start_addr + mem_size - 1u64);
     Page::range_inclusive(start_page, end_page)
 }
-
 
 /// The entry point of kernel, set by BSP.
 static mut ENTRY: usize = 0;
