@@ -68,7 +68,7 @@ pub fn try_get_file(path: &str, mode: file::Mode) -> Result<File, VolumeError> {
 
     trace!("root: {}, filename: {}", &path[..pos + 1], &path[pos + 1..]);
 
-    let root = resolve_path(&path[..pos + 1]);
+    let root = resolve_path(&path[..=pos]);
     let filename = &path[pos + 1..];
 
     if root.is_none() {

@@ -96,7 +96,7 @@ pub fn cd(path: &str, root_dir: &mut String) {
             }
             root_dir.pop();
             let pos = root_dir.rfind('/').unwrap();
-            *root_dir = root_dir[..pos + 1].to_string();
+            *root_dir = root_dir[..=pos].to_string();
         },
         "." => return,
         _ => {

@@ -142,7 +142,7 @@ where
 {
     let mut data = vec![0u8; file.length() as usize];
     let mut length = file.length() as usize;
-    for i in 0..file.length() as usize / Block::SIZE + 1 {
+    for i in 0..=file.length() as usize / Block::SIZE {
         let sector = volume.cluster_to_sector(&file.start_cluster());
         let block = volume.read_block(sector as usize + i).unwrap();
         if length > Block::SIZE {
@@ -171,7 +171,7 @@ where
         return Err(VolumeError::BufferTooSmall);
     }
     let mut length = file.length() as usize;
-    for i in 0..file.length() as usize / Block::SIZE + 1 {
+    for i in 0..=file.length() as usize / Block::SIZE {
         let sector = volume.cluster_to_sector(&file.start_cluster());
         let block = volume.read_block(sector as usize + i).unwrap();
         if length > Block::SIZE {
