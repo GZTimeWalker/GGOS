@@ -117,9 +117,8 @@ fn get_computer_input(state: &mut [CellState; 9], rng: &Random) {
 
     let sel = rng.next_u32() as usize % options.len();
 
-    match state[options[sel]] {
-        CellState::StateEmpty => state[options[sel]] = CellState::StateComputer,
-        _ => (),
+    if let CellState::StateEmpty = state[options[sel]] {
+        state[options[sel]] = CellState::StateComputer
     }
 }
 
