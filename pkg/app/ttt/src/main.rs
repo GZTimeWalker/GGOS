@@ -1,13 +1,13 @@
 #![no_std]
 #![no_main]
 
-use lib::*;
-use alloc::vec::Vec;
 use alloc::string::String;
 use alloc::string::ToString;
+use alloc::vec::Vec;
+use lib::*;
 
-extern crate lib;
 extern crate alloc;
+extern crate lib;
 
 // tic-tac-toe game
 
@@ -117,9 +117,8 @@ fn get_computer_input(state: &mut [CellState; 9], rng: &Random) {
 
     let sel = rng.next_u32() as usize % options.len();
 
-    match state[options[sel]] {
-        CellState::StateEmpty => state[options[sel]] = CellState::StateComputer,
-        _ => (),
+    if let CellState::StateEmpty = state[options[sel]] {
+        state[options[sel]] = CellState::StateComputer
     }
 }
 
