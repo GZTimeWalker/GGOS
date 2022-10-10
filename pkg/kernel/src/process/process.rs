@@ -317,13 +317,13 @@ impl Process {
         let mut new_stack_base = stack_info.start.start_address().as_u64()
             - (self.children.len() as u64 + 1) * STACK_MAX_SIZE;
 
-        while let Err(_) = elf::map_range(
+        while elf::map_range(
             new_stack_base,
             stack_info.count() as u64,
             self.page_table.as_mut().unwrap(),
             frame_alloc,
             true,
-        ) {
+        ).is_err() {
             trace!("Map thread stack to {:#x} failed.", new_stack_base);
             new_stack_base -= STACK_MAX_SIZE; // stack grow down
         }

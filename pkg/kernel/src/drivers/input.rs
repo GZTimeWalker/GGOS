@@ -17,7 +17,7 @@ pub fn init() {
 
 pub fn push_key(key: DecodedKey) {
     if let Some(queue) = get_input_buf() {
-        if let Err(_) = queue.push(key) {
+        if queue.push(key).is_err() {
             warn!("Input buffer is full.");
         }
     }
