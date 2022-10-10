@@ -1,6 +1,6 @@
 use super::*;
-use crate::*;
 use crate::dir_entry::*;
+use crate::*;
 
 /// Identifies a FAT16 Volume on the disk.
 pub struct FAT16Volume<T>
@@ -91,7 +91,8 @@ where
                     let start = entry * DirEntry::LEN;
                     let end = (entry + 1) * DirEntry::LEN;
                     trace!("Entry: {}..{}", start, end);
-                    let dir_entry = DirEntry::parse(&block.inner()[start..end]).map_err(|x| VolumeError::FileNameError(x))?;
+                    let dir_entry = DirEntry::parse(&block.inner()[start..end])
+                        .map_err(|x| VolumeError::FileNameError(x))?;
 
                     if dir_entry.is_eod() {
                         return Ok(());
@@ -122,8 +123,7 @@ where
         dir: &Directory,
         name: &str,
     ) -> Result<DirEntry, VolumeError> {
-        let match_name = ShortFileName::parse(name)
-            .map_err(|x| VolumeError::FileNameError(x))?;
+        let match_name = ShortFileName::parse(name).map_err(|x| VolumeError::FileNameError(x))?;
 
         let mut current_cluster = Some(dir.cluster);
         let mut dir_sector_num = self.cluster_to_sector(&dir.cluster);

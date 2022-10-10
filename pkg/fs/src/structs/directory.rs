@@ -33,6 +33,10 @@ impl Directory {
 
 impl core::fmt::Display for Directory {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "Directory(cluster: {}, entry: {:?})", self.cluster, self.entry)
+        write!(
+            f,
+            "Directory(cluster: {}, entry: {:?})",
+            self.cluster, self.entry
+        )
     }
 }

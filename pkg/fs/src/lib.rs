@@ -13,9 +13,9 @@ pub mod structs;
 use alloc::vec::Vec;
 use device::BlockDevice;
 pub use device::*;
-pub use structs::*;
 pub use file::Mode;
 use structs::dir_entry::Cluster;
+pub use structs::*;
 
 // 1. The disk structure
 // How to read a file from disk
@@ -33,7 +33,6 @@ use structs::dir_entry::Cluster;
 //     The BPB contains information about the filesystem.
 //
 //     [ FAT16 BPB ] [ Data ]
-
 
 pub fn root_dir() -> Directory {
     Directory::new(Cluster::ROOT_DIR)
@@ -133,21 +132,17 @@ where
 }
 
 /// read a file
-pub fn read<T>(
-    volume: &FAT16Volume<T>,
-    file: &File
-) -> Result<Vec<u8>, VolumeError>
+pub fn read<T>(volume: &FAT16Volume<T>, file: &File) -> Result<Vec<u8>, VolumeError>
 where
     T: BlockDevice,
 {
     let mut data = vec![0u8; file.length() as usize];
     let mut length = file.length() as usize;
-    for i in 0..file.length() as usize / Block::SIZE + 1 {
+    for i in 0..=file.length() as usize / Block::SIZE {
         let sector = volume.cluster_to_sector(&file.start_cluster());
         let block = volume.read_block(sector as usize + i).unwrap();
         if length > Block::SIZE {
-            data[i * Block::SIZE..(i + 1) * Block::SIZE]
-                .copy_from_slice(&block.inner()[..]);
+            data[i * Block::SIZE..(i + 1) * Block::SIZE].copy_from_slice(&block.inner()[..]);
             length -= Block::SIZE;
         } else {
             data[i * Block::SIZE..i * Block::SIZE + length as usize]
@@ -162,7 +157,7 @@ where
 pub fn read_to_buf<T>(
     volume: &FAT16Volume<T>,
     file: &File,
-    buf: &mut [u8]
+    buf: &mut [u8],
 ) -> Result<usize, VolumeError>
 where
     T: BlockDevice,
@@ -171,12 +166,11 @@ where
         return Err(VolumeError::BufferTooSmall);
     }
     let mut length = file.length() as usize;
-    for i in 0..file.length() as usize / Block::SIZE + 1 {
+    for i in 0..=file.length() as usize / Block::SIZE {
         let sector = volume.cluster_to_sector(&file.start_cluster());
         let block = volume.read_block(sector as usize + i).unwrap();
         if length > Block::SIZE {
-            buf[i * Block::SIZE..(i + 1) * Block::SIZE]
-                .copy_from_slice(&block.inner()[..]);
+            buf[i * Block::SIZE..(i + 1) * Block::SIZE].copy_from_slice(&block.inner()[..]);
             length -= Block::SIZE;
         } else {
             buf[i * Block::SIZE..i * Block::SIZE + length as usize]
