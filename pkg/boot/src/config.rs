@@ -36,17 +36,16 @@ impl<'a> Config<'a> {
     pub fn parse(content: &'a [u8]) -> Self {
         let content = core::str::from_utf8(content).expect("failed to parse config as utf8");
         let mut config = DEFAULT_CONFIG;
-        for line in content.split('\n') {
+        for line in content.lines() {
             let line = line.trim();
             // skip empty and comment
             if line.is_empty() || line.starts_with('#') {
                 continue;
             }
             // parse 'key=value'
-            let mut iter = line.splitn(2, '=');
-            let key = iter.next().expect("failed to parse key");
-            let value = iter.next().expect("failed to parse value");
-            config.process(key, value);
+            if let Some((key, value)) = line.split_once('=') {
+                config.process(key, value);
+            }
         }
         config
     }

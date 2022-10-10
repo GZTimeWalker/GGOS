@@ -82,17 +82,17 @@ impl PartitionMetaData {
 
 impl core::fmt::Debug for PartitionMetaData {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "Partition Meta Data: {{\n")?;
-        write!(f, "  Active: {}\n", self.is_active())?;
-        write!(f, "  Begin Head: 0x{:02x}\n", self.begin_head())?;
-        write!(f, "  Begin Sector: 0x{:04x}\n", self.begin_sector())?;
-        write!(f, "  Begin Cylinder: 0x{:04x}\n", self.begin_cylinder())?;
-        write!(f, "  Filesystem Flag: 0x{:02x}\n", self.filesystem_flag())?;
-        write!(f, "  End Head: 0x{:02x}\n", self.end_head())?;
-        write!(f, "  End Sector: 0x{:04x}\n", self.end_sector())?;
-        write!(f, "  End Cylinder: 0x{:04x}\n", self.end_cylinder())?;
-        write!(f, "  Begin LBA: 0x{:08x}\n", self.begin_lba())?;
-        write!(f, "  Total LBA: 0x{:08x}\n", self.total_lba())?;
+        writeln!(f, "Partition Meta Data: {{")?;
+        writeln!(f, "  Active: {}", self.is_active())?;
+        writeln!(f, "  Begin Head: 0x{:02x}", self.begin_head())?;
+        writeln!(f, "  Begin Sector: 0x{:04x}", self.begin_sector())?;
+        writeln!(f, "  Begin Cylinder: 0x{:04x}", self.begin_cylinder())?;
+        writeln!(f, "  Filesystem Flag: 0x{:02x}", self.filesystem_flag())?;
+        writeln!(f, "  End Head: 0x{:02x}", self.end_head())?;
+        writeln!(f, "  End Sector: 0x{:04x}", self.end_sector())?;
+        writeln!(f, "  End Cylinder: 0x{:04x}", self.end_cylinder())?;
+        writeln!(f, "  Begin LBA: 0x{:08x}", self.begin_lba())?;
+        writeln!(f, "  Total LBA: 0x{:08x}", self.total_lba())?;
         write!(f, "}}")
     }
 }

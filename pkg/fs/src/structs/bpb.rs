@@ -58,35 +58,35 @@ impl FAT16Bpb {
 
 impl core::fmt::Debug for FAT16Bpb {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "FAT16 BPB: {{\n")?;
-        write!(f, "  OEM Name: {:?}\n", self.oem_name_str())?;
-        write!(f, "  Bytes per Sector: {}\n", self.bytes_per_sector())?;
-        write!(f, "  Sectors per Cluster: {}\n", self.sectors_per_cluster())?;
-        write!(
+        writeln!(f, "FAT16 BPB: {{")?;
+        writeln!(f, "  OEM Name: {:?}", self.oem_name_str())?;
+        writeln!(f, "  Bytes per Sector: {}", self.bytes_per_sector())?;
+        writeln!(f, "  Sectors per Cluster: {}", self.sectors_per_cluster())?;
+        writeln!(
             f,
-            "  Reserved Sector Count: {}\n",
+            "  Reserved Sector Count: {}",
             self.reserved_sector_count()
         )?;
-        write!(f, "  FAT Count: {}\n", self.fat_count())?;
-        write!(f, "  Root Entries Count: {}\n", self.root_entries_count())?;
-        write!(f, "  Total Sectors: {}\n", self.total_sectors())?;
-        write!(f, "  Media Descriptor: {}\n", self.media_descriptor())?;
-        write!(f, "  Sectors per FAT: {}\n", self.sectors_per_fat())?;
-        write!(f, "  Sectors per Track: {}\n", self.sectors_per_track())?;
-        write!(f, "  Track Count: {}\n", self.track_count())?;
-        write!(f, "  Hidden Sectors: {}\n", self.hidden_sectors())?;
-        write!(f, "  Total Sectors: {}\n", self.total_sectors())?;
-        write!(f, "  Drive Number: {}\n", self.drive_number())?;
-        write!(f, "  Reserved Flags: {}\n", self.reserved_flags())?;
-        write!(f, "  Boot Signature: {}\n", self.boot_signature())?;
-        write!(f, "  Volume ID: {}\n", self.volume_id())?;
-        write!(f, "  Volume Label: {:?}\n", self.volume_label_str())?;
-        write!(
+        writeln!(f, "  FAT Count: {}", self.fat_count())?;
+        writeln!(f, "  Root Entries Count: {}", self.root_entries_count())?;
+        writeln!(f, "  Total Sectors: {}", self.total_sectors())?;
+        writeln!(f, "  Media Descriptor: {}", self.media_descriptor())?;
+        writeln!(f, "  Sectors per FAT: {}", self.sectors_per_fat())?;
+        writeln!(f, "  Sectors per Track: {}", self.sectors_per_track())?;
+        writeln!(f, "  Track Count: {}", self.track_count())?;
+        writeln!(f, "  Hidden Sectors: {}", self.hidden_sectors())?;
+        writeln!(f, "  Total Sectors: {}", self.total_sectors())?;
+        writeln!(f, "  Drive Number: {}", self.drive_number())?;
+        writeln!(f, "  Reserved Flags: {}", self.reserved_flags())?;
+        writeln!(f, "  Boot Signature: {}", self.boot_signature())?;
+        writeln!(f, "  Volume ID: {}", self.volume_id())?;
+        writeln!(f, "  Volume Label: {:?}", self.volume_label_str())?;
+        writeln!(
             f,
-            "  System Identifier: {:?}\n",
+            "  System Identifier: {:?}",
             self.system_identifier_str()
         )?;
-        write!(f, "  Trail: 0x{:04X}\n", self.trail())?;
+        writeln!(f, "  Trail: 0x{:04X}", self.trail())?;
         write!(f, "}}")
     }
 }

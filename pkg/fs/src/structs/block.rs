@@ -34,11 +34,11 @@ impl Default for Block {
 
 impl core::fmt::Debug for Block {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        write!(f, "Block:\n")?;
+        writeln!(f, "Block:")?;
         for i in 0..16 {
-            write!(
+            writeln!(
                 f,
-                "    {:016x} {:016x} {:016x} {:016x}\n",
+                "    {:016x} {:016x} {:016x} {:016x}",
                 u64::from_be_bytes(self.contents[i * 32..i * 32 + 8].try_into().unwrap()),
                 u64::from_be_bytes(self.contents[i * 32 + 8..i * 32 + 16].try_into().unwrap()),
                 u64::from_be_bytes(self.contents[i * 32 + 16..i * 32 + 24].try_into().unwrap()),

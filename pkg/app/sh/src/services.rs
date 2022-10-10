@@ -84,7 +84,7 @@ pub fn cat(path: &str, root_dir: &str) {
 }
 
 pub fn cd(path: &str, root_dir: &mut String) {
-    if path.starts_with("/") {
+    if path.starts_with('/') {
         *root_dir = String::from(path);
         return;
     }
