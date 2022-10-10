@@ -1,13 +1,13 @@
 #![no_std]
 #![no_main]
 
-use lib::*;
-use alloc::vec::Vec;
 use alloc::string::String;
 use alloc::string::ToString;
+use alloc::vec::Vec;
+use lib::*;
 
-extern crate lib;
 extern crate alloc;
+extern crate lib;
 
 // tic-tac-toe game
 
