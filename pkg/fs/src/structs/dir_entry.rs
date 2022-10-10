@@ -7,8 +7,8 @@
 
 use alloc::string::String;
 use bitflags::bitflags;
-use chrono::{DateTime, TimeZone, Utc};
 use chrono::LocalResult::Single;
+use chrono::{DateTime, TimeZone, Utc};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct DirEntry {
@@ -90,7 +90,8 @@ impl DirEntry {
 
     /// For Standard 8.3 format
     pub fn parse(data: &[u8]) -> Result<DirEntry, FilenameError> {
-        trace!("parsing file...\n    {:016x} {:016x} {:016x} {:016x}",
+        trace!(
+            "parsing file...\n    {:016x} {:016x} {:016x} {:016x}",
             u64::from_be_bytes(data[0..8].try_into().unwrap()),
             u64::from_be_bytes(data[8..16].try_into().unwrap()),
             u64::from_be_bytes(data[16..24].try_into().unwrap()),
@@ -116,9 +117,9 @@ impl DirEntry {
         let accessed_time = prase_datetime(time);
 
         let cluster = (data[27] as u32) << 8
-                         | (data[26] as u32) << 0
-                         | (data[21] as u32) << 24
-                         | (data[20] as u32) << 16;
+            | (data[26] as u32) << 0
+            | (data[21] as u32) << 24
+            | (data[20] as u32) << 16;
 
         time = u32::from_le_bytes([data[22], data[23], data[24], data[25]]);
         let moditified_time = prase_datetime(time);
@@ -277,7 +278,12 @@ impl core::fmt::Display for ShortFileName {
         if self.ext[0] == 0x20 {
             write!(f, "{}", self.basename().trim_end())
         } else {
-            write!(f, "{}.{}", self.basename().trim_end(), self.extension().trim_end())
+            write!(
+                f,
+                "{}.{}",
+                self.basename().trim_end(),
+                self.extension().trim_end()
+            )
         }
     }
 }
@@ -288,8 +294,12 @@ impl core::fmt::Display for DirEntry {
         write!(
             f,
             "{:>5.*}{} | {} | {}{}",
-           1, size, unit, self.moditified_time.format("%Y/%m/%d %H:%M:%S"), self.filename,
-           if self.is_directory() { "/" } else { "" }
+            1,
+            size,
+            unit,
+            self.moditified_time.format("%Y/%m/%d %H:%M:%S"),
+            self.filename,
+            if self.is_directory() { "/" } else { "" }
         )
     }
 }

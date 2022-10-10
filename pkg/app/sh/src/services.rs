@@ -1,4 +1,4 @@
-use alloc::{string::*, format, vec};
+use alloc::{format, string::*, vec};
 use lib::*;
 
 pub fn show_hex(data: &[u8]) {
@@ -97,7 +97,7 @@ pub fn cd(path: &str, root_dir: &mut String) {
             root_dir.pop();
             let pos = root_dir.rfind('/').unwrap();
             *root_dir = root_dir[..=pos].to_string();
-        },
+        }
         "." => return,
         _ => {
             root_dir.push_str(path);
@@ -119,9 +119,13 @@ pub fn exec(path: &str, root_dir: &str) {
     }
 
     let ret = sys_wait_pid(pid);
-    let time = sys_time() - start ;
+    let time = sys_time() - start;
 
-    println!("[+] process exited with code {} @ {}s", ret, time.num_seconds());
+    println!(
+        "[+] process exited with code {} @ {}s",
+        ret,
+        time.num_seconds()
+    );
 }
 
 pub fn nohup(path: &str, root_dir: &str) {

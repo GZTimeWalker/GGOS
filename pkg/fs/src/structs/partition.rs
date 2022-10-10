@@ -5,7 +5,7 @@
 use crate::alloc::borrow::ToOwned;
 
 pub struct MBRPartitions {
-    pub partitions: [PartitionMetaData; 4]
+    pub partitions: [PartitionMetaData; 4],
 }
 
 impl MBRPartitions {
@@ -13,40 +13,44 @@ impl MBRPartitions {
         let mut partitions = vec![PartitionMetaData::default(); 4];
         for i in 0..4 {
             partitions[i] = PartitionMetaData::parse(
-                &data[0x1be + (i * 16)..0x1be + (i * 16) + 16].try_into().unwrap()
+                &data[0x1be + (i * 16)..0x1be + (i * 16) + 16]
+                    .try_into()
+                    .unwrap(),
             );
             if partitions[i].is_active() {
                 trace!("Partition {}: \n{:?}", i, partitions[i]);
             }
         }
-        Self { partitions: partitions.try_into().unwrap() }
+        Self {
+            partitions: partitions.try_into().unwrap(),
+        }
     }
 }
 
 #[derive(Clone, Copy)]
 pub struct PartitionMetaData {
-    data: [u8; 16]
+    data: [u8; 16],
 }
 
 impl Default for PartitionMetaData {
     fn default() -> Self {
-        Self {
-            data: [0u8; 16]
-        }
+        Self { data: [0u8; 16] }
     }
 }
 
 impl PartitionMetaData {
     /// Attempt to parse a Boot Parameter Block from a 512 byte sector.
     pub fn parse(data: &[u8; 16]) -> PartitionMetaData {
-        PartitionMetaData { data: data.to_owned() }
+        PartitionMetaData {
+            data: data.to_owned(),
+        }
     }
 
-    define_field!( u8, 0x00, status);
-    define_field!( u8, 0x01, begin_head);
+    define_field!(u8, 0x00, status);
+    define_field!(u8, 0x01, begin_head);
     // 0x02 - 0x03 begin sector & begin cylinder
-    define_field!( u8, 0x04, filesystem_flag);
-    define_field!( u8, 0x05, end_head);
+    define_field!(u8, 0x04, filesystem_flag);
+    define_field!(u8, 0x05, end_head);
     // 0x06 - 0x07 end sector & edn cylinder
     define_field!(u32, 0x08, begin_lba);
     define_field!(u32, 0x0c, total_lba);

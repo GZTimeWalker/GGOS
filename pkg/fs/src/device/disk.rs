@@ -3,8 +3,8 @@
 //! reference: <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/fat.rs#L1350>
 
 use super::*;
-use crate::*;
 use crate::partition::PartitionMetaData;
+use crate::*;
 
 /// Identifies a Disk device
 ///
@@ -13,7 +13,7 @@ pub struct Disk<T>
 where
     T: BlockDevice + Clone,
 {
-    inner: T
+    inner: T,
 }
 
 impl<T> Disk<T>
@@ -59,11 +59,13 @@ where
     T: BlockDevice,
 {
     fn read(&self, buf: &mut [Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
-        self.inner.read(buf, offset + self.meta.begin_lba() as usize, size)
+        self.inner
+            .read(buf, offset + self.meta.begin_lba() as usize, size)
     }
 
     fn write(&mut self, buf: &[Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
-        self.inner.write(buf, offset + self.meta.begin_lba() as usize, size)
+        self.inner
+            .write(buf, offset + self.meta.begin_lba() as usize, size)
     }
 }
 
@@ -101,6 +103,7 @@ where
             self.meta.begin_lba()
         );
 
-        self.inner.write_block(offset + self.meta.begin_lba() as usize, block)
+        self.inner
+            .write_block(offset + self.meta.begin_lba() as usize, block)
     }
 }

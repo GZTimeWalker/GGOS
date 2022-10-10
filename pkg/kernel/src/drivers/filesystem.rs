@@ -35,9 +35,7 @@ pub fn resolve_path(root_path: &str) -> Option<Directory> {
     while let Some(pos) = path.find('/') {
         let dir = path[..pos].to_owned();
 
-        let tmp = fs::find_directory_entry(
-            get_volume(), &root, dir.as_str()
-        );
+        let tmp = fs::find_directory_entry(get_volume(), &root, dir.as_str());
 
         if tmp.is_err() {
             warn!("Directory not found: {}, {:?}", root_path, tmp);
@@ -80,7 +78,6 @@ pub fn try_get_file(path: &str, mode: file::Mode) -> Result<File, VolumeError> {
 }
 
 pub fn ls(root_path: &str) {
-
     let root = match resolve_path(root_path) {
         Some(root) => root,
         None => return,
