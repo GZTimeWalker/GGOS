@@ -242,7 +242,7 @@ pub fn sem_down(key: u32, regs: &mut Registers, sf: &mut InterruptStackFrame) {
 pub fn remove_sem(key: u32) -> isize {
     if let Some(mut sems) = get_sem_manager() {
         let key = SemaphoreId::new(key);
-        if let Some(_) = sems.remove(&key) {
+        if sems.remove(&key).is_some() {
             0
         } else {
             1

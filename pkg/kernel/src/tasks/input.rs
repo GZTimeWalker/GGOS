@@ -19,7 +19,7 @@ static INPUT_WAKER: AtomicWaker = AtomicWaker::new();
 
 pub fn push_key(key: DecodedKey) {
     if let Some(queue) = get_input_queue() {
-        if let Ok(_) = queue.push(key) {
+        if queue.push(key).is_ok() {
             INPUT_WAKER.wake()
         }
     }

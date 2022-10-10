@@ -330,7 +330,7 @@ impl ProcessManager {
             return;
         }
 
-        if let Err(_) = self.exit_code.try_insert(pid, ret) {
+        if self.exit_code.try_insert(pid, ret).is_err() {
             error!("Process #{} already exited", pid);
         }
     }
