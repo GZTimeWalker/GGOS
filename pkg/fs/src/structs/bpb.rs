@@ -81,11 +81,7 @@ impl core::fmt::Debug for FAT16Bpb {
         writeln!(f, "  Boot Signature: {}", self.boot_signature())?;
         writeln!(f, "  Volume ID: {}", self.volume_id())?;
         writeln!(f, "  Volume Label: {:?}", self.volume_label_str())?;
-        writeln!(
-            f,
-            "  System Identifier: {:?}",
-            self.system_identifier_str()
-        )?;
+        writeln!(f, "  System Identifier: {:?}", self.system_identifier_str())?;
         writeln!(f, "  Trail: 0x{:04X}", self.trail())?;
         write!(f, "}}")
     }

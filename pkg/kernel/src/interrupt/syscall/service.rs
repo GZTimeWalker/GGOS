@@ -166,6 +166,6 @@ pub fn sys_sem(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStack
         1 => regs.set_rax(crate::process::sem_up(args.arg1 as u32) as usize),
         2 => crate::process::sem_down(args.arg1 as u32, regs, sf),
         3 => regs.set_rax(crate::process::remove_sem(args.arg1 as u32) as usize),
-        _ => regs.set_rax(usize::MAX)
+        _ => regs.set_rax(usize::MAX),
     }
 }
