@@ -10,7 +10,7 @@ fn partition_test() {
 
     println!("{:?}", meta0);
 
-    assert_eq!(meta0.is_active(), true);
+    assert!(meta0.is_active());
     assert_eq!(meta0.begin_head(), 1);
     assert_eq!(meta0.begin_sector(), 1);
     assert_eq!(meta0.begin_cylinder(), 0);
