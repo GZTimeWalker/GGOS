@@ -13,7 +13,6 @@ const USER_HEAP_PAGE: usize = USER_HEAP_SIZE / crate::memory::PAGE_SIZE as usize
 pub static USER_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
-
     let mapper = &mut *super::get_page_table_for_sure();
     let frame_allocator = &mut *super::get_frame_alloc_for_sure();
 
@@ -31,12 +30,15 @@ pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
         let frame = frame_allocator
             .allocate_frame()
             .ok_or(MapToError::FrameAllocationFailed)?;
-        let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE | PageTableFlags::USER_ACCESSIBLE;
+        let flags =
+            PageTableFlags::PRESENT | PageTableFlags::WRITABLE | PageTableFlags::USER_ACCESSIBLE;
         unsafe { mapper.map_to(page, frame, flags, frame_allocator)?.flush() };
     }
 
     unsafe {
-        USER_ALLOCATOR.lock().init(USER_HEAP_START as *mut u8, USER_HEAP_SIZE);
+        USER_ALLOCATOR
+            .lock()
+            .init(USER_HEAP_START as *mut u8, USER_HEAP_SIZE);
     }
 
     Ok(())

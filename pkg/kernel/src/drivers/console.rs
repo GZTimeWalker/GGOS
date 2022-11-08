@@ -126,7 +126,7 @@ impl Console {
                     self.write("  ");
                     self.prev_char();
                     self.prev_char();
-                },
+                }
                 _ => self.write_char(c),
             }
         }

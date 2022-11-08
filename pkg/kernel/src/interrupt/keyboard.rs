@@ -1,10 +1,10 @@
 use super::consts;
+use crate::{keyboard::get_keyboard_for_sure, push_key};
+use pc_keyboard::DecodedKey;
 use x86_64::{
     instructions::port::Port,
     structures::idt::{InterruptDescriptorTable, InterruptStackFrame},
 };
-use pc_keyboard::DecodedKey;
-use crate::{keyboard::get_keyboard_for_sure, push_key};
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt[(consts::Interrupts::Irq0 as u8 + consts::Irq::Keyboard as u8) as usize]
@@ -19,7 +19,6 @@ pub fn init() {
 /// Receive character from keyboard
 /// Should be called on every interrupt
 pub fn receive() -> Option<DecodedKey> {
-
     let mut keyboard = get_keyboard_for_sure();
     let mut data_port = Port::<u8>::new(0x60);
     let mut status_port = Port::<u8>::new(0x64);

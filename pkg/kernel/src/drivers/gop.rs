@@ -1,8 +1,8 @@
+use crate::utils::*;
 use boot::GraphicInfo;
 use core::intrinsics::{volatile_copy_memory, volatile_set_memory};
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::*;
-use crate::utils::*;
 
 #[derive(Debug)]
 pub enum DisplayError {
@@ -51,11 +51,7 @@ impl<'a> GOPDisplay<'a> {
         }
     }
 
-    pub fn draw_pixel_u32(
-        &mut self,
-        point: Point,
-        color: u32
-    ) -> Result<(), DisplayError> {
+    pub fn draw_pixel_u32(&mut self, point: Point, color: u32) -> Result<(), DisplayError> {
         let size = self.resolution();
         let (x, y) = (point.x as usize, point.y as usize);
 

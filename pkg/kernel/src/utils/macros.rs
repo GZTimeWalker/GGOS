@@ -1,8 +1,8 @@
-use core::fmt::*;
 use crate::console::get_console;
 use crate::serial::get_serial;
 use crate::utils::colors;
 use alloc::string::ToString;
+use core::fmt::*;
 use x86_64::instructions::interrupts;
 
 /// Use spin mutex to control variable access
@@ -77,7 +77,6 @@ macro_rules! println_serial {
     ($($arg:tt)*) => ($crate::print_serial!("{}\n\r", format_args!($($arg)*)));
 }
 
-
 #[doc(hidden)]
 pub fn print_internal(args: Arguments) {
     interrupts::without_interrupts(|| {
@@ -119,7 +118,12 @@ pub fn print_serial_internal(args: Arguments) {
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     let location = if let Some(location) = info.location() {
-        alloc::format!("{}@{}:{}", location.file(), location.line(), location.column())
+        alloc::format!(
+            "{}@{}:{}",
+            location.file(),
+            location.line(),
+            location.column()
+        )
     } else {
         "Unknown location".to_string()
     };

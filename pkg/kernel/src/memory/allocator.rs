@@ -19,7 +19,6 @@ pub fn init() {
 }
 
 pub fn init_heap() -> Result<(), MapToError<Size4KiB>> {
-
     let mapper = &mut *super::get_page_table_for_sure();
     let frame_allocator = &mut *super::get_frame_alloc_for_sure();
 

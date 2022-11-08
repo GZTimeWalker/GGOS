@@ -1,5 +1,9 @@
 use super::*;
-use crate::memory::{allocator::{ALLOCATOR, HEAP_SIZE}, get_frame_alloc_for_sure, user::{USER_ALLOCATOR, USER_HEAP_SIZE}};
+use crate::memory::{
+    allocator::{ALLOCATOR, HEAP_SIZE},
+    get_frame_alloc_for_sure,
+    user::{USER_ALLOCATOR, USER_HEAP_SIZE},
+};
 use crate::utils::Registers;
 use alloc::collections::BTreeMap;
 use alloc::format;
@@ -215,25 +219,34 @@ impl ProcessManager {
 
         output += format!(
             "Heap  : {:>7.*}/{:>7.*} KiB ({:>5.2}%)\n",
-            2, heap_used as f64 / 1024f64,
-            2, heap_size as f64 / 1024f64,
+            2,
+            heap_used as f64 / 1024f64,
+            2,
+            heap_size as f64 / 1024f64,
             heap_used as f64 / heap_size as f64 * 100.0
-        ).as_str();
+        )
+        .as_str();
 
         output += format!(
             "User  : {:>7.*}/{:>7.*} KiB ({:>5.2}%)\n",
-            2, user_heap_used as f64 / 1024f64,
-            2, user_heap_size as f64 / 1024f64,
+            2,
+            user_heap_used as f64 / 1024f64,
+            2,
+            user_heap_size as f64 / 1024f64,
             user_heap_used as f64 / user_heap_size as f64 * 100.0
-        ).as_str();
+        )
+        .as_str();
 
         output += format!(
             "Frames: {:>7.*}/{:>7.*} MiB ({:>5.2}%) {} frames used\n",
-            2, (frames_recycled * 4) as f64 / 1024f64,
-            2, (frames_used * 4) as f64 / 1024f64,
+            2,
+            (frames_recycled * 4) as f64 / 1024f64,
+            2,
+            (frames_used * 4) as f64 / 1024f64,
             frames_recycled as f64 / frames_used as f64 * 100.0,
             frames_used
-        ).as_str();
+        )
+        .as_str();
 
         print!("{}", output);
     }
@@ -269,8 +282,7 @@ impl ProcessManager {
         addr: VirtAddr,
         err_code: PageFaultErrorCode,
     ) -> Result<(), ()> {
-        if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION)
-        {
+        if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION) {
             let cur_proc = self.current_mut();
             trace!("Checking if {:#x} is on current process's stack", addr);
             if cur_proc.is_on_stack(addr) {

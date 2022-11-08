@@ -6,20 +6,21 @@ mod macros;
 #[macro_use]
 mod regs;
 
-pub mod func;
-pub mod font;
-pub mod colors;
-pub mod logger;
 pub mod clock;
+pub mod colors;
+pub mod font;
+pub mod func;
+pub mod logger;
 pub mod resource;
 
-pub use resource::Resource;
 pub use macros::*;
 pub use regs::*;
+pub use resource::Resource;
 use x86_64::instructions::interrupts;
 
 pub const fn get_ascii_header() -> &'static str {
-    concat!("
+    concat!(
+        "
  _______  _______  _______  _______
 |       ||       ||       ||       |
 |    ___||    ___||   _   ||  _____|
@@ -27,7 +28,10 @@ pub const fn get_ascii_header() -> &'static str {
 |   ||  ||   ||  ||  |_|  ||_____  |
 |   |_| ||   |_| ||       | _____| |
 |_______||_______||_______||_______|
-                                v", env!("CARGO_PKG_VERSION"), " by GZTime")
+                                v",
+        env!("CARGO_PKG_VERSION"),
+        " by GZTime"
+    )
 }
 
 pub const fn get_header() -> &'static str {

@@ -1,5 +1,5 @@
+use crate::{guard_access_fn, once_mutex};
 use boot::*;
-use crate::{once_mutex, guard_access_fn};
 
 once_mutex!(UEFI_SERVICE: UefiRuntime);
 
@@ -14,13 +14,13 @@ guard_access_fn! {
 }
 
 pub struct UefiRuntime {
-    runtime_service: &'static RuntimeServices
+    runtime_service: &'static RuntimeServices,
 }
 
 impl UefiRuntime {
     pub unsafe fn new(boot_info: &'static BootInfo) -> Self {
         Self {
-            runtime_service: boot_info.system_table.runtime_services()
+            runtime_service: boot_info.system_table.runtime_services(),
         }
     }
 

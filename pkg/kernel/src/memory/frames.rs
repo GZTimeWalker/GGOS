@@ -3,7 +3,7 @@
 
 use alloc::vec::Vec;
 use boot::{MemoryMap, MemoryType};
-use x86_64::structures::paging::{FrameAllocator, PhysFrame, Size4KiB, FrameDeallocator};
+use x86_64::structures::paging::{FrameAllocator, FrameDeallocator, PhysFrame, Size4KiB};
 use x86_64::PhysAddr;
 
 once_mutex!(pub FRAME_ALLOCATOR: BootInfoFrameAllocator);
@@ -63,7 +63,8 @@ impl FrameDeallocator<Size4KiB> for BootInfoFrameAllocator {
 
 unsafe fn create_frame_iter(memory_map: &MemoryMap) -> BootInfoFrameIter {
     memory_map
-        .clone().into_iter()
+        .clone()
+        .into_iter()
         // get usable regions from memory map
         .filter(|r| r.ty == MemoryType::CONVENTIONAL)
         // align to page boundary
