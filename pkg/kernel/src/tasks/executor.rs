@@ -1,11 +1,11 @@
 use crate::process;
 
 use super::{Task, TaskId};
-use alloc::{collections::BTreeMap, sync::Arc, task::Wake};
-use core::task::{Context, Poll, Waker};
-use core::future::Future;
-use crossbeam_queue::ArrayQueue;
 use crate::process::ProcessId;
+use alloc::{collections::BTreeMap, sync::Arc, task::Wake};
+use core::future::Future;
+use core::task::{Context, Poll, Waker};
+use crossbeam_queue::ArrayQueue;
 
 pub struct Executor {
     tasks: BTreeMap<TaskId, Task>,
@@ -49,7 +49,8 @@ impl Executor {
                 Some(task) => task,
                 None => continue, // task no longer exists
             };
-            let waker = self.waker_cache
+            let waker = self
+                .waker_cache
                 .entry(task_id)
                 .or_insert_with(|| TaskWaker::new(task_id, self.task_queue.clone()));
             let mut context = Context::from_waker(waker);
@@ -90,7 +91,9 @@ impl TaskWaker {
     }
 
     fn wake_task(&self) {
-        self.task_queue.push(self.task_id).expect("Task queue is full");
+        self.task_queue
+            .push(self.task_id)
+            .expect("Task queue is full");
     }
 }
 

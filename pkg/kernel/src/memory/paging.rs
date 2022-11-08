@@ -1,4 +1,3 @@
-
 use x86_64::structures::paging::{OffsetPageTable, PageTable};
 use x86_64::VirtAddr;
 
@@ -7,7 +6,6 @@ once_mutex!(pub PAGE_TABLE: OffsetPageTable<'static>);
 guard_access_fn! {
     pub get_page_table(PAGE_TABLE: OffsetPageTable<'static>)
 }
-
 
 /// Initialize a new OffsetPageTable.
 ///

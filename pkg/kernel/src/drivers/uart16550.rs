@@ -1,11 +1,10 @@
+use bitflags::bitflags;
 /// reference: https://docs.rs/uart_16550
 /// reference: http://byterunner.com/16550.html
 /// reference: http://www.larvierinehart.com/serial/serialadc/serial.htm
 /// reference: https://wiki.osdev.org/Serial_Ports
-
 use core::fmt;
 use x86_64::instructions::port::{Port, PortReadOnly, PortWriteOnly};
-use bitflags::bitflags;
 
 macro_rules! wait_for {
     ($cond:expr) => {

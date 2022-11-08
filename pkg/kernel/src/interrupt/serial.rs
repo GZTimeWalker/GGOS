@@ -1,7 +1,7 @@
 use super::consts;
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
-use pc_keyboard::DecodedKey;
 use crate::{drivers::serial::get_serial_for_sure, push_key};
+use pc_keyboard::DecodedKey;
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt[(consts::Interrupts::Irq0 as u8 + consts::Irq::Serial0 as u8) as usize]
@@ -20,7 +20,7 @@ pub fn receive() -> Option<DecodedKey> {
         match scancode {
             127 => Some(DecodedKey::Unicode('\x08')),
             13 => Some(DecodedKey::Unicode('\n')),
-            c => Some(DecodedKey::Unicode(c as char))
+            c => Some(DecodedKey::Unicode(c as char)),
         }
     } else {
         None

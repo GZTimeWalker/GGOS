@@ -330,7 +330,7 @@ impl core::fmt::Display for Drive {
     }
 }
 
-use fs::{*, device::BlockDevice};
+use fs::{device::BlockDevice, *};
 
 impl Device<Block> for Drive {
     fn read(&self, _: &mut [Block], _: usize, _: usize) -> Result<usize, DeviceError> {

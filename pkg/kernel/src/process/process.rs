@@ -323,7 +323,9 @@ impl Process {
             self.page_table.as_mut().unwrap(),
             frame_alloc,
             true,
-        ).is_err() {
+        )
+        .is_err()
+        {
             trace!("Map thread stack to {:#x} failed.", new_stack_base);
             new_stack_base -= STACK_MAX_SIZE; // stack grow down
         }

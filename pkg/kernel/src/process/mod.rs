@@ -12,12 +12,13 @@ use sync::*;
 pub use process::ProcessData;
 
 use crate::{filesystem::get_volume, Registers, Resource};
-use alloc::{string::String, vec, collections::BTreeMap};
-use x86_64::{
-    registers::control::{Cr3, Cr2},
-    structures::idt::InterruptStackFrame, VirtAddr,
-};
+use alloc::{collections::BTreeMap, string::String, vec};
 use x86_64::structures::idt::PageFaultErrorCode;
+use x86_64::{
+    registers::control::{Cr2, Cr3},
+    structures::idt::InterruptStackFrame,
+    VirtAddr,
+};
 
 use self::manager::init_PROCESS_MANAGER;
 use self::sync::init_SEMAPHORES;
@@ -117,7 +118,6 @@ pub fn switch(regs: &mut Registers, sf: &mut InterruptStackFrame) {
         manager.switch_next(regs, sf);
     });
 }
-
 
 pub fn print_process_list() {
     x86_64::instructions::interrupts::without_interrupts(|| {
@@ -252,7 +252,10 @@ pub fn remove_sem(key: u32) -> isize {
     }
 }
 
-pub fn try_resolve_page_fault(_err_code: PageFaultErrorCode, _sf: &mut InterruptStackFrame) -> Result<(),()> {
+pub fn try_resolve_page_fault(
+    _err_code: PageFaultErrorCode,
+    _sf: &mut InterruptStackFrame,
+) -> Result<(), ()> {
     let addr = Cr2::read();
     debug!("Trying to access address: {:?}", addr);
 
@@ -282,7 +285,11 @@ pub fn spawn(file: &File) -> Result<ProcessId, String> {
             parent,
             Some(ProcessData::new().add_file(file)),
         );
-        debug!("Spawned process: {}#{}", file.entry.filename().to_lowercase(), pid);
+        debug!(
+            "Spawned process: {}#{}",
+            file.entry.filename().to_lowercase(),
+            pid
+        );
         pid
     });
 
@@ -299,7 +306,6 @@ pub fn fork(regs: &mut Registers, sf: &mut InterruptStackFrame) {
 }
 
 pub fn force_show_info() {
-
     unsafe {
         manager::PROCESS_MANAGER.get().unwrap().force_unlock();
     }

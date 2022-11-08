@@ -27,33 +27,33 @@ pub use drivers::*;
 pub mod memory;
 pub mod tasks;
 
-pub use tasks::*;
-use memory::gdt;
 use memory::allocator;
+use memory::gdt;
+pub use tasks::*;
 
-pub mod process;
 pub mod interrupt;
+pub mod process;
 
 pub use interrupt::Syscall;
 
-use boot::BootInfo;
 pub use alloc::format;
+use boot::BootInfo;
 
 pub fn init(boot_info: &'static BootInfo) {
-    serial::init();             // init serial output
-    logger::init();             // init logger system
-    gdt::init();                // init gdt
-    display::init(boot_info);   // init vga display
-    console::init();            // init graphic console
-    clock::init(boot_info);     // init clock (uefi service)
-    interrupt::init();          // init interrupts
-    memory::init(boot_info);    // init memory manager
-    allocator::init();          // init heap allocator
-    process::init(boot_info);   // init process manager
-    keyboard::init();           // init keyboard
-    input::init();              // init input
-    ata::init();                // init ata
-    filesystem::init();         // init filesystem
+    serial::init(); // init serial output
+    logger::init(); // init logger system
+    gdt::init(); // init gdt
+    display::init(boot_info); // init vga display
+    console::init(); // init graphic console
+    clock::init(boot_info); // init clock (uefi service)
+    interrupt::init(); // init interrupts
+    memory::init(boot_info); // init memory manager
+    allocator::init(); // init heap allocator
+    process::init(boot_info); // init process manager
+    keyboard::init(); // init keyboard
+    input::init(); // init input
+    ata::init(); // init ata
+    filesystem::init(); // init filesystem
 
     x86_64::instructions::interrupts::enable();
     info!("Interrupts Enabled.");

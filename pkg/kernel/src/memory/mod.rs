@@ -1,13 +1,13 @@
 mod address;
+pub mod allocator;
 mod frames;
 mod paging;
-pub mod allocator;
 
 pub mod gdt;
 pub mod user;
+pub use address::*;
 pub use frames::*;
 pub use paging::*;
-pub use address::*;
 
 pub fn init(boot_info: &'static boot::BootInfo) {
     let physical_memory_offset = x86_64::VirtAddr::new_truncate(PHYSICAL_OFFSET as u64);

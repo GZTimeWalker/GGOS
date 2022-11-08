@@ -2,7 +2,10 @@ use alloc::string::String;
 use fs::{Device, File, Random};
 use pc_keyboard::DecodedKey;
 
-use crate::{filesystem::{get_volume, StdIO}, input::try_get_key};
+use crate::{
+    filesystem::{get_volume, StdIO},
+    input::try_get_key,
+};
 
 #[derive(Debug, Clone)]
 pub enum Resource {
@@ -28,7 +31,7 @@ impl Resource {
                         } else {
                             Ok(0)
                         }
-                    }
+                    };
                 }
                 _ => Err(()),
             },

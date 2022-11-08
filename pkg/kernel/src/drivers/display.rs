@@ -7,7 +7,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     init_DISPLAY(GOPDisplay::new(graphic));
 
     let mut display = get_display_for_sure();
-    
+
     display.clear(None, 0);
     let (x, y) = display.resolution();
 
