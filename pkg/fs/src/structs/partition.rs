@@ -51,7 +51,7 @@ impl PartitionMetaData {
     // 0x02 - 0x03 begin sector & begin cylinder
     define_field!(u8, 0x04, filesystem_flag);
     define_field!(u8, 0x05, end_head);
-    // 0x06 - 0x07 end sector & edn cylinder
+    // 0x06 - 0x07 end sector & end cylinder
     define_field!(u32, 0x08, begin_lba);
     define_field!(u32, 0x0c, total_lba);
 

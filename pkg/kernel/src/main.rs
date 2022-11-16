@@ -6,9 +6,9 @@ use ggos_kernel as ggos;
 
 extern crate alloc;
 
-boot::entry_point!(kernal_main);
+boot::entry_point!(kernel_main);
 
-pub fn kernal_main(boot_info: &'static boot::BootInfo) -> ! {
+pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
     ggos::init(boot_info);
 
     let mut executor = Executor::new();

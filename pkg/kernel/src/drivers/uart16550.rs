@@ -87,7 +87,7 @@ impl SerialPort {
             self.fifo_ctrl.write(0b00000111);
 
             // Mark data terminal ready, signal request to send
-            // and enable auxilliary output #2 (used as interrupt line for CPU)
+            // and enable auxiliary output #2 (used as interrupt line for CPU)
             self.modem_ctrl.write(0b00001011);
 
             // Enable interrupts
