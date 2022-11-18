@@ -19,8 +19,8 @@ log = "0.4.17"
 bit_field = "0.10.1"
 micromath = { version = "2.0.0", features = ["num-traits"] }
 bitflags = "1.3.2"
-chrono = { version = "0.4.22", default-features = false }
-libm = "0.2.5"
+chrono = { version = "0.4.23", default-features = false }
+libm = "0.2.6"
 linked_list_allocator = "0.10.3"
 pc-keyboard = "0.6.1"
 crossbeam-queue = { version = "0.3.6", default-features = false, features = ["alloc"] }

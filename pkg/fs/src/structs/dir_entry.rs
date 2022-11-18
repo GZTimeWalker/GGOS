@@ -156,16 +156,14 @@ fn prase_datetime(time: u32) -> DateTime<Utc> {
     let month = (time >> 21) & 0x0f;
     let day = (time >> 16) & 0x1f;
     let hour = (time >> 11) & 0x1f;
-    let minute = (time >> 5) & 0x3f;
-    let second = (time & 0x1f) * 2;
+    let min = (time >> 5) & 0x3f;
+    let sec = (time & 0x1f) * 2;
 
-    if let Single(time) = Utc
-        .ymd_opt(year, month, day)
-        .and_hms_opt(hour, minute, second)
+    if let Single(time) = Utc.with_ymd_and_hms(year, month, day, hour, min, sec)
     {
         time
     } else {
-        Utc.ymd(1980, 1, 1).and_hms(0, 0, 0)
+        Utc.with_ymd_and_hms(1980, 1, 1, 0, 0, 0).single().unwrap()
     }
 }
 

@@ -56,7 +56,7 @@ pub fn sys_wait_pid(pid: u16) -> isize {
 pub fn sys_time() -> NaiveDateTime {
     let time = syscall!(Syscall::Time) as i64;
     const BILLION: i64 = 1_000_000_000;
-    NaiveDateTime::from_timestamp(time / BILLION, (time % BILLION) as u32)
+    NaiveDateTime::from_timestamp_opt(time / BILLION, (time % BILLION) as u32).unwrap_or_default()
 }
 
 #[inline(always)]
