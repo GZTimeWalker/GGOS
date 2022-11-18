@@ -8,7 +8,12 @@ pub fn sys_draw(x: i32, y: i32, color: u32) -> usize {
 
 #[inline(always)]
 pub fn sys_write(fd: u8, buf: &[u8]) -> Option<usize> {
-    let ret = syscall!(Syscall::Write, fd as u64, buf.as_ptr() as u64, buf.len() as u64) as isize;
+    let ret = syscall!(
+        Syscall::Write,
+        fd as u64,
+        buf.as_ptr() as u64,
+        buf.len() as u64
+    ) as isize;
     if ret.is_negative() {
         None
     } else {
@@ -18,7 +23,12 @@ pub fn sys_write(fd: u8, buf: &[u8]) -> Option<usize> {
 
 #[inline(always)]
 pub fn sys_read(fd: u8, buf: &mut [u8]) -> Option<usize> {
-    let ret = syscall!(Syscall::Read, fd as u64, buf.as_ptr() as u64, buf.len() as u64) as isize;
+    let ret = syscall!(
+        Syscall::Read,
+        fd as u64,
+        buf.as_ptr() as u64,
+        buf.len() as u64
+    ) as isize;
     if ret.is_negative() {
         None
     } else {
@@ -61,11 +71,7 @@ pub fn sys_time() -> NaiveDateTime {
 
 #[inline(always)]
 pub fn sys_list_dir(root: &str) {
-    syscall!(
-        Syscall::ListDir,
-        root.as_ptr() as u64,
-        root.len() as u64
-    );
+    syscall!(Syscall::ListDir, root.as_ptr() as u64, root.len() as u64);
 }
 
 #[inline(always)]
@@ -75,11 +81,7 @@ pub fn sys_stat() {
 
 #[inline(always)]
 pub fn sys_spawn(path: &str) -> u16 {
-    let pid = syscall!(
-        Syscall::Spawn,
-        path.as_ptr() as u64,
-        path.len() as u64
-    ) as u16;
+    let pid = syscall!(Syscall::Spawn, path.as_ptr() as u64, path.len() as u64) as u16;
     pid
 }
 
