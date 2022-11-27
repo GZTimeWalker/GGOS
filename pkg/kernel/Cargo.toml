@@ -23,7 +23,7 @@ chrono = { version = "0.4.23", default-features = false }
 libm = "0.2.6"
 linked_list_allocator = "0.10.3"
 pc-keyboard = "0.6.1"
-crossbeam-queue = { version = "0.3.6", default-features = false, features = ["alloc"] }
+crossbeam-queue = { version = "0.3.8", default-features = false, features = ["alloc"] }
 volatile = "0.4.5"
 xmas-elf = "0.8"
 num_enum = { version = "0.5.7", default-features = false }

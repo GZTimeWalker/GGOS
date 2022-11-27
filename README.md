@@ -14,7 +14,7 @@ See also: [GGOS 诞生记](https://blog.gztime.cc/posts/2022/2430028)
 
 use `make run` to start the OS, or run as no-graphic mode with `make run RUN_MODE=nographic`
 
-`/usr/share/ovmf/OVMF.fd` is required for booting this OS, you may need to install `ovmf` first. The development work is based on QEMU v7.0.0.
+The development work is based on QEMU v7.0.0.
 
 You can put your files to `esp` directory to read them in the OS.
 
