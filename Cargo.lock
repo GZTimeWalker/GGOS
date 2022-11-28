@@ -202,6 +202,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ggos_fact"
+version = "0.1.0"
+dependencies = [
+ "gglib",
+]
+
+[[package]]
 name = "ggos_fork"
 version = "0.2.0"
 dependencies = [

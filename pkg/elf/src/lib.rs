@@ -131,6 +131,8 @@ pub fn unmap_range(
 
     let range_end = range_start + pages;
 
+    trace!("Page Range: {:?}({})", Page::range(range_start, range_end), pages);
+
     for page in Page::range(range_start, range_end) {
         let info = page_table.unmap(page)?;
         if do_dealloc {

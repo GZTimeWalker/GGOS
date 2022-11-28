@@ -268,7 +268,7 @@ impl Process {
         let start_page = Page::<Size4KiB>::containing_address(addr);
         let pages = self.proc_data.stack_segment.unwrap().start - start_page;
         let page_table = self.page_table.as_mut().unwrap();
-        debug!(
+        trace!(
             "Fill missing pages...[{:#x} -> {:#x})",
             start_page.start_address().as_u64(),
             self.proc_data
@@ -279,9 +279,15 @@ impl Process {
                 .as_u64()
         );
 
-        let new_stack = elf::map_range(addr.as_u64(), pages, page_table, alloc, true)?;
+        elf::map_range(addr.as_u64(), pages, page_table, alloc, true)?;
 
-        self.proc_data.stack_segment = Some(new_stack);
+        let end_page = self.proc_data.stack_segment.unwrap().end;
+
+        self.proc_data.stack_segment = Some(PageRange {
+            start: start_page,
+            end: end_page,
+        });
+
         Ok(())
     }
 
@@ -419,9 +425,16 @@ impl Drop for Process {
         let frame_deallocator = &mut *get_frame_alloc_for_sure();
         let start_count = frame_deallocator.recycled_count();
 
-        trace!("Free stack for {}#{}", self.name, self.pid);
-
         let stack = self.proc_data.stack_segment.unwrap();
+
+        trace!(
+            "Free stack for {}#{}: [{:#x} -> {:#x}) ({} frames)",
+            self.name, self.pid,
+            stack.start.start_address(),
+            stack.end.start_address(),
+            stack.count()
+        );
+
         elf::unmap_range(
             stack.start.start_address().as_u64(),
             stack.count() as u64,

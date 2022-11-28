@@ -238,12 +238,13 @@ impl ProcessManager {
         .as_str();
 
         output += format!(
-            "Frames: {:>7.*}/{:>7.*} MiB ({:>5.2}%) {} frames used\n",
+            "Frames: {:>7.*}/{:>7.*} MiB ({:>5.2}%) [{}/{} recycled/used]\n",
             2,
             (frames_recycled * 4) as f64 / 1024f64,
             2,
             (frames_used * 4) as f64 / 1024f64,
             frames_recycled as f64 / frames_used as f64 * 100.0,
+            frames_recycled,
             frames_used
         )
         .as_str();
