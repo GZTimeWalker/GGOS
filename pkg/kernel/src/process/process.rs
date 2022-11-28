@@ -429,7 +429,8 @@ impl Drop for Process {
 
         trace!(
             "Free stack for {}#{}: [{:#x} -> {:#x}) ({} frames)",
-            self.name, self.pid,
+            self.name,
+            self.pid,
             stack.start.start_address(),
             stack.end.start_address(),
             stack.count()
