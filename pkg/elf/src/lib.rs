@@ -7,7 +7,7 @@ extern crate alloc;
 use core::intrinsics::{copy_nonoverlapping, write_bytes};
 
 use alloc::vec::Vec;
-use x86_64::structures::paging::page::{PageRangeInclusive, PageRange};
+use x86_64::structures::paging::page::{PageRange, PageRangeInclusive};
 use x86_64::structures::paging::{mapper::*, *};
 use x86_64::{align_up, PhysAddr, VirtAddr};
 use xmas_elf::{program, ElfFile};
@@ -75,7 +75,11 @@ pub fn map_range(
     // create a stack
     let range_start = Page::containing_address(VirtAddr::new(addr));
     let range_end = range_start + pages;
-    trace!("Page Range: {:?}({})", Page::range(range_start, range_end), pages);
+    trace!(
+        "Page Range: {:?}({})",
+        Page::range(range_start, range_end),
+        pages
+    );
 
     let mut flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
 
@@ -131,7 +135,11 @@ pub fn unmap_range(
 
     let range_end = range_start + pages;
 
-    trace!("Page Range: {:?}({})", Page::range(range_start, range_end), pages);
+    trace!(
+        "Page Range: {:?}({})",
+        Page::range(range_start, range_end),
+        pages
+    );
 
     for page in Page::range(range_start, range_end) {
         let info = page_table.unmap(page)?;
@@ -270,7 +278,16 @@ pub fn load_elf(
     trace!("Loading ELF file...{:?}", elf.input.as_ptr());
     elf.program_iter()
         .filter(|segment| segment.get_type().unwrap() == program::Type::Load)
-        .map(|segment| load_segment(elf, physical_offset, &segment, page_table, frame_allocator, user_access))
+        .map(|segment| {
+            load_segment(
+                elf,
+                physical_offset,
+                &segment,
+                page_table,
+                frame_allocator,
+                user_access,
+            )
+        })
         .collect()
 }
 
@@ -382,7 +399,7 @@ fn load_segment(
                 page_table
                     .map_to(page, frame, page_table_flags, frame_allocator)?
                     .flush();
-            // zero bss
+                // zero bss
 
                 write_bytes(
                     (frame.start_address().as_u64() + physical_offset) as *mut u8,
@@ -391,7 +408,6 @@ fn load_segment(
                 );
             }
         }
-
     }
 
     let end_page = Page::containing_address(virt_start_addr + mem_size - 1u64);
