@@ -97,5 +97,6 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
         "No more message...".to_string()
     };
     errln!("\n\n\rERROR: panicked at {}\n\n\r{}", location, msg);
-    loop {}
+
+    crate::sys_exit(1);
 }
