@@ -1,5 +1,5 @@
-use crate::{Syscall, errln};
 use crate::alloc::string::ToString;
+use crate::{errln, Syscall};
 use core::arch::asm;
 
 #[doc(hidden)]
@@ -87,7 +87,12 @@ macro_rules! entry {
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     let location = if let Some(location) = info.location() {
-        alloc::format!("{}@{}:{}", location.file(), location.line(), location.column())
+        alloc::format!(
+            "{}@{}:{}",
+            location.file(),
+            location.line(),
+            location.column()
+        )
     } else {
         "Unknown location".to_string()
     };
