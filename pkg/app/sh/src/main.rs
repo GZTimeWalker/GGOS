@@ -17,11 +17,14 @@ fn main() -> usize {
     println!("            <<< Welcome to GGOS shell >>>            ");
     println!("                                 type `help` for help");
     loop {
-        print!("[{}] ", root_dir);
+        print!("[{}] $ ", root_dir);
         let input = stdin().read_line();
         let line: Vec<&str> = input.trim().split(' ').collect();
         match line[0] {
-            "exit" => break,
+            "\x04" | "exit" => {
+                println!();
+                break;
+            },
             "ps" => sys_stat(),
             "ls" => sys_list_dir(root_dir.as_str()),
             "cat" => {
@@ -71,7 +74,13 @@ fn main() -> usize {
                 services::kill(pid.unwrap());
             }
             "help" => print!("{}", consts::help_text()),
-            _ => println!("[=] you said \"{}\"", input),
+            _ => {
+                if line[0].is_empty() {
+                    println!();
+                    continue;
+                }
+                println!("[=] you said \"{}\"", input)
+            }
         }
     }
 

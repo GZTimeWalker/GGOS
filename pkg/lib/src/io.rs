@@ -42,6 +42,15 @@ impl Stdin {
                         stdout().write("\n");
                         break;
                     }
+                    '\x03' => {
+                        string.clear();
+                        break;
+                    }
+                    '\x04' => {
+                        string.clear();
+                        string.push('\x04');
+                        break;
+                    }
                     '\x08' => {
                         if !string.is_empty() {
                             stdout().write("\x08");

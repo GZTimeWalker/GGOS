@@ -16,6 +16,10 @@ Usage:
     kill <pid>  | kill process
     exit        | exit shell
 
+Shortcuts:
+    Ctrl + D    | exit shell
+    Ctrl + C    | cancel current command
+
 "#
     )
 }

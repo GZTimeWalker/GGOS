@@ -179,10 +179,10 @@ pub fn kill(pid: ProcessId, regs: &mut Registers, sf: &mut InterruptStackFrame) 
     x86_64::instructions::interrupts::without_interrupts(|| {
         let mut manager = get_process_manager_for_sure();
         if pid == manager.current_pid() {
-            manager.kill_self(!0xdeadbeef);
+            manager.kill_self(0xdead);
             manager.switch_next(regs, sf);
         } else {
-            manager.kill(pid, !0xdeadbeef);
+            manager.kill(pid, 0xdead);
         }
     })
 }
