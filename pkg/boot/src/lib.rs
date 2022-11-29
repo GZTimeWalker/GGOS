@@ -1,6 +1,5 @@
 #![no_std]
 #[allow(dead_code)]
-
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
 pub use uefi::prelude::SystemTable;
@@ -28,7 +27,7 @@ pub struct BootInfo {
     pub system_table: SystemTable<Runtime>,
 
     // Kernel pages
-    pub kernel_pages: KernelPages
+    pub kernel_pages: KernelPages,
 }
 
 pub type MemoryMap = ArrayVec<MemoryDescriptor, 256>;

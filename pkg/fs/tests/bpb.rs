@@ -6,8 +6,9 @@ use ggfs::structs::bpb::*;
 #[test]
 fn test_fat16_bpb_1() {
     // Taken from a Raspberry Pi bootable SD-Card
-    const BPB_EXAMPLE: &[u8] = concat_bytes!(hex_literal::hex!(
-        "EB 3C 90 6D 6B 66 73 2E 66 61 74 00 02 10 01 00
+    const BPB_EXAMPLE: &[u8] = concat_bytes!(
+        hex_literal::hex!(
+            "EB 3C 90 6D 6B 66 73 2E 66 61 74 00 02 10 01 00
          02 00 02 00 00 F8 20 00 3F 00 FF 00 00 00 00 00
          00 E0 01 00 80 01 29 BB B0 71 77 62 6F 6F 74 20
          20 20 20 20 20 20 46 41 54 31 36 20 20 20 0E 1F
@@ -18,8 +19,11 @@ fn test_fat16_bpb_1() {
          69 6E 73 65 72 74 20 61 20 62 6F 6F 74 61 62 6C
          65 20 66 6C 6F 70 70 79 20 61 6E 64 0D 0A 70 72
          65 73 73 20 61 6E 79 20 6B 65 79 20 74 6F 20 74
-         72 79 20 61 67 61 69 6E 20 2E 2E 2E 20 0D 0A 00"),
-         [0x00; 318], [0x55, 0xAA]);
+         72 79 20 61 67 61 69 6E 20 2E 2E 2E 20 0D 0A 00"
+        ),
+        [0x00; 318],
+        [0x55, 0xAA]
+    );
     let bpb = FAT16Bpb::new(BPB_EXAMPLE).unwrap();
 
     assert_eq!(bpb.oem_name(), b"mkfs.fat");
@@ -51,12 +55,16 @@ fn test_fat16_bpb_1() {
 #[test]
 fn test_fat16_bpb_2() {
     // Taken from a Raspberry Pi bootable SD-Card
-    const BPB_EXAMPLE: &[u8] = concat_bytes!(hex_literal::hex!(
-        "EB 3E 90 4D 53 57 49 4E 34 2E 31 00 02 10 01 00
+    const BPB_EXAMPLE: &[u8] = concat_bytes!(
+        hex_literal::hex!(
+            "EB 3E 90 4D 53 57 49 4E 34 2E 31 00 02 10 01 00
          02 00 02 00 00 F8 FC 00 3F 00 10 00 3F 00 00 00
          C1 BF 0F 00 80 00 29 FD 1A BE FA 51 45 4D 55 20
          56 56 46 41 54 20 46 41 54 31 36 20 20 20 00 00"
-    ), [0x00; 446], [0x55, 0xAA]);
+        ),
+        [0x00; 446],
+        [0x55, 0xAA]
+    );
     let bpb = FAT16Bpb::new(BPB_EXAMPLE).unwrap();
 
     assert_eq!(bpb.oem_name(), b"MSWIN4.1");
@@ -92,7 +100,7 @@ fn test_fat16_bpb_2() {
 fn test_fat16_bpb_3() {
     // Taken from a Raspberry Pi bootable SD-Card
     const BPB_EXAMPLE: &[u8] = concat_bytes!(hex_literal::hex!(
-       "EB 3C 90 50 4B 57 49 4E 34 2E 31 00 02 40 01 00
+        "EB 3C 90 50 4B 57 49 4E 34 2E 31 00 02 40 01 00
         02 00 02 00 00 F8 A0 00 3F 00 FF 00 00 70 48 74
         AF ED 27 00 80 00 29 B7 06 BA 0E 4E 4F 20 4E 41
         4D 45 20 20 20 20 46 41 54 31 36 20 20 20 33 C9

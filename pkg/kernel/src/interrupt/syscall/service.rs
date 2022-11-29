@@ -157,6 +157,10 @@ pub fn sys_wait_pid(args: &SyscallArgs) -> usize {
 
 pub fn sys_kill(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
     let pid = ProcessId(args.arg0 as u16);
+    if pid == ProcessId(1) {
+        warn!("sys_kill: cannot kill kernel!");
+        return;
+    }
     crate::process::kill(pid, regs, sf);
 }
 

@@ -57,7 +57,10 @@ fn clock() -> ! {
         .unwrap();
 
         Line::new(Point::new(cx, cy), Point::new(cx + dx, cy + dy))
-            .into_styled(PrimitiveStyle::with_stroke(Rgb888::new(0x32, 0x8e, 0x2e), 5))
+            .into_styled(PrimitiveStyle::with_stroke(
+                Rgb888::new(0x32, 0x8e, 0x2e),
+                5,
+            ))
             .draw(&mut display::SysDisplay)
             .unwrap();
     }

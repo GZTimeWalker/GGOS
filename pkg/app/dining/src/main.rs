@@ -8,7 +8,6 @@ extern crate lib;
 static CHOPSTICK: [Semaphore; 5] = semaphore_array![0, 1, 2, 3, 4];
 
 fn main() -> usize {
-
     let mut pids = [0u16; 5];
 
     for i in 0..5 {

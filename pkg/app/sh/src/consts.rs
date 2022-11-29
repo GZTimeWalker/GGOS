@@ -1,5 +1,9 @@
 pub const fn help_text() -> &'static str {
-    concat!("    GGOS shell v", env!("CARGO_PKG_VERSION"), " by GZTime",r#"
+    concat!(
+        "    GGOS shell v",
+        env!("CARGO_PKG_VERSION"),
+        " by GZTime",
+        r#"
 
 Usage:
     help        | show this help
@@ -12,5 +16,6 @@ Usage:
     kill <pid>  | kill process
     exit        | exit shell
 
-"#)
+"#
+    )
 }

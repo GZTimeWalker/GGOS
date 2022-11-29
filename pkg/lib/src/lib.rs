@@ -17,14 +17,14 @@ mod utils;
 mod sync;
 pub mod allocator;
 
-use core::fmt::*;
 pub use alloc::*;
+use core::fmt::*;
 
-pub use io::*;
-pub use syscall::*;
 pub use chrono::*;
-pub use utils::*;
+pub use io::*;
 pub use sync::*;
+pub use syscall::*;
+pub use utils::*;
 
 #[derive(Clone, Debug)]
 pub enum Syscall {

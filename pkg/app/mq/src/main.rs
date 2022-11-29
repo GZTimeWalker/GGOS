@@ -13,7 +13,6 @@ static IS_NOT_EMPTY: Semaphore = Semaphore(0x2000);
 static MUTEX: Semaphore = Semaphore(0x6666);
 
 fn main() -> usize {
-
     IS_NOT_EMPTY.init(0);
     IS_NOT_FULL.init(QUEUE_COUNT * 2);
     MUTEX.init(1);
@@ -57,8 +56,12 @@ fn producer(id: usize) -> ! {
     for _ in 0..10 {
         IS_NOT_FULL.acquire();
         MUTEX.acquire();
-        unsafe { COUNT += 1; }
-        println!("Produced by #{:<3}({:<3}) count={}", id, pid, unsafe{ &COUNT });
+        unsafe {
+            COUNT += 1;
+        }
+        println!("Produced by #{:<3}({:<3}) count={}", id, pid, unsafe {
+            &COUNT
+        });
         MUTEX.release();
         IS_NOT_EMPTY.release();
     }
@@ -71,8 +74,12 @@ fn consumer(id: usize) -> ! {
     for _ in 0..10 {
         IS_NOT_EMPTY.acquire();
         MUTEX.acquire();
-        unsafe { COUNT -= 1; }
-        println!("Consumed by #{:<3}({:<3}) count={}", id, pid, unsafe{ &COUNT });
+        unsafe {
+            COUNT -= 1;
+        }
+        println!("Consumed by #{:<3}({:<3}) count={}", id, pid, unsafe {
+            &COUNT
+        });
         MUTEX.release();
         IS_NOT_FULL.release();
     }

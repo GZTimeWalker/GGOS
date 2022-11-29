@@ -1,6 +1,6 @@
 use crate::*;
-use alloc::vec;
 use alloc::string::{String, ToString};
+use alloc::vec;
 
 pub struct Stdin;
 pub struct Stdout;
@@ -41,7 +41,7 @@ impl Stdin {
                     '\n' => {
                         stdout().write("\n");
                         break;
-                    },
+                    }
                     '\x08' => {
                         if !string.is_empty() {
                             stdout().write("\x08");
@@ -54,7 +54,6 @@ impl Stdin {
                     }
                 }
             }
-
         }
         string
     }
