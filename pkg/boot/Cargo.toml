@@ -7,11 +7,11 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [dependencies]
 arrayvec = { version = "0.7.2", default-features = false }
-uefi = "0.17.0"
-uefi-services = { version = "0.14.0", optional = true}
+uefi = "0.18.0"
+uefi-services = { version = "0.15.0", optional = true}
 log = "0.4.17"
 x86_64 = "0.14.10"
-xmas-elf = "0.8"
+xmas-elf = "0.9"
 elf = { package = "ggos_elf", path = "../elf" }
 
 [features]

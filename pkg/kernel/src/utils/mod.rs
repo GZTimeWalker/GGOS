@@ -1,4 +1,3 @@
-mod math;
 mod uefi;
 
 #[macro_use]

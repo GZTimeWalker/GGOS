@@ -15,6 +15,7 @@ extern crate log;
 extern crate lazy_static;
 #[macro_use]
 extern crate bitflags;
+extern crate libm;
 
 #[macro_use]
 pub mod utils;
