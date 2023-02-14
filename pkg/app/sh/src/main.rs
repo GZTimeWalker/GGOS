@@ -24,7 +24,7 @@ fn main() -> usize {
             "\x04" | "exit" => {
                 println!();
                 break;
-            },
+            }
             "ps" => sys_stat(),
             "ls" => sys_list_dir(root_dir.as_str()),
             "cat" => {

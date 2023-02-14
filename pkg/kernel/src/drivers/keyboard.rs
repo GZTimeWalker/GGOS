@@ -6,6 +6,10 @@ once_mutex!(pub KEYBOARD: DefaultKeyBoard);
 guard_access_fn!(pub get_keyboard(KEYBOARD: DefaultKeyBoard));
 
 pub fn init() {
-    init_KEYBOARD(Keyboard::new(HandleControl::Ignore));
+    init_KEYBOARD(Keyboard::new(
+        ScancodeSet1::new(),
+        layouts::Us104Key,
+        HandleControl::Ignore,
+    ));
     info!("Keyboard Initialized.");
 }

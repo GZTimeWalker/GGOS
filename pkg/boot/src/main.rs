@@ -9,7 +9,6 @@
 
 #![no_std]
 #![no_main]
-#![feature(abi_efiapi)]
 #![feature(alloc_error_handler)]
 
 #[macro_use]
