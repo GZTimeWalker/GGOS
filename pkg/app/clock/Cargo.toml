@@ -8,6 +8,6 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [dependencies]
 lib = { path="../../lib", package="gglib"}
-embedded-graphics = { version = "0.7.1", features = ['fixed_point'] }
-micromath = { version = "2.0.0", features = ["num-traits"] }
-chrono = { version = "0.4.22", default-features = false }
+embedded-graphics = { version = "0.7", features = ['fixed_point'] }
+micromath = { version = "2.0", features = ["num-traits"] }
+chrono = { version = "0.4", default-features = false }

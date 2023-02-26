@@ -9,22 +9,22 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 boot = { path = "../boot", package = "ggos_boot", default-features = false }
 fs = { path = "../fs", package = "ggfs" }
 elf = { package = "ggos_elf", path = "../elf" }
-embedded-graphics = { version = "0.7.1", features = ['fixed_point'] }
-lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
-paste = "1.0.9"
-spin = "0.9.4"
-x86 = "0.52.0"
-x86_64 = "0.14.10"
-log = "0.4.17"
-bit_field = "0.10.1"
-micromath = { version = "2.0.0", features = ["num-traits"] }
-bitflags = "1.3.2"
-chrono = { version = "0.4.23", default-features = false }
-libm = "0.2.6"
-linked_list_allocator = "0.10.3"
-pc-keyboard = "0.7.0"
-crossbeam-queue = { version = "0.3.8", default-features = false, features = ["alloc"] }
-volatile = "0.4.5"
+embedded-graphics = { version = "0.7", features = ['fixed_point'] }
+lazy_static = { version = "1.4", features = ["spin_no_std"] }
+paste = "1.0"
+spin = "0.9"
+x86 = "0.52"
+x86_64 = "0.14"
+log = "0.4"
+bit_field = "0.10"
+micromath = { version = "2.0", features = ["num-traits"] }
+bitflags = "1.3"
+chrono = { version = "0.4", default-features = false }
+libm = "0.2"
+linked_list_allocator = "0.10"
+pc-keyboard = "0.7"
+crossbeam-queue = { version = "0.3", default-features = false, features = ["alloc"] }
+volatile = "0.4"
 xmas-elf = "0.9"
-num_enum = { version = "0.5.7", default-features = false }
-futures-util = { version = "0.3.24", default-features = false, features = ["alloc"] }
+num_enum = { version = "0.5", default-features = false }
+futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
