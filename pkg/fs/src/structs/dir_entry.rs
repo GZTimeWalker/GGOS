@@ -26,6 +26,7 @@ pub struct Cluster(pub u32);
 
 bitflags! {
     /// File Attributes
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct Attributes: u8 {
         const READ_ONLY = 0x01;
         const HIDDEN    = 0x02;
