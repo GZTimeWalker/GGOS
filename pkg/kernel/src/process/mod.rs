@@ -272,8 +272,9 @@ pub fn spawn(file: &File) -> Result<ProcessId, String> {
     let pages = (size as usize + 0x1000 - 1) / 0x1000;
     let mut buf = vec![0u8; (pages * 0x1000) as usize];
 
-    fs::read_to_buf(get_volume(), file, &mut buf).expect("Failed to read file");
-    let elf = xmas_elf::ElfFile::new(&buf).expect("Failed to parse ELF file");
+    fs::read_to_buf(get_volume(), file, &mut buf)?;
+
+    let elf = xmas_elf::ElfFile::new(&buf).map_err(|e| "Invalid ELF file")?;
 
     let pid = x86_64::instructions::interrupts::without_interrupts(|| {
         let mut manager = get_process_manager_for_sure();

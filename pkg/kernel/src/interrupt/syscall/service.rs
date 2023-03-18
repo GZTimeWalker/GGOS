@@ -54,6 +54,7 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
         warn!("spawn_process: file not found: {}", path);
         return 0;
     }
+
     let file = file.unwrap();
 
     let pid = crate::process::spawn(&file);
@@ -62,6 +63,7 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
         warn!("spawn_process: failed to spawn process: {}", path);
         return 0;
     }
+
     u16::from(pid.unwrap()) as usize
 }
 
