@@ -16,6 +16,7 @@ type BootInfoFrameIter = impl Iterator<Item = PhysFrame>;
 
 /// A FrameAllocator that returns usable frames from the bootloader's memory map.
 pub struct BootInfoFrameAllocator {
+    size: usize,
     frames: BootInfoFrameIter,
     used: usize,
     recycled: Vec<PhysFrame>,
@@ -27,8 +28,9 @@ impl BootInfoFrameAllocator {
     /// This function is unsafe because the caller must guarantee that the passed
     /// memory map is valid. The main requirement is that all frames that are marked
     /// as `USABLE` in it are really unused.
-    pub unsafe fn init(memory_map: &MemoryMap, used: usize) -> Self {
+    pub unsafe fn init(memory_map: &MemoryMap, used: usize, size: usize) -> Self {
         BootInfoFrameAllocator {
+            size,
             frames: create_frame_iter(memory_map),
             used,
             recycled: Vec::new(),
@@ -37,6 +39,10 @@ impl BootInfoFrameAllocator {
 
     pub fn frames_used(&self) -> usize {
         self.used
+    }
+
+    pub fn frames_total(&self) -> usize {
+        self.size
     }
 
     pub fn recycled_count(&self) -> usize {

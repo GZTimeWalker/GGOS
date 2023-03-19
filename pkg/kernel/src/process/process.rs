@@ -2,7 +2,7 @@ use super::ProcessId;
 use super::*;
 use crate::filesystem::StdIO;
 use crate::memory::gdt::get_user_selector;
-use crate::memory::*;
+use crate::memory::{self, *};
 use crate::utils::{Registers, RegistersValue, Resource};
 use alloc::collections::btree_map::BTreeMap;
 use alloc::string::String;
@@ -38,6 +38,8 @@ pub struct ProcessData {
     code_segments: Option<Vec<PageRangeInclusive>>,
     stack_segment: Option<PageRange>,
     file_handles: BTreeMap<u8, Resource>,
+    pub code_memory_usage: usize,
+    pub stack_memory_usage: usize,
 }
 
 impl ProcessData {
@@ -56,6 +58,8 @@ impl ProcessData {
             code_segments,
             stack_segment,
             file_handles,
+            code_memory_usage: 0,
+            stack_memory_usage: 0,
         }
     }
 
@@ -73,11 +77,21 @@ impl ProcessData {
     pub fn set_stack(mut self, start: u64, size: u64) -> Self {
         let start = Page::containing_address(VirtAddr::new(start));
         self.stack_segment = Some(Page::range(start, start + size));
+        self.stack_memory_usage = size as usize;
         self
     }
 
     pub fn set_kernel_code(mut self, pages: &KernelPages) -> Self {
-        self.code_segments = Some(pages.into_iter().cloned().collect());
+        let mut size = 0;
+        let owned_pages = pages
+            .iter()
+            .map(|page| {
+                size += page.count();
+                PageRangeInclusive::from(page.clone())
+            })
+            .collect();
+        self.code_segments = Some(owned_pages);
+        self.code_memory_usage = size;
         self
     }
 }
@@ -282,11 +296,13 @@ impl Process {
         elf::map_range(addr.as_u64(), pages, page_table, alloc, true)?;
 
         let end_page = self.proc_data.stack_segment.unwrap().end;
-
-        self.proc_data.stack_segment = Some(PageRange {
+        let new_stack = PageRange {
             start: start_page,
             end: end_page,
-        });
+        };
+
+        self.proc_data.stack_memory_usage = new_stack.count();
+        self.proc_data.stack_segment = Some(new_stack);
 
         Ok(())
     }
@@ -351,12 +367,17 @@ impl Process {
         // clone proc data
         let mut owned_proc_data = self.proc_data.clone();
         // record new stack range
-        owned_proc_data.stack_segment = Some(Page::range(
+        let stack = Page::range(
             Page::containing_address(VirtAddr::new_truncate(new_stack_base)),
             Page::containing_address(VirtAddr::new_truncate(
                 new_stack_base + stack_info.count() as u64 * Size4KiB::SIZE,
             )),
-        ));
+        );
+        // use shared code segment, only record the new stack usage
+        owned_proc_data.stack_memory_usage = stack.count();
+        owned_proc_data.code_memory_usage = 0;
+        owned_proc_data.stack_segment = Some(stack);
+
         // create new process
         let mut child = Self {
             pid: ProcessId::new(),
@@ -396,6 +417,10 @@ impl Process {
         self.children.clone()
     }
 
+    pub fn memory_usage(&self) -> usize {
+        self.proc_data.code_memory_usage + self.proc_data.stack_memory_usage
+    }
+
     pub fn not_drop_page_table(&mut self) {
         unsafe {
             self.page_table_addr.0 = PhysFrame::from_start_address_unchecked(PhysAddr::new(0))
@@ -412,6 +437,14 @@ impl Process {
 
         let stack_segment =
             elf::map_range(STACT_INIT_BOT, STACK_DEF_PAGE, &mut page_table, alloc, true).unwrap();
+
+        // record memory usage
+        self.proc_data.code_memory_usage = code_segments
+            .iter()
+            .map(|seg| seg.count())
+            .fold(0, |acc, x| acc + x);
+
+        self.proc_data.stack_memory_usage = stack_segment.count();
 
         self.page_table = Some(page_table);
         self.proc_data.code_segments = Some(code_segments);
@@ -499,13 +532,16 @@ impl core::fmt::Debug for Process {
 
 impl core::fmt::Display for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        let (size, unit) = memory::humanized_size(self.memory_usage() as u64 * 4096);
         write!(
             f,
-            " #{:-3} | #{:-3} | {:13} | {:8} | {:?}",
+            " #{:-3} | #{:-3} | {:12} | {:7} | {:>5.1} {} | {:?}",
             u16::from(self.pid),
             u16::from(self.parent),
             self.name,
             self.ticks_passed,
+            size,
+            unit,
             self.status
         )?;
         Ok(())

@@ -2,7 +2,7 @@ use super::*;
 use crate::memory::{
     allocator::{ALLOCATOR, HEAP_SIZE},
     get_frame_alloc_for_sure,
-    user::{USER_ALLOCATOR, USER_HEAP_SIZE},
+    user::{USER_ALLOCATOR, USER_HEAP_SIZE}, self, PAGE_SIZE,
 };
 use crate::utils::Registers;
 use alloc::collections::BTreeMap;
@@ -202,7 +202,7 @@ impl ProcessManager {
     }
 
     pub fn print_process_list(&self) {
-        let mut output = String::from("  PID | PPID | Name          |    Ticks | Status\n");
+        let mut output = String::from("  PID | PPID | Process Name |  Ticks  |   Memory  | Status\n");
         for p in self.processes.iter() {
             output += format!("{}\n", p).as_str();
         }
@@ -216,9 +216,10 @@ impl ProcessManager {
         let alloc = get_frame_alloc_for_sure();
         let frames_used = alloc.frames_used();
         let frames_recycled = alloc.recycled_count();
+        let frames_total = alloc.frames_total();
 
         output += format!(
-            "Heap  : {:>7.*}/{:>7.*} KiB ({:>5.2}%)\n",
+            "System : {:>7.*} KiB/ {:>7.*} KiB ({:>5.2}%)\n",
             2,
             heap_used as f64 / 1024f64,
             2,
@@ -228,7 +229,7 @@ impl ProcessManager {
         .as_str();
 
         output += format!(
-            "User  : {:>7.*}/{:>7.*} KiB ({:>5.2}%)\n",
+            "User   : {:>7.*} KiB/ {:>7.*} KiB ({:>5.2}%)\n",
             2,
             user_heap_used as f64 / 1024f64,
             2,
@@ -237,15 +238,18 @@ impl ProcessManager {
         )
         .as_str();
 
+        // put used/total frames in MiB
+        let (used_size, used_unit) = memory::humanized_size(frames_used as u64 * PAGE_SIZE);
+        let (tot_size, tot_unit) = memory::humanized_size(frames_total as u64 * PAGE_SIZE);
+
         output += format!(
-            "Frames: {:>7.*}/{:>7.*} MiB ({:>5.2}%) [{}/{} recycled/used]\n",
+            "Memory : {:>7.*} {}/ {:>7.*} {} ({:>5.2}%) [{} recycled]\n",
             2,
-            (frames_recycled * 4) as f64 / 1024f64,
+            used_size, used_unit,
             2,
-            (frames_used * 4) as f64 / 1024f64,
-            frames_recycled as f64 / frames_used as f64 * 100.0,
-            frames_recycled,
-            frames_used
+            tot_size, tot_unit,
+            frames_used as f64 / frames_total as f64 * 100.0,
+            frames_recycled
         )
         .as_str();
 

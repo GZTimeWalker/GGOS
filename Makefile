@@ -1,7 +1,8 @@
 OVMF := tools/OVMF.fd
 ESP := esp
 BUILD_ARGS :=
-QEMU_ARGS := -serial stdio
+QEMU_ARGS := -m 64M
+QEMU_OUTPUT := -serial stdio
 MODE ?= release
 RUN_MODE ?=
 CUR_PATH := $(shell pwd)
@@ -18,7 +19,7 @@ ifeq (${MODE}, release)
 endif
 
 ifeq (${RUN_MODE}, nographic)
-	QEMU_ARGS = -nographic
+	QEMU_OUTPUT = -nographic
 endif
 
 .PHONY: build run debug clean launch intdbg \
@@ -33,6 +34,7 @@ launch:
 		-bios ${OVMF} \
 		-net none \
 		$(QEMU_ARGS) \
+		$(QEMU_OUTPUT) \
 		-drive format=raw,file=fat:rw:${ESP}
 
 intdbg:
@@ -40,13 +42,16 @@ intdbg:
 		-bios ${OVMF} \
 		-net none \
 		$(QEMU_ARGS) \
-		-drive format=raw,file=fat:rw:${ESP} -no-reboot -d int,cpu_reset
+		$(QEMU_OUTPUT) \
+		-drive format=raw,file=fat:rw:${ESP} \
+		-no-reboot -d int,cpu_reset
 
 debug: build
 	@qemu-system-x86_64 \
 		-bios ${OVMF} \
 		-net none \
 		$(QEMU_ARGS) \
+		$(QEMU_OUTPUT) \
 		-drive format=raw,file=fat:rw:${ESP} \
 		-s -S
 

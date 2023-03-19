@@ -38,19 +38,23 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     let (size, unit) = humanized_size(used as u64 * PAGE_SIZE);
     info!("Kernel Used Memory: {:>7.*} {}", 3, size, unit);
 
+    let size = used + usable_mem_size as usize;
+
     unsafe {
         init_PAGE_TABLE(paging::init(physical_memory_offset));
-        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map, used));
+        init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map, used, size));
     }
 }
 
-fn humanized_size(size: u64) -> (f64, &'static str) {
+pub fn humanized_size(size: u64) -> (f64, &'static str) {
     let bytes = size as f64;
-    if bytes < 1024f64 {
-        (bytes, "B")
-    } else if (bytes / (1 << 10) as f64) < 1024f64 {
+
+    // use 1000 to keep the max length of the number is 3 digits
+    if bytes < 1000f64 {
+        (bytes, "  B")
+    } else if (bytes / (1 << 10) as f64) < 1000f64 {
         (bytes / (1 << 10) as f64, "KiB")
-    } else if (bytes / (1 << 20) as f64) < 1024f64 {
+    } else if (bytes / (1 << 20) as f64) < 1000f64 {
         (bytes / (1 << 20) as f64, "MiB")
     } else {
         (bytes / (1 << 30) as f64, "GiB")

@@ -57,6 +57,8 @@ impl Stdin {
                             string.pop();
                         }
                     }
+                    // ignore other control characters
+                    '\x00'..='\x1F' => {}
                     c => {
                         print!("{}", k);
                         string.push(c);

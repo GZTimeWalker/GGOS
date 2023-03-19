@@ -31,6 +31,9 @@ fn main() -> usize {
     // calculate factorial
     let result = factorial(n);
 
+    // print system status
+    sys_stat();
+
     // print result
     println!("The factorial of {} under modulo {} is {}.", n, MOD, result);
 

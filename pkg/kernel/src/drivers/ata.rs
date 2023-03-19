@@ -311,14 +311,16 @@ impl Drive {
         fs::Block::SIZE
     }
 
-    fn humanized_size(&self) -> (usize, String) {
+    fn humanized_size(&self) -> (usize, &'static str) {
         let size = self.block_size();
         let count = self.block_count().unwrap();
         let bytes = size * count;
-        if bytes >> 20 < 1000 {
-            (bytes >> 20, String::from("MiB"))
+        if bytes >> 20 < 1024 {
+            (bytes >> 20, "MiB")
+        } else if bytes >> 30 < 1024 {
+            (bytes >> 30, "GiB")
         } else {
-            (bytes >> 30, String::from("GiB"))
+            (bytes >> 40, "TiB")
         }
     }
 }

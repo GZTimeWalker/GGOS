@@ -7,7 +7,7 @@ use x86_64::structures::paging::{
 use x86_64::VirtAddr;
 
 pub const USER_HEAP_START: usize = 0x4000_0000_0000;
-pub const USER_HEAP_SIZE: usize = 128 * 1024; // 128 KiB
+pub const USER_HEAP_SIZE: usize = 512 * 1024; // 512 KiB
 const USER_HEAP_PAGE: usize = USER_HEAP_SIZE / crate::memory::PAGE_SIZE as usize;
 
 pub static USER_ALLOCATOR: LockedHeap = LockedHeap::empty();

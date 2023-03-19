@@ -13,7 +13,7 @@ pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
 
     let mut executor = Executor::new();
 
-    // TODO: use executor.spawn() to spawn kernel tasks
+    // use executor.spawn() to spawn kernel tasks
 
     executor.run(spawn_init());
     ggos::shutdown(boot_info);
