@@ -92,7 +92,7 @@ where
                     let end = (entry + 1) * DirEntry::LEN;
                     trace!("Entry: {}..{}", start, end);
                     let dir_entry = DirEntry::parse(&block.inner()[start..end])
-                        .map_err(|x| VolumeError::FileNameError(x))?;
+                        .map_err(VolumeError::FileNameError)?;
 
                     if dir_entry.is_eod() {
                         return Ok(());
@@ -123,7 +123,7 @@ where
         dir: &Directory,
         name: &str,
     ) -> Result<DirEntry, VolumeError> {
-        let match_name = ShortFileName::parse(name).map_err(|x| VolumeError::FileNameError(x))?;
+        let match_name = ShortFileName::parse(name).map_err(VolumeError::FileNameError)?;
 
         let mut current_cluster = Some(dir.cluster);
         let mut dir_sector_num = self.cluster_to_sector(&dir.cluster);
@@ -168,7 +168,7 @@ where
     pub fn next_cluster(&self, cluster: Cluster) -> Result<Cluster, VolumeError> {
         let fat_offset = (cluster.0 * 2) as usize;
         let cur_fat_sector = self.fat_start + fat_offset / Block::SIZE;
-        let offset = (fat_offset % Block::SIZE) as usize;
+        let offset = fat_offset % Block::SIZE;
         let block = self.volume.read_block(cur_fat_sector).unwrap();
         let fat_entry = u16::from_le_bytes(
             block.inner()[offset..=offset + 1]

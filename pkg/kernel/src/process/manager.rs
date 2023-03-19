@@ -1,8 +1,10 @@
 use super::*;
 use crate::memory::{
+    self,
     allocator::{ALLOCATOR, HEAP_SIZE},
     get_frame_alloc_for_sure,
-    user::{USER_ALLOCATOR, USER_HEAP_SIZE}, self, PAGE_SIZE,
+    user::{USER_ALLOCATOR, USER_HEAP_SIZE},
+    PAGE_SIZE,
 };
 use crate::utils::Registers;
 use alloc::collections::BTreeMap;
@@ -160,14 +162,14 @@ impl ProcessManager {
         proc_data: Option<ProcessData>,
     ) -> ProcessId {
         let mut p = Process::new(
-            &mut *crate::memory::get_frame_alloc_for_sure(),
+            &mut crate::memory::get_frame_alloc_for_sure(),
             name,
             parent,
             self.get_kernel_page_table(),
             proc_data,
         );
         p.pause();
-        p.init_elf(&elf);
+        p.init_elf(elf);
         p.init_stack_frame(
             VirtAddr::new_truncate(elf.header.pt2.entry_point()),
             VirtAddr::new_truncate(STACK_INIT_TOP),
@@ -187,7 +189,7 @@ impl ProcessManager {
         proc_data: Option<ProcessData>,
     ) -> ProcessId {
         let mut p = Process::new(
-            &mut *crate::memory::get_frame_alloc_for_sure(),
+            &mut crate::memory::get_frame_alloc_for_sure(),
             name,
             parent,
             self.get_kernel_page_table(),
@@ -202,7 +204,8 @@ impl ProcessManager {
     }
 
     pub fn print_process_list(&self) {
-        let mut output = String::from("  PID | PPID | Process Name |  Ticks  |   Memory  | Status\n");
+        let mut output =
+            String::from("  PID | PPID | Process Name |  Ticks  |   Memory  | Status\n");
         for p in self.processes.iter() {
             output += format!("{}\n", p).as_str();
         }
@@ -218,37 +221,50 @@ impl ProcessManager {
         let frames_recycled = alloc.recycled_count();
         let frames_total = alloc.frames_total();
 
+        let (sys_used, sys_used_unit) = memory::humanized_size(heap_used as u64);
+        let (sys_size, sys_size_unit) = memory::humanized_size(heap_size as u64);
+
         output += format!(
-            "System : {:>7.*} KiB/ {:>7.*} KiB ({:>5.2}%)\n",
+            "System : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
             2,
-            heap_used as f64 / 1024f64,
+            sys_used,
+            sys_used_unit,
             2,
-            heap_size as f64 / 1024f64,
+            sys_size,
+            sys_size_unit,
             heap_used as f64 / heap_size as f64 * 100.0
         )
         .as_str();
 
+        let (user_used, user_used_unit) = memory::humanized_size(user_heap_used as u64);
+        let (user_size, user_size_unit) = memory::humanized_size(user_heap_size as u64);
+
         output += format!(
-            "User   : {:>7.*} KiB/ {:>7.*} KiB ({:>5.2}%)\n",
+            "User   : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
             2,
-            user_heap_used as f64 / 1024f64,
+            user_used,
+            user_used_unit,
             2,
-            user_heap_size as f64 / 1024f64,
+            user_size,
+            user_size_unit,
             user_heap_used as f64 / user_heap_size as f64 * 100.0
         )
         .as_str();
 
         // put used/total frames in MiB
-        let (used_size, used_unit) = memory::humanized_size(frames_used as u64 * PAGE_SIZE);
+        let (used_size, used_unit) =
+            memory::humanized_size((frames_used - frames_recycled) as u64 * PAGE_SIZE);
         let (tot_size, tot_unit) = memory::humanized_size(frames_total as u64 * PAGE_SIZE);
 
         output += format!(
-            "Memory : {:>7.*} {}/ {:>7.*} {} ({:>5.2}%) [{} recycled]\n",
+            "Memory : {:>6.*} {} / {:>6.*} {} ({:>5.2}%) [{} recycled]\n",
             2,
-            used_size, used_unit,
+            used_size,
+            used_unit,
             2,
-            tot_size, tot_unit,
-            frames_used as f64 / frames_total as f64 * 100.0,
+            tot_size,
+            tot_unit,
+            (frames_used - frames_recycled) as f64 / frames_total as f64 * 100.0,
             frames_recycled
         )
         .as_str();

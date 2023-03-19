@@ -140,13 +140,13 @@ where
     let mut length = file.length() as usize;
     for i in 0..=file.length() as usize / Block::SIZE {
         let sector = volume.cluster_to_sector(&file.start_cluster());
-        let block = volume.read_block(sector as usize + i).unwrap();
+        let block = volume.read_block(sector + i).unwrap();
         if length > Block::SIZE {
             data[i * Block::SIZE..(i + 1) * Block::SIZE].copy_from_slice(&block.inner()[..]);
             length -= Block::SIZE;
         } else {
-            data[i * Block::SIZE..i * Block::SIZE + length as usize]
-                .copy_from_slice(&block.inner()[..length as usize]);
+            data[i * Block::SIZE..i * Block::SIZE + length]
+                .copy_from_slice(&block.inner()[..length]);
             break;
         }
     }
@@ -168,13 +168,13 @@ where
     let mut length = file.length() as usize;
     for i in 0..=file.length() as usize / Block::SIZE {
         let sector = volume.cluster_to_sector(&file.start_cluster());
-        let block = volume.read_block(sector as usize + i).unwrap();
+        let block = volume.read_block(sector + i).unwrap();
         if length > Block::SIZE {
             buf[i * Block::SIZE..(i + 1) * Block::SIZE].copy_from_slice(&block.inner()[..]);
             length -= Block::SIZE;
         } else {
-            buf[i * Block::SIZE..i * Block::SIZE + length as usize]
-                .copy_from_slice(&block.inner()[..length as usize]);
+            buf[i * Block::SIZE..i * Block::SIZE + length]
+                .copy_from_slice(&block.inner()[..length]);
             break;
         }
     }

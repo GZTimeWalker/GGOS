@@ -49,6 +49,12 @@ impl Console {
     }
 }
 
+impl Default for Console {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Console {
     pub fn size(&self) -> (isize, isize) {
         let size: Size = get_display_for_sure().size();
@@ -133,8 +139,8 @@ impl Console {
     }
 
     pub fn move_cursor(&mut self, dx: isize, dy: isize) {
-        self.x_pos = self.x_pos as isize + dx;
-        self.y_pos = self.y_pos as isize + dy;
+        self.x_pos += dx;
+        self.y_pos += dy;
     }
 
     pub fn draw_hint(&mut self) {

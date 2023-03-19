@@ -4,6 +4,7 @@
 //! reference: https://wiki.osdev.org/ATA_PIO_Mode
 //! reference: https://github.com/xfoxfu/rust-xos/blob/main/kernel/src/drivers/ide.rs
 
+use alloc::boxed::Box;
 use alloc::{string::String, vec::Vec};
 use bit_field::BitField;
 use core::hint::spin_loop;
@@ -64,8 +65,8 @@ impl Bus {
             status: PortReadOnly::new(io_base + 7),
             command: PortWriteOnly::new(io_base + 7),
 
-            alternate_status: PortReadOnly::new(ctrl_base + 0),
-            control: PortWriteOnly::new(ctrl_base + 0),
+            alternate_status: PortReadOnly::new(ctrl_base),
+            control: PortWriteOnly::new(ctrl_base),
             drive_blockess: PortReadOnly::new(ctrl_base + 1),
         }
     }
@@ -217,7 +218,9 @@ impl Bus {
             }
         }
         match (self.cylinder_low(), self.cylinder_high()) {
-            (0x00, 0x00) => Ok(IdentifyResponse::Ata([(); 256].map(|_| self.read_data()))),
+            (0x00, 0x00) => Ok(IdentifyResponse::Ata(Box::new(
+                [(); 256].map(|_| self.read_data()),
+            ))),
             (0x14, 0xEB) => Ok(IdentifyResponse::Atapi),
             (0x3C, 0x3C) => Ok(IdentifyResponse::Sata),
             (_, _) => Err(()),
@@ -278,7 +281,7 @@ pub struct Drive {
 }
 
 enum IdentifyResponse {
-    Ata([u16; 256]),
+    Ata(Box<[u16; 256]>),
     Atapi,
     Sata,
     None,

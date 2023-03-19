@@ -13,6 +13,12 @@ pub struct Executor {
     waker_cache: BTreeMap<TaskId, Waker>,
 }
 
+impl Default for Executor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Executor {
     pub fn new() -> Self {
         Executor {

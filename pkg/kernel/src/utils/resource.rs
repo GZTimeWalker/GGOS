@@ -43,13 +43,13 @@ impl Resource {
     pub fn write(&self, buf: &[u8]) -> Result<usize, ()> {
         match self {
             Resource::File(_) => unimplemented!(),
-            Resource::Console(stdio) => match stdio {
-                &StdIO::Stdin => Err(()),
-                &StdIO::Stdout => {
+            Resource::Console(stdio) => match *stdio {
+                StdIO::Stdin => Err(()),
+                StdIO::Stdout => {
                     print!("{}", String::from_utf8_lossy(buf));
                     Ok(buf.len())
                 }
-                &StdIO::Stderr => {
+                StdIO::Stderr => {
                     warn!("{}", String::from_utf8_lossy(buf));
                     Ok(buf.len())
                 }

@@ -232,7 +232,7 @@ impl ShortFileName {
                 }
                 // Denotes the start of the file extension
                 b'.' => {
-                    if idx >= 1 && idx <= 8 {
+                    if (1..=8).contains(&idx) {
                         seen_dot = true;
                         idx = 8;
                     } else {
@@ -243,7 +243,7 @@ impl ShortFileName {
                     let ch = ch.to_ascii_uppercase();
                     trace!("char: '{}', at: {}", ch as char, idx);
                     if seen_dot {
-                        if idx >= 8 && idx < 11 {
+                        if (8..11).contains(&idx) {
                             sfn.ext[idx - 8] = ch;
                         } else {
                             return Err(FilenameError::NameTooLong);

@@ -27,15 +27,9 @@ impl MBRPartitions {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct PartitionMetaData {
     data: [u8; 16],
-}
-
-impl Default for PartitionMetaData {
-    fn default() -> Self {
-        Self { data: [0u8; 16] }
-    }
 }
 
 impl PartitionMetaData {

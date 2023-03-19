@@ -24,13 +24,7 @@ pub fn push_key(key: DecodedKey) {
 }
 
 pub fn try_get_key() -> Option<DecodedKey> {
-    interrupts::without_interrupts(|| {
-        if let Some(key) = get_input_buf_for_sure().pop() {
-            Some(key)
-        } else {
-            None
-        }
-    })
+    interrupts::without_interrupts(|| get_input_buf_for_sure().pop())
 }
 
 pub fn get_key() -> DecodedKey {

@@ -41,7 +41,7 @@ impl<'a> GOPDisplay<'a> {
         let buffer = unsafe {
             core::slice::from_raw_parts_mut(
                 graphic.fb_addr as *mut u32,
-                graphic.mode.resolution().0 as usize * graphic.mode.resolution().1 as usize,
+                graphic.mode.resolution().0 * graphic.mode.resolution().1,
             )
         };
 

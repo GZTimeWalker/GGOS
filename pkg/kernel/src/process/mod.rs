@@ -4,6 +4,7 @@ mod sync;
 
 use core::sync::atomic::{AtomicU16, Ordering};
 
+use alloc::collections::btree_map::Entry;
 use fs::File;
 use manager::*;
 use process::*;
@@ -68,6 +69,12 @@ impl ProcessId {
     pub fn new() -> Self {
         static NEXT_PID: AtomicU16 = AtomicU16::new(0);
         ProcessId(NEXT_PID.fetch_add(1, Ordering::Relaxed))
+    }
+}
+
+impl Default for ProcessId {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -190,13 +197,12 @@ pub fn kill(pid: ProcessId, regs: &mut Registers, sf: &mut InterruptStackFrame) 
 pub fn new_sem(key: u32, value: usize) -> isize {
     if let Some(mut sems) = get_sem_manager() {
         let sid = SemaphoreId::new(key);
-        // trace!("New Semaphore#{}", key);
-        if !sems.contains_key(&sid) {
-            sems.insert(sid, Semaphore::new(value));
+        if let Entry::Vacant(e) = sems.entry(sid) {
+            e.insert(Semaphore::new(value));
             return 0;
         }
     }
-    return 1;
+    1
 }
 
 pub fn sem_up(key: u32) -> isize {
@@ -212,7 +218,7 @@ pub fn sem_up(key: u32) -> isize {
             return 0;
         }
     }
-    return 1;
+    1
 }
 
 pub fn sem_down(key: u32, regs: &mut Registers, sf: &mut InterruptStackFrame) {
@@ -270,7 +276,7 @@ pub fn try_resolve_page_fault(
 pub fn spawn(file: &File) -> Result<ProcessId, String> {
     let size = file.length();
     let pages = (size as usize + 0x1000 - 1) / 0x1000;
-    let mut buf = vec![0u8; (pages * 0x1000) as usize];
+    let mut buf = vec![0u8; pages * 0x1000];
 
     fs::read_to_buf(get_volume(), file, &mut buf).map_err(|_| "Failed to read file")?;
 

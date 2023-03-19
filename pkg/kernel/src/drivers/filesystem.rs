@@ -47,7 +47,7 @@ pub fn resolve_path(root_path: &str) -> Option<Directory> {
         path = path[pos + 1..].to_string();
         trace!("Resolving path: {}", path);
 
-        if path.len() == 0 {
+        if path.is_empty() {
             break;
         }
     }

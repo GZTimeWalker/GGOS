@@ -19,15 +19,13 @@ impl Device<u8> for Random {
                 }
             }
             Ok(size)
-        } else {
-            if let Some(mut rng) = GLOBAL_RNG.get().and_then(spin::Mutex::try_lock) {
-                for i in 0..size {
-                    buf[offset + i] = rng.next_u32() as u8;
-                }
-                Ok(size)
-            } else {
-                Err(DeviceError::ReadError)
+        } else if let Some(mut rng) = GLOBAL_RNG.get().and_then(spin::Mutex::try_lock) {
+            for i in 0..size {
+                buf[offset + i] = rng.next_u32() as u8;
             }
+            Ok(size)
+        } else {
+            Err(DeviceError::ReadError)
         }
     }
 

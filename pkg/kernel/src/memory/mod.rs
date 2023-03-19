@@ -10,7 +10,7 @@ pub use frames::*;
 pub use paging::*;
 
 pub fn init(boot_info: &'static boot::BootInfo) {
-    let physical_memory_offset = x86_64::VirtAddr::new_truncate(PHYSICAL_OFFSET as u64);
+    let physical_memory_offset = x86_64::VirtAddr::new_truncate(PHYSICAL_OFFSET);
     let memory_map = &boot_info.memory_map;
 
     let mut mem_size = 0;

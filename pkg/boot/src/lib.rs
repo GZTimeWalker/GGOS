@@ -1,5 +1,4 @@
 #![no_std]
-#[allow(dead_code)]
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
 pub use uefi::prelude::SystemTable;

@@ -130,7 +130,7 @@ impl Process {
     }
 
     pub fn page_table_addr(&self) -> PhysFrame {
-        self.page_table_addr.0.clone()
+        self.page_table_addr.0
     }
 
     pub fn is_running(&self) -> bool {
@@ -146,8 +146,8 @@ impl Process {
     }
 
     pub fn save(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
-        self.regs = unsafe { regs.as_mut().read().clone() };
-        self.stack_frame = unsafe { sf.as_mut().read().clone() };
+        self.regs = unsafe { regs.as_mut().read() };
+        self.stack_frame = unsafe { sf.as_mut().read() };
         self.status = ProgramStatus::Ready;
     }
 
@@ -324,7 +324,7 @@ impl Process {
                 (physical_to_virtual(frame.start_address().as_u64()) as *mut PageTable)
                     .as_mut()
                     .unwrap(),
-                VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET as u64),
+                VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET),
             )
         }
     }
@@ -356,7 +356,7 @@ impl Process {
 
         let cur_stack_base = stack_info.start.start_address().as_u64();
         // make new stack frame
-        let mut new_stack_frame = self.stack_frame.clone();
+        let mut new_stack_frame = self.stack_frame;
         // cal new stack pointer
         new_stack_frame.stack_pointer += new_stack_base - cur_stack_base;
         // clone new stack content
@@ -386,7 +386,7 @@ impl Process {
             status: ProgramStatus::Created,
             ticks_passed: 0,
             stack_frame: new_stack_frame,
-            regs: self.regs.clone(),
+            regs: self.regs,
             page_table_addr: (self.page_table_addr.0, Cr3::read().1),
             page_table: Some(owned_page_table),
             children: Vec::new(),
@@ -406,7 +406,7 @@ impl Process {
         );
         trace!("{:#?}", &child);
 
-        return child;
+        child
     }
 
     pub fn set_parent(&mut self, pid: ProcessId) {
@@ -439,10 +439,7 @@ impl Process {
             elf::map_range(STACT_INIT_BOT, STACK_DEF_PAGE, &mut page_table, alloc, true).unwrap();
 
         // record memory usage
-        self.proc_data.code_memory_usage = code_segments
-            .iter()
-            .map(|seg| seg.count())
-            .fold(0, |acc, x| acc + x);
+        self.proc_data.code_memory_usage = code_segments.iter().map(|seg| seg.count()).sum();
 
         self.proc_data.stack_memory_usage = stack_segment.count();
 
