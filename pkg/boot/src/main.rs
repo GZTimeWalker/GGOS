@@ -75,13 +75,13 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     let mmap_storage = Box::leak(
         vec![0; max_mmap_size.map_size + 10 * max_mmap_size.entry_size].into_boxed_slice(),
     );
-    let mmap_iter = system_table
+    let mmap = system_table
         .boot_services()
         .memory_map(mmap_storage)
-        .expect("Failed to get memory map")
-        .1;
+        .expect("Failed to get memory map");
 
-    let max_phys_addr = mmap_iter
+    let max_phys_addr = mmap
+        .entries()
         .map(|m| m.phys_start + m.page_count * 0x1000)
         .max()
         .unwrap()
@@ -144,14 +144,12 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     info!("Exiting boot services...");
 
-    let (rt, mmap_iter) = system_table
-        .exit_boot_services(image, mmap_storage)
-        .expect("Failed to exit boot services");
+    let (rt, mmap) = system_table.exit_boot_services();
     // NOTE: alloc & log can no longer be used
 
     // construct BootInfo
     let bootinfo = BootInfo {
-        memory_map: mmap_iter.copied().collect(),
+        memory_map: mmap.entries().copied().collect(),
         kernel_pages: get_page_usage(&elf),
         physical_memory_offset: config.physical_memory_offset,
         graphic_info,
