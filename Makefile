@@ -46,7 +46,7 @@ intdbg:
 		-drive format=raw,file=fat:rw:${ESP} \
 		-no-reboot -d int,cpu_reset
 
-debug: build
+debug:
 	@qemu-system-x86_64 \
 		-bios ${OVMF} \
 		-net none \

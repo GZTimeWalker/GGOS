@@ -26,5 +26,5 @@ pc-keyboard = "0.7"
 crossbeam-queue = { version = "0.3", default-features = false, features = ["alloc"] }
 volatile = "0.4"
 xmas-elf = "0.9"
-num_enum = { version = "0.5", default-features = false }
+num_enum = { version = "0.6", default-features = false }
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
