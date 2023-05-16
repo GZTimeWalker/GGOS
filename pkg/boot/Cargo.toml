@@ -7,8 +7,8 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [dependencies]
 arrayvec = { version = "0.7", default-features = false }
-uefi = "0.20"
-uefi-services = { version = "0.17", optional = true}
+uefi = "0.21"
+uefi-services = { version = "0.18", optional = true}
 log = "0.4"
 x86_64 = "0.14"
 xmas-elf = "0.9"

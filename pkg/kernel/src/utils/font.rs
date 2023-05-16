@@ -5,7 +5,7 @@ use embedded_graphics::{
 };
 
 pub const JBMONO: MonoFont = MonoFont {
-    image: ImageRaw::new_binary(include_bytes!("../../assets/JBMONO.raw"), 15 * 16),
+    image: ImageRaw::new(include_bytes!("../../assets/JBMONO.raw"), 15 * 16),
     glyph_mapping: &ASCII,
     character_size: Size::new(15, 30),
     character_spacing: 0,
@@ -15,7 +15,7 @@ pub const JBMONO: MonoFont = MonoFont {
 };
 
 pub const JBMONO_TITLE: MonoFont = MonoFont {
-    image: ImageRaw::new_binary(include_bytes!("../../assets/JBMONO_TITLE.raw"), 28 * 16),
+    image: ImageRaw::new(include_bytes!("../../assets/JBMONO_TITLE.raw"), 28 * 16),
     glyph_mapping: &ASCII,
     character_size: Size::new(28, 54),
     character_spacing: 0,

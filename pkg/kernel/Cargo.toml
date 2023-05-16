@@ -9,7 +9,7 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 boot = { path = "../boot", package = "ggos_boot", default-features = false }
 fs = { path = "../fs", package = "ggfs" }
 elf = { package = "ggos_elf", path = "../elf" }
-embedded-graphics = { version = "0.7", features = ['fixed_point'] }
+embedded-graphics = { version = "0.8", features = ['fixed_point'] }
 lazy_static = { version = "1.4", features = ["spin_no_std"] }
 paste = "1.0"
 spin = "0.9"
