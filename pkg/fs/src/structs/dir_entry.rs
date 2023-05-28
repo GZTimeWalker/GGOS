@@ -118,7 +118,7 @@ impl DirEntry {
         let accessed_time = prase_datetime(time);
 
         let cluster = (data[27] as u32) << 8
-            | (data[26] as u32) << 0
+            | (data[26] as u32)
             | (data[21] as u32) << 24
             | (data[20] as u32) << 16;
 

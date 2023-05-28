@@ -7,6 +7,8 @@
 #![feature(type_alias_impl_trait)]
 #![feature(panic_info_message)]
 #![feature(map_try_insert)]
+#![allow(clippy::missing_safety_doc)]
+#![allow(clippy::result_unit_err)]
 
 extern crate alloc;
 #[macro_use]
@@ -33,6 +35,7 @@ use memory::gdt;
 pub use tasks::*;
 
 pub mod interrupt;
+
 pub mod process;
 
 pub use interrupt::Syscall;

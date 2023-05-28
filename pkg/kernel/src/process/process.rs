@@ -87,7 +87,7 @@ impl ProcessData {
             .iter()
             .map(|page| {
                 size += page.count();
-                PageRangeInclusive::from(page.clone())
+                *page
             })
             .collect();
         self.code_segments = Some(owned_pages);

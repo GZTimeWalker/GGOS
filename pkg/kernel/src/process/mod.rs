@@ -1,6 +1,8 @@
 mod manager;
-mod process;
 mod sync;
+
+#[allow(clippy::module_inception)]
+mod process;
 
 use core::sync::atomic::{AtomicU16, Ordering};
 
@@ -105,7 +107,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     trace!("Init process data: {:#?}", kproc_data);
     // kernel process
     let mut kproc = Process::new(
-        &mut *alloc,
+        &mut alloc,
         String::from("kernel"),
         ProcessId::new(),
         Cr3::read().0,
