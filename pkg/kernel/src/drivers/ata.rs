@@ -109,7 +109,7 @@ impl Bus {
             // Bit 7 => 1
             self.drive.write(0xA0 | (drive << 4))
         }
-        trace!("Selected drive {}, waiting...", drive);
+        // trace!("Selected drive {}, waiting...", drive);
         self.poll(Status::BSY, false)?;
         self.poll(Status::DRQ, false)?;
         Ok(())
@@ -129,7 +129,7 @@ impl Bus {
             self.cylinder_high.write(bytes[2]);
             self.drive.write(bytes[3]);
         }
-        trace!("Wrote command parameters: {:016b}", block);
+        // trace!("Wrote command parameters: {:016b}", block);
         Ok(())
     }
 
@@ -145,7 +145,7 @@ impl Bus {
 
     fn write_command(&mut self, cmd: ATACommand) -> Result<(), ()> {
         unsafe { self.command.write(cmd as u8) }
-        trace!("Wrote command {:?}", cmd);
+        // trace!("Wrote command {:?}", cmd);
         self.status(); // Ignore results of first read
         self.clear_interrupt();
         if self.status() == 0 {

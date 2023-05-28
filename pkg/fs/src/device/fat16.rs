@@ -52,7 +52,7 @@ where
         let block = volume.read_block(0).unwrap();
         let bpb = FAT16Bpb::new(block.inner()).unwrap();
 
-        trace!("Loading FAT16 Volume: \n{:?}", bpb);
+        trace!("Loading FAT16 Volume: {:?}", bpb);
 
         // FirstDataSector = BPB_ResvdSecCnt + (BPB_NumFATs * FATSz) + RootDirSectors;
         let root_dir_size =
@@ -76,7 +76,10 @@ where
     where
         F: FnMut(&DirEntry),
     {
-        trace!("Iterating directory: {:?}", dir);
+        if let Some(entry) = &dir.entry {
+            trace!("Iterating directory: {}", entry.filename());
+        }
+
         let mut current_cluster = Some(dir.cluster);
         let mut dir_sector_num = self.cluster_to_sector(&dir.cluster);
         let dir_size = match dir.cluster {
@@ -90,14 +93,13 @@ where
                 for entry in 0..Block::SIZE / DirEntry::LEN {
                     let start = entry * DirEntry::LEN;
                     let end = (entry + 1) * DirEntry::LEN;
-                    trace!("Entry: {}..{}", start, end);
+                    // trace!("Entry: {}..{}", start, end);
                     let dir_entry = DirEntry::parse(&block.inner()[start..end])
                         .map_err(VolumeError::FileNameError)?;
 
                     if dir_entry.is_eod() {
                         return Ok(());
                     } else if dir_entry.is_valid() && !dir_entry.is_long_name() {
-                        trace!("found file {}", dir_entry.filename());
                         func(&dir_entry);
                     }
                 }
@@ -194,7 +196,7 @@ where
             let end = (entry + 1) * DirEntry::LEN;
             let dir_entry = DirEntry::parse(&block.inner()[start..end])
                 .map_err(|_| VolumeError::InvalidOperation)?;
-            trace!("matching {} to {}...", dir_entry.filename(), match_name);
+            // trace!("Matching {} to {}...", dir_entry.filename(), match_name);
             if dir_entry.is_eod() {
                 // Can quit early
                 return Err(VolumeError::FileNotFound);

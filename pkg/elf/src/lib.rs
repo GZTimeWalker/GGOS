@@ -341,20 +341,20 @@ fn load_segment(
             page.size()
         };
 
-        trace!(
-            "Map page: {:#x} -> {:#x} ({}/{})",
-            page.start_address().as_u64(),
-            frame.start_address().as_u64(),
-            offset,
-            file_size
-        );
+        // trace!(
+        //     "Map page: {:#x} -> {:#x} ({}/{})",
+        //     page.start_address().as_u64(),
+        //     frame.start_address().as_u64(),
+        //     offset,
+        //     file_size
+        // );
 
         unsafe {
-            trace!(
-                "Copying data: {:#x} -> {:#x}",
-                data as u64 + idx as u64 * page.size(),
-                frame.start_address().as_u64() + physical_offset
-            );
+            // trace!(
+            //     "Copying data: {:#x} -> {:#x}",
+            //     data as u64 + idx as u64 * page.size(),
+            //     frame.start_address().as_u64() + physical_offset
+            // );
 
             copy_nonoverlapping(
                 data.add(idx * page.size() as usize),
@@ -368,10 +368,10 @@ fn load_segment(
 
             if count < page.size() {
                 // zero the rest of the page
-                trace!(
-                    "Zeroing rest of the page: {:#x}",
-                    page.start_address().as_u64()
-                );
+                // trace!(
+                //     "Zeroing rest of the page: {:#x}",
+                //     page.start_address().as_u64()
+                // );
                 write_bytes(
                     (frame.start_address().as_u64() + physical_offset + count) as *mut u8,
                     0,

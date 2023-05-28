@@ -283,14 +283,15 @@ impl Process {
         let pages = self.proc_data.stack_segment.unwrap().start - start_page;
         let page_table = self.page_table.as_mut().unwrap();
         trace!(
-            "Fill missing pages...[{:#x} -> {:#x})",
+            "Fill missing pages...[{:#x} -> {:#x}) ({} pages)",
             start_page.start_address().as_u64(),
             self.proc_data
                 .stack_segment
                 .unwrap()
                 .start
                 .start_address()
-                .as_u64()
+                .as_u64(),
+            pages
         );
 
         elf::map_range(addr.as_u64(), pages, page_table, alloc, true)?;
@@ -476,7 +477,7 @@ impl Drop for Process {
         .unwrap();
 
         if self.page_table_addr.0.start_address().as_u64() != 0 {
-            trace!("Clean up page_table for {}#{}", self.name, self.pid);
+            trace!("Clean up page table for {}#{}", self.name, self.pid);
             unsafe {
                 if let Some(ref mut segments) = self.proc_data.code_segments {
                     for range in segments {

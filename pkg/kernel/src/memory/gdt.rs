@@ -20,7 +20,7 @@ lazy_static! {
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_end = stack_start + STACK_SIZE;
             info!(
-                "Privilege Stack : 0x{:016x}-0x{:016x}",
+                "Privilege Stack  : 0x{:016x}-0x{:016x}",
                 stack_start.as_u64(),
                 stack_end.as_u64()
             );
@@ -32,7 +32,7 @@ lazy_static! {
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_end = stack_start + STACK_SIZE;
             info!(
-                "Double Fault IST: 0x{:016x}-0x{:016x}",
+                "Double Fault IST : 0x{:016x}-0x{:016x}",
                 stack_start.as_u64(),
                 stack_end.as_u64()
             );
@@ -44,7 +44,7 @@ lazy_static! {
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_end = stack_start + STACK_SIZE;
             info!(
-                "Syscall IST     : 0x{:016x}-0x{:016x}",
+                "Syscall IST      : 0x{:016x}-0x{:016x}",
                 stack_start.as_u64(),
                 stack_end.as_u64()
             );
@@ -56,7 +56,7 @@ lazy_static! {
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
             let stack_end = stack_start + STACK_SIZE;
             info!(
-                "Page Fault IST  : 0x{:016x}-0x{:016x}",
+                "Page Fault IST   : 0x{:016x}-0x{:016x}",
                 stack_start.as_u64(),
                 stack_end.as_u64()
             );
@@ -126,8 +126,8 @@ pub fn init() {
 
     info!("Kernel IST Size : {} KiB", size / 1024);
 
-    trace!("{:#?}", &GDT.1);
-    trace!("{:#?}", &GDT.2);
+    // trace!("{:#?}", &GDT.1);
+    // trace!("{:#?}", &GDT.2);
 
     info!("GDT Initialized.");
 }

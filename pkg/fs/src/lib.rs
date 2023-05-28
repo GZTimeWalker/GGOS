@@ -90,7 +90,7 @@ where
 
     let dir = Directory::from_entry(dir_entry);
 
-    trace!("opened dir: \n{:#?}", &dir);
+    trace!("Opened dir: {:#?}", &dir);
 
     Ok(dir)
 }
@@ -105,7 +105,7 @@ pub fn open_file<T>(
 where
     T: BlockDevice,
 {
-    trace!("try open file: {}", name);
+    trace!("Try open file: {}", name);
     let dir_entry = volume.find_directory_entry(parent, name)?;
 
     if dir_entry.is_directory() {
@@ -126,7 +126,7 @@ where
         _ => return Err(VolumeError::Unsupported),
     };
 
-    trace!("opened file: \n{:#?}", &file);
+    trace!("Opened file: {:#?}", &file);
 
     Ok(file)
 }

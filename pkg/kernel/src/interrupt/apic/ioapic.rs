@@ -46,7 +46,7 @@ impl IoApic {
         // enabled, and routed to the given cpunum,
         // which happens to be that cpu's APIC ID.
         self.write_irq(irq, RedirectionEntry::NONE, cpunum);
-        trace!("IOApic::enable: IRQ={}, CPU={}", irq, cpunum);
+        trace!("Enable IOApic: IRQ={}, CPU={}", irq, cpunum);
     }
 
     pub fn disable(&mut self, irq: u8) {

@@ -24,10 +24,10 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     }
 
     let (size, unit) = humanized_size(mem_size * PAGE_SIZE);
-    info!("Physical Memory   : {:>7.*} {}", 3, size, unit);
+    info!("Physical Memory    : {:>7.*} {}", 3, size, unit);
 
     let (size, unit) = humanized_size(usable_mem_size * PAGE_SIZE);
-    info!("Free Usable Memory: {:>7.*} {}", 3, size, unit);
+    info!("Free Usable Memory : {:>7.*} {}", 3, size, unit);
 
     let mut used = crate::process::KSTACK_DEF_PAGE as usize;
 
@@ -36,7 +36,7 @@ pub fn init(boot_info: &'static boot::BootInfo) {
     }
 
     let (size, unit) = humanized_size(used as u64 * PAGE_SIZE);
-    info!("Kernel Used Memory: {:>7.*} {}", 3, size, unit);
+    info!("Kernel Used Memory : {:>7.*} {}", 3, size, unit);
 
     let size = used + usable_mem_size as usize;
 

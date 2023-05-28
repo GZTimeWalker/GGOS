@@ -305,7 +305,7 @@ impl ProcessManager {
     ) -> Result<(), ()> {
         if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION) {
             let cur_proc = self.current_mut();
-            trace!("Checking if {:#x} is on current process's stack", addr);
+            trace!("Page Fault! Checking if {:#x} is on current process's stack", addr);
             if cur_proc.is_on_stack(addr) {
                 cur_proc.try_alloc_new_stack_page(addr).unwrap();
                 Ok(())

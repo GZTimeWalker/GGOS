@@ -18,7 +18,7 @@ impl MBRPartitions {
                     .unwrap(),
             );
             if partitions[i].is_active() {
-                trace!("Partition {}: \n{:?}", i, partitions[i]);
+                trace!("Partition {}: {:?}", i, partitions[i]);
             }
         }
         Self {

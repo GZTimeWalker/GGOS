@@ -91,13 +91,13 @@ impl DirEntry {
 
     /// For Standard 8.3 format
     pub fn parse(data: &[u8]) -> Result<DirEntry, FilenameError> {
-        trace!(
-            "parsing file...\n    {:016x} {:016x} {:016x} {:016x}",
-            u64::from_be_bytes(data[0..8].try_into().unwrap()),
-            u64::from_be_bytes(data[8..16].try_into().unwrap()),
-            u64::from_be_bytes(data[16..24].try_into().unwrap()),
-            u64::from_be_bytes(data[24..32].try_into().unwrap()),
-        );
+        // trace!(
+        //     "Parsing file...\n    {:016x} {:016x} {:016x} {:016x}",
+        //     u64::from_be_bytes(data[0..8].try_into().unwrap()),
+        //     u64::from_be_bytes(data[8..16].try_into().unwrap()),
+        //     u64::from_be_bytes(data[16..24].try_into().unwrap()),
+        //     u64::from_be_bytes(data[24..32].try_into().unwrap()),
+        // );
 
         let filename = ShortFileName::new(&data[..11]);
 
@@ -241,7 +241,7 @@ impl ShortFileName {
                 }
                 _ => {
                     let ch = ch.to_ascii_uppercase();
-                    trace!("char: '{}', at: {}", ch as char, idx);
+                    // trace!("Char: '{}', at: {}", ch as char, idx);
                     if seen_dot {
                         if (8..11).contains(&idx) {
                             sfn.ext[idx - 8] = ch;
@@ -251,7 +251,6 @@ impl ShortFileName {
                     } else if idx < 8 {
                         sfn.name[idx] = ch;
                     } else {
-                        trace!("1");
                         return Err(FilenameError::NameTooLong);
                     }
                     idx += 1;

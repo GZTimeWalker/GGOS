@@ -78,11 +78,11 @@ where
     }
 
     fn read_block(&self, offset: usize) -> Result<Block, DeviceError> {
-        trace!(
-            "read_block offset: {}, volume lba start: {}",
-            offset,
-            self.meta.begin_lba()
-        );
+        // trace!(
+        //     "Read block offset: {}, Volume LBA start: {}",
+        //     offset,
+        //     self.meta.begin_lba()
+        // );
 
         let block = self
             .inner
@@ -97,11 +97,11 @@ where
     }
 
     fn write_block(&mut self, offset: usize, block: &Block) -> Result<(), DeviceError> {
-        trace!(
-            "write_block offset: {}, volume lba start: {}",
-            offset,
-            self.meta.begin_lba()
-        );
+        // trace!(
+        //     "Write block offset: {}, Volume LBA start: {}",
+        //     offset,
+        //     self.meta.begin_lba()
+        // );
 
         self.inner
             .write_block(offset + self.meta.begin_lba() as usize, block)

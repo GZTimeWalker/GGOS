@@ -23,8 +23,8 @@ pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
         Page::range(heap_start_page, heap_end_page)
     };
 
-    debug!("User Heap Start   : {:?}", page_range.start);
-    debug!("User Heap End     : {:?}", page_range.end);
+    debug!("User Heap Start    : {:?}", page_range.start);
+    debug!("User Heap End      : {:?}", page_range.end);
 
     for page in page_range {
         let frame = frame_allocator
