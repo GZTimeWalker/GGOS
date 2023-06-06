@@ -11,10 +11,10 @@ pub mod device;
 pub mod structs;
 
 use alloc::vec::Vec;
-use device::BlockDevice;
+use structs::dir_entry::Cluster;
+
 pub use device::*;
 pub use file::Mode;
-use structs::dir_entry::Cluster;
 pub use structs::*;
 
 // 1. The disk structure

@@ -3,23 +3,21 @@
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
 
-extern crate alloc;
-
 #[macro_use]
 pub mod macros;
 
 #[macro_use]
 pub mod io;
+pub mod sync;
+pub mod allocator;
+pub extern crate alloc;
+
 mod syscall;
 mod utils;
 
-#[macro_use]
-mod sync;
-pub mod allocator;
-
-pub use alloc::*;
 use core::fmt::*;
 
+pub use alloc::*;
 pub use chrono::*;
 pub use io::*;
 pub use sync::*;
