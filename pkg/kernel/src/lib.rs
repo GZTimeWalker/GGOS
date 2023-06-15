@@ -80,7 +80,7 @@ pub fn shutdown(boot_info: &'static BootInfo) -> ! {
     info!("GGOS shutting down.");
     unsafe {
         boot_info.system_table.runtime_services().reset(
-            boot::ResetType::Shutdown,
+            boot::ResetType::SHUTDOWN,
             boot::UefiStatus::SUCCESS,
             None,
         );
