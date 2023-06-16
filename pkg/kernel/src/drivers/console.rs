@@ -1,6 +1,7 @@
 use crate::drivers::display::get_display_for_sure;
 use crate::utils::colors;
 use crate::utils::font;
+use alloc::vec::Vec;
 use core::fmt::Write;
 use embedded_graphics::{
     mono_font::{MonoFont, MonoTextStyle},
@@ -123,7 +124,12 @@ impl Console {
     }
 
     pub fn write(&mut self, s: &str) {
-        for c in s.chars() {
+        let mut skip = 0;
+        for (idx, c) in s.chars().enumerate() {
+            if idx < skip {
+                continue;
+            }
+
             match c {
                 '\n' => self.next_row(),
                 '\r' => self.x_pos = 0,
@@ -133,14 +139,103 @@ impl Console {
                     self.prev_char();
                     self.prev_char();
                 }
+                // handle other control characters here
+                '\x1b' => {
+                    let count = self.handle_ctlseqs(s.split_at(idx + 1).1);
+                    skip = idx + count + 1;
+                }
                 _ => self.write_char(c),
             }
         }
     }
 
+    pub fn handle_ctlseqs(&mut self, s: &str) -> usize {
+        // support list:
+        // CSI n A
+        // CSI n B
+        // CSI n C
+        // CSI n D
+        // CSI y ; x H
+        // CSI n J
+
+        if !s.starts_with('[') {
+            return 0;
+        }
+
+        let mut count = 1;
+        let mut nums = Vec::new();
+        let mut num = 0;
+        for c in s.chars().skip(1) {
+            count += 1;
+
+            match c {
+                '0'..='9' => {
+                    num *= 10;
+                    num += c as usize - '0' as usize;
+
+                    if num > 32767 {
+                        num = 32767;
+                    }
+                    continue;
+                }
+                ';' => {
+                    nums.push(num);
+                    num = 0;
+                    continue;
+                }
+                _ => {
+                    nums.push(num);
+                }
+            }
+
+            let n = *nums.first().unwrap_or(&0) as isize;
+
+            match c {
+                'A' => {
+                    self.move_cursor(0, -n);
+                    break;
+                }
+                'B' => {
+                    self.move_cursor(0, n);
+                    break;
+                }
+                'C' => {
+                    self.move_cursor(n, 0);
+                    break;
+                }
+                'D' => {
+                    self.move_cursor(-n, 0);
+                    break;
+                }
+                'H' => {
+                    let x = *nums.get(1).unwrap_or(&1) as isize;
+                    self.set_cursor(x - 1, n - 1);
+                    break;
+                }
+                'J' => {
+                    if n == 2 {
+                        self.clear();
+                        break;
+                    } else {
+                        // not support
+                        return 0;
+                    }
+                }
+                _ => return 0,
+            }
+        }
+
+        count
+    }
+
     pub fn move_cursor(&mut self, dx: isize, dy: isize) {
-        self.x_pos += dx;
-        self.y_pos += dy;
+        self.x_pos = (self.x_pos + dx).max(0).min(self.size().0 - 1);
+        self.y_pos = (self.y_pos + dy).max(0).min(self.size().1 - 1);
+    }
+
+    pub fn set_cursor(&mut self, x: isize, y: isize) {
+        self.x_pos = x.max(0).min(self.size().0 - 1);
+        self.y_pos = y.max(0).min(self.size().1 - 1);
     }
 
     pub fn draw_hint(&mut self) {
@@ -169,7 +264,7 @@ impl Console {
     pub fn clear(&self) {
         get_display_for_sure().clear(
             Some(self.background),
-            FONT_Y as usize * TOP_PAD_LINE_NUM as usize,
+            FONT_Y as usize * (TOP_PAD_LINE_NUM - 1) as usize,
         );
     }
 

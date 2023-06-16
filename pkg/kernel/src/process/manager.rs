@@ -337,6 +337,8 @@ impl ProcessManager {
             ret
         );
 
+        trace!("Kill {:#?}", &p);
+
         let parent = p.parent();
         let children = p.children();
         let cur_page_table_addr = p.page_table_addr().start_address().as_u64();

@@ -14,6 +14,7 @@ Usage:
     exec <file> | execute file
     nohup <file>| execute file in background
     kill <pid>  | kill process
+    clear       | clear screen
     exit        | exit shell
 
 Shortcuts:

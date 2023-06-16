@@ -63,8 +63,6 @@ pub fn init(boot_info: &'static BootInfo) {
     info!("Interrupts Enabled.");
 
     info!("GGOS initialized.");
-
-    print_serial!("\x1b[?25h");
 }
 
 // DEPRECATED: do not spawn kernel thread

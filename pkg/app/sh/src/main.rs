@@ -74,6 +74,7 @@ fn main() -> usize {
                 services::kill(pid.unwrap());
             }
             "help" => print!("{}", consts::help_text()),
+            "clear" => print!("\x1b[1;1H\x1b[2J"),
             _ => {
                 if line[0].is_empty() {
                     println!();

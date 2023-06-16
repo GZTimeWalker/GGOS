@@ -14,12 +14,13 @@ pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
     let mut executor = Executor::new();
 
     // use executor.spawn() to spawn kernel tasks
-
     executor.run(spawn_init());
     ggos::shutdown(boot_info);
 }
 
 pub fn spawn_init() -> ggos::process::ProcessId {
+    print_serial!("\x1b[1;1H\x1b[2J");
+
     let sh_file = ggos::filesystem::try_get_file("/APP/SH", fs::Mode::ReadOnly).unwrap();
     ggos::process::spawn(&sh_file).unwrap()
 }
