@@ -61,7 +61,7 @@ pub fn cat(path: &str, root_dir: &str) {
         return;
     }
 
-    let mut buf = if path == "/dev/random" {
+    let mut buf = if path == "/DEV/RANDOM" {
         vec![0; 24]
     } else {
         vec![0; 0x4000]

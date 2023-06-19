@@ -125,7 +125,7 @@ impl ProcessManager {
 
     pub fn open(&mut self, path: &str, mode: u8) -> Option<u8> {
         let res = match path {
-            "/dev/random" => Resource::Random(fs::Random::new(
+            "/DEV/RANDOM" => Resource::Random(fs::Random::new(
                 crate::utils::clock::now().timestamp() as u64,
             )),
             path => {
