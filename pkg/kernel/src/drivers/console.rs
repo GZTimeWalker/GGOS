@@ -139,9 +139,8 @@ impl Console {
                     self.prev_char();
                     self.prev_char();
                 }
-                // handle other control characters here
                 '\x1b' => {
-                    let count = self.handle_ctlseqs(s.split_at(idx + 1).1);
+                    let count = self.handle_ctlseqs(&mut s.chars().skip(idx + 1));
                     skip = idx + count + 1;
                 }
                 _ => self.write_char(c),
@@ -149,23 +148,32 @@ impl Console {
         }
     }
 
-    pub fn handle_ctlseqs(&mut self, s: &str) -> usize {
+    fn handle_ctlseqs(&mut self, chrs: &mut impl Iterator<Item = char>) -> usize {
         // support list:
-        // CSI n A
-        // CSI n B
-        // CSI n C
-        // CSI n D
-        // CSI y ; x H
-        // CSI n J
+        // c                Clear
+        // CSI n A          Cursor Up
+        // CSI n B          Cursor Down
+        // CSI n C          Cursor Forward
+        // CSI n D          Cursor Backward
+        // CSI y ; x H      Cursor Position
+        // CSI n J          Erase in Display
 
-        if !s.starts_with('[') {
-            return 0;
+        match chrs.next() {
+            Some('[') => self.handle_csi(chrs),
+            Some('c') => {
+                self.clear();
+                1
+            }
+            _ => 0,
         }
+    }
 
+    fn handle_csi(&mut self, chrs: &mut impl Iterator<Item = char>) -> usize {
         let mut count = 1;
         let mut nums = Vec::new();
         let mut num = 0;
-        for c in s.chars().skip(1) {
+
+        for c in chrs {
             count += 1;
 
             match c {

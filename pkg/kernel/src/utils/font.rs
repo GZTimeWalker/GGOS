@@ -15,9 +15,9 @@ pub const JBMONO: MonoFont = MonoFont {
 };
 
 pub const JBMONO_TITLE: MonoFont = MonoFont {
-    image: ImageRaw::new(include_bytes!("../../assets/JBMONO_TITLE.raw"), 28 * 16),
+    image: ImageRaw::new(include_bytes!("../../assets/JBMONO_TITLE.raw"), 29 * 16),
     glyph_mapping: &ASCII,
-    character_size: Size::new(28, 54),
+    character_size: Size::new(29, 56),
     character_spacing: 0,
     baseline: 42,
     underline: DecorationDimensions::new(42, 3),

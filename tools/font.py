@@ -16,12 +16,12 @@ class FontCfg:
     def as_title(self):
         self.NAME = 'JBMONO_TITLE'
         self.FONT = 'JetBrainsMono.ttf'
-        self.BLOCK_SIZE = 50
+        self.BLOCK_SIZE = 52
         self.WIDTH = int(self.BLOCK_SIZE / 16 * 9)
         self.HEIGHT = self.BLOCK_SIZE + 4
         self.X_PAD = 0
         self.Y_PAD = 0
-        self.CHAR_SIZE = 48
+        self.CHAR_SIZE = 46
         self.SIZE = (self.WIDTH * 16, self.HEIGHT * 6)
 
     # def as_pixel(self):
@@ -48,7 +48,6 @@ def draw_img(cfg: FontCfg):
     draw = ImageDraw.Draw(im)
 
     draw.rectangle([(0, 0), cfg.SIZE], fill=BG)
-    x, y = 0, 0
 
     table = ''.join(i for i in ASCII if i.isprintable()) + '?'
     table = [table[idx * 16:idx * 16 + 16] for idx in range(6)]
@@ -67,7 +66,7 @@ def get_1bit(cfg: FontCfg, im):
         bit = 0
         for x in range(cfg.SIZE[0]):
             b = im.getpixel((x, y))
-            v = (v << 1) + (1 if b[0] > 32 else 0)
+            v = (v << 1) + (1 if b[0] > 35 else 0)
             bit += 1
             if bit == 8:
                 charmap.append(v)
@@ -77,13 +76,25 @@ def get_1bit(cfg: FontCfg, im):
             charmap.append(v << (7 - bit))
     return charmap
 
+def gen_font_border(cfg: FontCfg, im):
+    draw = ImageDraw.Draw(im)
+    # draw a border to identify the font size
+    for y in range(cfg.SIZE[1]):
+        for x in range(cfg.SIZE[0]):
+            if x % cfg.WIDTH == 0 or y % cfg.HEIGHT == 0:
+                draw.point((x, y), fill=(255, 0, 0))
+
 def gen(cfg: FontCfg):
     im = draw_img(cfg)
-    im.save(f'assets/img/{cfg.NAME}.png')
     res = get_1bit(cfg, im)
+
     print(cfg, len(res))
     with open(f'pkg/kernel/assets/{cfg.NAME}.raw', 'wb') as fp:
         fp.write(bytes(res))
+
+    gen_font_border(cfg, im)
+    im.save(f'assets/img/{cfg.NAME}.png')
+
 
 if __name__ == "__main__":
     cfg = FontCfg()
