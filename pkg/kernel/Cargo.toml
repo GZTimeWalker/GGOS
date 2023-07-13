@@ -18,7 +18,7 @@ x86_64 = "0.14"
 log = "0.4"
 bit_field = "0.10"
 micromath = { version = "2.0", features = ["num-traits"] }
-bitflags = "2.0"
+bitflags = "2.3"
 chrono = { version = "0.4", default-features = false }
 libm = "0.2"
 linked_list_allocator = "0.10"
