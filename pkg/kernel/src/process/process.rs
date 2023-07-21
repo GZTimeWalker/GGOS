@@ -146,7 +146,7 @@ impl Process {
     }
 
     pub fn save(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
-        self.regs = unsafe { regs.as_mut().read() };
+        self.regs = unsafe { regs.as_mut().as_ptr().read() };
         self.stack_frame = unsafe { sf.as_mut().read() };
         self.status = ProgramStatus::Ready;
     }
@@ -157,7 +157,7 @@ impl Process {
 
     pub fn restore(&mut self, regs: &mut Registers, sf: &mut InterruptStackFrame) {
         unsafe {
-            regs.as_mut().write(self.regs);
+            regs.as_mut().as_mut_ptr().write(self.regs);
             sf.as_mut().write(self.stack_frame);
             Cr3::write(self.page_table_addr.0, self.page_table_addr.1)
         }

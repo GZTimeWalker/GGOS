@@ -1,6 +1,6 @@
 use core::fmt;
 use core::ops::Deref;
-use volatile::Volatile;
+use volatile::VolatileRef;
 
 #[repr(align(8), C)]
 #[derive(Clone, Default, Copy)]
@@ -29,8 +29,8 @@ pub struct Registers {
 
 impl Registers {
     #[inline]
-    pub unsafe fn as_mut(&mut self) -> Volatile<&mut RegistersValue> {
-        Volatile::new(&mut self.value)
+    pub unsafe fn as_mut(&mut self) -> VolatileRef<RegistersValue> {
+        VolatileRef::from_mut_ref(&mut self.value)
     }
 
     #[inline]
