@@ -9,7 +9,7 @@ use x86_64::structures::idt::InterruptStackFrame;
 use super::SyscallArgs;
 
 pub fn sys_clock() -> i64 {
-    clock::now().timestamp_nanos()
+    clock::now().timestamp_nanos_opt().unwrap_or_default()
 }
 
 pub fn sys_draw(args: &SyscallArgs) {

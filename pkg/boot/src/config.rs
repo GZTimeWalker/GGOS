@@ -52,7 +52,7 @@ impl<'a> Config<'a> {
 
     fn process(&mut self, key: &str, value: &'a str) {
         info!("parse {} = {}", key, value);
-        let r10 = u64::from_str(&value).unwrap_or(0);
+        let r10 = u64::from_str(value).unwrap_or(0);
         let r16 = if value.len() > 2 {
             u64::from_str_radix(&value[2..], 16).unwrap_or(0)
         } else {

@@ -267,6 +267,7 @@ fn get_page_range(header: ProgramHeader) -> PageRangeInclusive {
 static mut ENTRY: usize = 0;
 
 /// Jump to ELF entry according to global variable `ENTRY`
+#[allow(clippy::empty_loop)]
 unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
     asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
     loop {}
