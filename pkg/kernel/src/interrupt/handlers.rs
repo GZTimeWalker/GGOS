@@ -164,7 +164,7 @@ pub extern "x86-interrupt" fn page_fault_handler(
     stack_frame: InterruptStackFrame,
     err_code: PageFaultErrorCode,
 ) {
-    if let Err(()) = crate::process::handle_page_fault(Cr2::read(), err_code) {
+    if crate::process::handle_page_fault(Cr2::read(), err_code).is_err() {
         warn!(
             "EXCEPTION: PAGE FAULT, ERROR_CODE: {:?}\n\nTrying to access: {:#x}\n{:#?}",
             err_code,

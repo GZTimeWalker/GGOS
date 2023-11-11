@@ -119,13 +119,13 @@ impl ProcessManager {
     }
 
     fn get_kernel_page_table(&self) -> PhysFrame {
-        let proc = self.processes.get(0).unwrap();
+        let proc = self.processes.first().unwrap();
         proc.page_table_addr()
     }
 
     pub fn open(&mut self, path: &str, mode: u8) -> Option<u8> {
         let res = match path {
-            "/DEV/RANDOM" => Resource::Random(fs::Random::new(
+            "/dev/random" => Resource::Random(fs::Random::new(
                 crate::utils::clock::now().timestamp() as u64,
             )),
             path => {
