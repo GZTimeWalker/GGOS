@@ -46,11 +46,12 @@ impl ProcessData {
     pub fn new() -> Self {
         let env = BTreeMap::new();
         let mut file_handles = BTreeMap::new();
+
         // stdin, stdout, stderr
         file_handles.insert(0, Resource::Console(StdIO::Stdin));
         file_handles.insert(1, Resource::Console(StdIO::Stdout));
         file_handles.insert(2, Resource::Console(StdIO::Stderr));
-        // 3 is the file self
+
         let code_segments = None;
         let stack_segment = None;
         Self {
@@ -451,6 +452,9 @@ impl Process {
 }
 
 impl Drop for Process {
+    /// Drop the process, free the stack and page table
+    ///
+    /// this will be called when the process is removed from the process list
     fn drop(&mut self) {
         let page_table = self.page_table.as_mut().unwrap();
         let frame_deallocator = &mut *get_frame_alloc_for_sure();
@@ -476,6 +480,7 @@ impl Drop for Process {
         )
         .unwrap();
 
+        // check if the page table is marked as not to be dropped
         if self.page_table_addr.0.start_address().as_u64() != 0 {
             trace!("Clean up page table for {}#{}", self.name, self.pid);
             unsafe {

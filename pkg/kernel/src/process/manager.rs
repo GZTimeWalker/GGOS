@@ -147,8 +147,8 @@ impl ProcessManager {
     }
 
     pub fn close(&mut self, fd: u8) -> bool {
-        if fd < 4 {
-            false // stdin, stdout, stderr, exec file are reserved
+        if fd < 3 {
+            false // stdin, stdout, stderr are reserved
         } else {
             self.current_mut().close(fd)
         }
@@ -180,28 +180,29 @@ impl ProcessManager {
         pid
     }
 
-    pub fn spawn_kernel_thread(
-        &mut self,
-        entry: VirtAddr,
-        stack_top: VirtAddr,
-        name: String,
-        parent: ProcessId,
-        proc_data: Option<ProcessData>,
-    ) -> ProcessId {
-        let mut p = Process::new(
-            &mut crate::memory::get_frame_alloc_for_sure(),
-            name,
-            parent,
-            self.get_kernel_page_table(),
-            proc_data,
-        );
-        p.pause();
-        p.init_stack_frame(entry, stack_top);
-        info!("Spawn process: {}#{}", p.name(), p.pid());
-        let pid = p.pid();
-        self.processes.push(p);
-        pid
-    }
+    // DEPRECATED: do not spawn kernel thread
+    // pub fn spawn_kernel_thread(
+    //     &mut self,
+    //     entry: VirtAddr,
+    //     stack_top: VirtAddr,
+    //     name: String,
+    //     parent: ProcessId,
+    //     proc_data: Option<ProcessData>,
+    // ) -> ProcessId {
+    //     let mut p = Process::new(
+    //         &mut crate::memory::get_frame_alloc_for_sure(),
+    //         name,
+    //         parent,
+    //         self.get_kernel_page_table(),
+    //         proc_data,
+    //     );
+    //     p.pause();
+    //     p.init_stack_frame(entry, stack_top);
+    //     info!("Spawn process: {}#{}", p.name(), p.pid());
+    //     let pid = p.pid();
+    //     self.processes.push(p);
+    //     pid
+    // }
 
     pub fn print_process_list(&self) {
         let mut output =
@@ -343,22 +344,27 @@ impl ProcessManager {
         let children = p.children();
         let cur_page_table_addr = p.page_table_addr().start_address().as_u64();
 
+        // set parent of children to parent of current process
         self.processes.iter_mut().for_each(|x| {
             if children.contains(&x.pid()) {
                 x.set_parent(parent);
             }
         });
 
+        // any process using the same page table as current process?
         let not_drop_page_table = self.processes.iter().any(|x| {
             x.page_table_addr().start_address().as_u64() == cur_page_table_addr && pid != x.pid()
         });
 
+        // mark thr page table as not to be dropped
         if not_drop_page_table {
             self.pid_mut(pid).not_drop_page_table();
         }
 
+        // remove process from process list
         self.processes.retain(|p| p.pid() != pid);
 
+        // remove self from parent's children list
         if let Some(proc) = self.processes.iter_mut().find(|x| x.pid() == parent) {
             proc.remove_child(pid);
         }

@@ -21,17 +21,29 @@ pub fn sys_draw(args: &SyscallArgs) {
 
 pub fn sys_allocate(args: &SyscallArgs) -> usize {
     let layout = unsafe { (args.arg0 as *const Layout).as_ref().unwrap() };
-    let ptr = crate::memory::user::USER_ALLOCATOR
+
+    if layout.size() == 0 {
+        return 0;
+    }
+
+    let ret = crate::memory::user::USER_ALLOCATOR
         .lock()
-        .allocate_first_fit(*layout)
-        .unwrap()
-        .as_ptr();
-    ptr as usize
+        .allocate_first_fit(*layout);
+
+    match ret {
+        Ok(ptr) => ptr.as_ptr() as usize,
+        Err(_) => 0,
+    }
 }
 
 pub fn sys_deallocate(args: &SyscallArgs) {
-    let ptr = args.arg0 as *mut u8;
     let layout = unsafe { (args.arg1 as *const Layout).as_ref().unwrap() };
+
+    if args.arg0 == 0 || layout.size() == 0 {
+        return;
+    }
+
+    let ptr = args.arg0 as *mut u8;
 
     unsafe {
         crate::memory::user::USER_ALLOCATOR
