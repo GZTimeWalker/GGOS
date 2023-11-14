@@ -1,5 +1,5 @@
 /.vscode
-/target
+**/target
 /esp
 **/.gdb_history
 **/.DS_Store
