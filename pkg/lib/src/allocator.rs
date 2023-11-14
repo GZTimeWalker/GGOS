@@ -1,6 +1,6 @@
-pub struct SystemAllocator;
+pub struct KernelAllocator;
 
-unsafe impl alloc::alloc::GlobalAlloc for SystemAllocator {
+unsafe impl alloc::alloc::GlobalAlloc for KernelAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
         crate::sys_allocate(&layout)
     }
@@ -10,7 +10,7 @@ unsafe impl alloc::alloc::GlobalAlloc for SystemAllocator {
 }
 
 #[global_allocator]
-static ALLOCATOR: SystemAllocator = SystemAllocator;
+static ALLOCATOR: KernelAllocator = KernelAllocator;
 
 #[cfg(not(test))]
 #[alloc_error_handler]
