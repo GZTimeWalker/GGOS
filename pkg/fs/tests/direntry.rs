@@ -16,12 +16,18 @@ fn test_dir_entry() {
     assert_eq!(res.attributes, Attributes::ARCHIVE);
     assert_eq!(res.cluster, Cluster(2));
     assert_eq!(res.size, 0xee4f0);
-    assert_eq!(res.created_time, Utc.ymd(2020, 6, 16).and_hms(23, 48, 30));
+    assert_eq!(
+        res.created_time,
+        Utc.with_ymd_and_hms(2020, 6, 16, 23, 48, 30).unwrap()
+    );
     assert_eq!(
         res.moditified_time,
-        Utc.ymd(2020, 6, 16).and_hms(23, 48, 30)
+        Utc.with_ymd_and_hms(2020, 6, 16, 23, 48, 30).unwrap()
     );
-    assert_eq!(res.accessed_time, Utc.ymd(2020, 6, 16).and_hms(0, 0, 0));
+    assert_eq!(
+        res.accessed_time,
+        Utc.with_ymd_and_hms(2020, 6, 16, 0, 0, 0).unwrap()
+    );
 
     println!("{:#?}", res);
 }

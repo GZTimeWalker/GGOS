@@ -114,8 +114,7 @@ pub fn print_serial_internal(args: Arguments) {
     });
 }
 
-/// This function is called on panic.
-#[panic_handler]
+#[cfg_attr(not(test), panic_handler)]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     let location = if let Some(location) = info.location() {
         alloc::format!(

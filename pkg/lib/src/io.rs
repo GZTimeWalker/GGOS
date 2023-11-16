@@ -60,7 +60,7 @@ impl Stdin {
                     // ignore other control characters
                     '\x00'..='\x1F' => {}
                     c => {
-                        print!("{}", k);
+                        self::print!("{}", k);
                         string.push(c);
                     }
                 }

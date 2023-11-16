@@ -84,7 +84,7 @@ macro_rules! entry {
     };
 }
 
-#[panic_handler]
+#[cfg_attr(not(test), panic_handler)]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     let location = if let Some(location) = info.location() {
         alloc::format!(
