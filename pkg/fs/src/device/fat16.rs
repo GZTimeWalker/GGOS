@@ -80,12 +80,12 @@ where
         while let Some(cluster) = current_cluster {
             for sector in dir_sector_num..dir_sector_num + dir_size {
                 self.volume.read_block(sector, &mut block).unwrap();
-                for _entry in 0..Block::SIZE / DirEntry::LEN {
-                    // let start = entry * DirEntry::LEN;
-                    // let end = (entry + 1) * DirEntry::LEN;
-                    // trace!("Entry: {}..{}", start, end);
+                for entry in 0..Block::SIZE / DirEntry::LEN {
+                    let start = entry * DirEntry::LEN;
+                    let end = (entry + 1) * DirEntry::LEN;
+
                     let dir_entry =
-                        DirEntry::parse(block.as_u8_slice()).map_err(VolumeError::FileNameError)?;
+                        DirEntry::parse(&block[start..end]).map_err(VolumeError::FileNameError)?;
 
                     if dir_entry.is_eod() {
                         return Ok(());
