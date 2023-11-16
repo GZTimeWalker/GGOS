@@ -1,4 +1,4 @@
 [toolchain]
 channel = "nightly"
-profile = "minimal"
+profile = "default"
 targets = [ "x86_64-unknown-uefi" ]
