@@ -14,19 +14,6 @@ where
     pub first_root_dir_sector: usize,
 }
 
-impl<T> Device<Block> for FAT16Volume<T>
-where
-    T: BlockDevice,
-{
-    fn read(&self, buf: &mut [Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
-        self.volume.read(buf, offset, size)
-    }
-
-    fn write(&mut self, buf: &[Block], offset: usize, size: usize) -> Result<usize, DeviceError> {
-        self.volume.write(buf, offset, size)
-    }
-}
-
 impl<T> BlockDevice for FAT16Volume<T>
 where
     T: BlockDevice,
@@ -35,11 +22,11 @@ where
         self.volume.block_count()
     }
 
-    fn read_block(&self, offset: usize) -> Result<Block, DeviceError> {
-        self.volume.read_block(offset)
+    fn read_block(&self, offset: usize, block: &mut Block) -> Result<(), DeviceError> {
+        self.volume.read_block(offset, block)
     }
 
-    fn write_block(&mut self, offset: usize, block: &Block) -> Result<(), DeviceError> {
+    fn write_block(&self, offset: usize, block: &Block) -> Result<(), DeviceError> {
         self.volume.write_block(offset, block)
     }
 }
@@ -49,8 +36,9 @@ where
     T: BlockDevice,
 {
     pub fn new(volume: Volume<T>) -> Self {
-        let block = volume.read_block(0).unwrap();
-        let bpb = FAT16Bpb::new(block.inner()).unwrap();
+        let mut block = Block::default();
+        volume.read_block(0, &mut block).unwrap();
+        let bpb = FAT16Bpb::new(block.as_u8_slice()).unwrap();
 
         trace!("Loading FAT16 Volume: {:?}", bpb);
 
@@ -87,15 +75,17 @@ where
             _ => self.bpb.sectors_per_cluster() as usize,
         };
         trace!("Directory size: {}", dir_size);
+
+        let mut block = Block::default();
         while let Some(cluster) = current_cluster {
             for sector in dir_sector_num..dir_sector_num + dir_size {
-                let block = self.volume.read_block(sector).unwrap();
-                for entry in 0..Block::SIZE / DirEntry::LEN {
-                    let start = entry * DirEntry::LEN;
-                    let end = (entry + 1) * DirEntry::LEN;
+                self.volume.read_block(sector, &mut block).unwrap();
+                for _entry in 0..Block::SIZE / DirEntry::LEN {
+                    // let start = entry * DirEntry::LEN;
+                    // let end = (entry + 1) * DirEntry::LEN;
                     // trace!("Entry: {}..{}", start, end);
-                    let dir_entry = DirEntry::parse(&block.inner()[start..end])
-                        .map_err(VolumeError::FileNameError)?;
+                    let dir_entry =
+                        DirEntry::parse(block.as_u8_slice()).map_err(VolumeError::FileNameError)?;
 
                     if dir_entry.is_eod() {
                         return Ok(());
@@ -171,12 +161,11 @@ where
         let fat_offset = (cluster.0 * 2) as usize;
         let cur_fat_sector = self.fat_start + fat_offset / Block::SIZE;
         let offset = fat_offset % Block::SIZE;
-        let block = self.volume.read_block(cur_fat_sector).unwrap();
-        let fat_entry = u16::from_le_bytes(
-            block.inner()[offset..=offset + 1]
-                .try_into()
-                .unwrap_or([0; 2]),
-        );
+
+        let mut block = Block::default();
+        self.volume.read_block(cur_fat_sector, &mut block).unwrap();
+
+        let fat_entry = u16::from_le_bytes(block[offset..=offset + 1].try_into().unwrap_or([0; 2]));
         match fat_entry {
             0xFFF7 => Err(VolumeError::BadCluster),         // Bad cluster
             0xFFF8..=0xFFFF => Err(VolumeError::EndOfFile), // There is no next cluster
@@ -190,12 +179,14 @@ where
         match_name: &ShortFileName,
         sector: usize,
     ) -> Result<DirEntry, VolumeError> {
-        let block = self.volume.read_block(sector).unwrap();
+        let mut block = Block::default();
+        self.volume.read_block(sector, &mut block).unwrap();
+
         for entry in 0..Block::SIZE / DirEntry::LEN {
             let start = entry * DirEntry::LEN;
             let end = (entry + 1) * DirEntry::LEN;
-            let dir_entry = DirEntry::parse(&block.inner()[start..end])
-                .map_err(|_| VolumeError::InvalidOperation)?;
+            let dir_entry =
+                DirEntry::parse(&block[start..end]).map_err(|_| VolumeError::InvalidOperation)?;
             // trace!("Matching {} to {}...", dir_entry.filename(), match_name);
             if dir_entry.is_eod() {
                 // Can quit early

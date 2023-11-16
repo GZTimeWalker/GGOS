@@ -1,8 +1,10 @@
+use core::ops::Deref;
+
 use crate::alloc::borrow::ToOwned;
 
 #[derive(Clone)]
 pub struct Block {
-    pub contents: [u8; Block::SIZE],
+    contents: [u8; Block::SIZE],
 }
 
 impl Block {
@@ -15,12 +17,21 @@ impl Block {
         }
     }
 
-    pub fn inner(&self) -> &[u8; Block::SIZE] {
+    pub fn as_u8_slice(&self) -> &[u8; Block::SIZE] {
         &self.contents
     }
 
-    pub fn inner_mut(&mut self) -> &mut [u8; Block::SIZE] {
+    pub fn as_mut_u8_slice(&mut self) -> &mut [u8; Block::SIZE] {
         &mut self.contents
+    }
+}
+
+impl Deref for Block {
+    type Target = [u8; Block::SIZE];
+
+    /// For `&block[x..y] -> &[u8]`
+    fn deref(&self) -> &Self::Target {
+        &self.contents
     }
 }
 

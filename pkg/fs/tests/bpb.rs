@@ -7,7 +7,7 @@ use ggfs::structs::bpb::*;
 fn test_fat16_bpb_1() {
     // Taken from a Raspberry Pi bootable SD-Card
     const DATA: [u8; 192] = hex_literal::hex!(
-       "EB 3C 90 6D 6B 66 73 2E 66 61 74 00 02 10 01 00
+        "EB 3C 90 6D 6B 66 73 2E 66 61 74 00 02 10 01 00
         02 00 02 00 00 F8 20 00 3F 00 FF 00 00 00 00 00
         00 E0 01 00 80 01 29 BB B0 71 77 62 6F 6F 74 20
         20 20 20 20 20 20 46 41 54 31 36 20 20 20 0E 1F
@@ -21,10 +21,7 @@ fn test_fat16_bpb_1() {
         72 79 20 61 67 61 69 6E 20 2E 2E 2E 20 0D 0A 00"
     );
 
-    const PADDING: &[u8] = concat_bytes!(
-        [0x00; 318],
-        [0x55, 0xAA]
-    );
+    const PADDING: &[u8] = concat_bytes!([0x00; 318], [0x55, 0xAA]);
 
     let mut bpb_data = DATA.to_vec();
     bpb_data.extend_from_slice(PADDING);
@@ -61,17 +58,13 @@ fn test_fat16_bpb_1() {
 fn test_fat16_bpb_2() {
     // Taken from a Raspberry Pi bootable SD-Card
     const DATA: [u8; 64] = hex_literal::hex!(
-       "EB 3E 90 4D 53 57 49 4E 34 2E 31 00 02 10 01 00
+        "EB 3E 90 4D 53 57 49 4E 34 2E 31 00 02 10 01 00
         02 00 02 00 00 F8 FC 00 3F 00 10 00 3F 00 00 00
         C1 BF 0F 00 80 00 29 FD 1A BE FA 51 45 4D 55 20
         56 56 46 41 54 20 46 41 54 31 36 20 20 20 00 00"
     );
 
-    const PADDING: &[u8] = concat_bytes!(
-        [0x00; 446],
-        [0x55, 0xAA]
-    );
-
+    const PADDING: &[u8] = concat_bytes!([0x00; 446], [0x55, 0xAA]);
 
     let mut bpb_data = DATA.to_vec();
     bpb_data.extend_from_slice(PADDING);

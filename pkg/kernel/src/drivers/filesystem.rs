@@ -20,7 +20,8 @@ pub enum StdIO {
 
 pub fn init() {
     info!("Opening disk device...");
-    let [p0, _, _, _] = Disk::new(Drive::open(0, 0).unwrap()).volumes();
+    let disk = Disk::new(Drive::open(0, 0).unwrap());
+    let [p0, _, _, _] = disk.volumes().unwrap();
 
     info!("Mounting filesystem...");
     FILESYSTEM.call_once(|| FAT16Volume::new(p0));

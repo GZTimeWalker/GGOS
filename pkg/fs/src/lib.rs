@@ -138,15 +138,16 @@ where
 {
     let mut data = vec![0u8; file.length() as usize];
     let mut length = file.length() as usize;
+    let mut block = Block::default();
+
     for i in 0..=file.length() as usize / Block::SIZE {
         let sector = volume.cluster_to_sector(&file.start_cluster());
-        let block = volume.read_block(sector + i).unwrap();
+        volume.read_block(sector + i, &mut block).unwrap();
         if length > Block::SIZE {
-            data[i * Block::SIZE..(i + 1) * Block::SIZE].copy_from_slice(&block.inner()[..]);
+            data[i * Block::SIZE..(i + 1) * Block::SIZE].copy_from_slice(block.as_u8_slice());
             length -= Block::SIZE;
         } else {
-            data[i * Block::SIZE..i * Block::SIZE + length]
-                .copy_from_slice(&block.inner()[..length]);
+            data[i * Block::SIZE..i * Block::SIZE + length].copy_from_slice(&block[..length]);
             break;
         }
     }
@@ -165,16 +166,18 @@ where
     if buf.len() < file.length() as usize {
         return Err(VolumeError::BufferTooSmall);
     }
+
     let mut length = file.length() as usize;
+    let mut block = Block::default();
+
     for i in 0..=file.length() as usize / Block::SIZE {
         let sector = volume.cluster_to_sector(&file.start_cluster());
-        let block = volume.read_block(sector + i).unwrap();
+        volume.read_block(sector + i, &mut block).unwrap();
         if length > Block::SIZE {
-            buf[i * Block::SIZE..(i + 1) * Block::SIZE].copy_from_slice(&block.inner()[..]);
+            buf[i * Block::SIZE..(i + 1) * Block::SIZE].copy_from_slice(block.as_u8_slice());
             length -= Block::SIZE;
         } else {
-            buf[i * Block::SIZE..i * Block::SIZE + length]
-                .copy_from_slice(&block.inner()[..length]);
+            buf[i * Block::SIZE..i * Block::SIZE + length].copy_from_slice(&block[..length]);
             break;
         }
     }

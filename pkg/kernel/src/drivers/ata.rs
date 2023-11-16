@@ -336,35 +336,22 @@ impl core::fmt::Display for Drive {
     }
 }
 
-use fs::{device::BlockDevice, *};
-
-impl Device<Block> for Drive {
-    fn read(&self, _: &mut [Block], _: usize, _: usize) -> Result<usize, DeviceError> {
-        unimplemented!()
-    }
-
-    fn write(&mut self, _: &[Block], _: usize, _: usize) -> Result<usize, DeviceError> {
-        unimplemented!()
-    }
-}
+use fs::device::{Block, BlockDevice, DeviceError};
 
 impl BlockDevice for Drive {
     fn block_count(&self) -> Result<usize, DeviceError> {
         Ok(self.blocks as usize)
     }
 
-    fn read_block(&self, offset: usize) -> Result<Block, DeviceError> {
-        let mut block = Block::default();
+    fn read_block(&self, offset: usize, block: &mut Block) -> Result<(), DeviceError> {
         get_buses_for_sure()[self.bus as usize]
-            .read(self.dsk, offset as u32, block.inner_mut())
-            .map_err(|_| DeviceError::ReadError)?;
-        Ok(block)
+            .read(self.dsk, offset as u32, block.as_mut_u8_slice())
+            .map_err(|_| DeviceError::ReadError)
     }
 
-    fn write_block(&mut self, offset: usize, block: &Block) -> Result<(), DeviceError> {
+    fn write_block(&self, offset: usize, block: &Block) -> Result<(), DeviceError> {
         get_buses_for_sure()[self.bus as usize]
-            .write(self.dsk, offset as u32, block.inner())
-            .map_err(|_| DeviceError::WriteError)?;
-        Ok(())
+            .write(self.dsk, offset as u32, block.as_u8_slice())
+            .map_err(|_| DeviceError::WriteError)
     }
 }

@@ -9,7 +9,7 @@ pub use random::Random;
 
 use crate::dir_entry::FilenameError;
 
-use super::block::Block;
+pub use super::block::Block;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum DeviceError {
@@ -43,8 +43,8 @@ pub trait Device<T> {
     fn write(&mut self, buf: &[T], offset: usize, size: usize) -> Result<usize, DeviceError>;
 }
 
-pub trait BlockDevice: Device<Block> {
+pub trait BlockDevice: Send + Sync {
     fn block_count(&self) -> Result<usize, DeviceError>;
-    fn read_block(&self, offset: usize) -> Result<Block, DeviceError>;
-    fn write_block(&mut self, offset: usize, block: &Block) -> Result<(), DeviceError>;
+    fn read_block(&self, offset: usize, block: &mut Block) -> Result<(), DeviceError>;
+    fn write_block(&self, offset: usize, block: &Block) -> Result<(), DeviceError>;
 }
