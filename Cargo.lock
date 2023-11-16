@@ -263,6 +263,7 @@ dependencies = [
  "num_enum",
  "paste",
  "pc-keyboard",
+ "roaring",
  "spin 0.9.8",
  "volatile 0.5.1",
  "x86",
@@ -485,6 +486,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c297679cb867470fa8c9f67dbba74a78d78e3e98d7cf2b08d6d71540f797332"
 dependencies = [
  "bitflags 1.3.2",
+]
+
+[[package]]
+name = "roaring"
+version = "0.10.2"
+source = "git+https://github.com/GZTimeWalker/roaring-rs.git?branch=no-std#a8dc5f45ee4c837a3fa68f1909d9b8bc453107a2"
+dependencies = [
+ "bytemuck",
+ "byteorder",
 ]
 
 [[package]]

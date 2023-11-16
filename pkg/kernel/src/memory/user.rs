@@ -12,6 +12,11 @@ const USER_HEAP_PAGE: usize = USER_HEAP_SIZE / crate::memory::PAGE_SIZE as usize
 
 pub static USER_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
+pub fn init() {
+    init_user_heap().expect("User Heap Initialization Failed.");
+    info!("User Heap Initialized.");
+}
+
 pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
     let mapper = &mut *super::get_page_table_for_sure();
     let frame_allocator = &mut *super::get_frame_alloc_for_sure();
@@ -23,8 +28,11 @@ pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
         Page::range(heap_start_page, heap_end_page)
     };
 
-    debug!("User Heap Start    : {:?}", page_range.start);
-    debug!("User Heap End      : {:?}", page_range.end);
+    debug!(
+        "User Heap        : 0x{:016x}-0x{:016x}",
+        page_range.start.start_address().as_u64(),
+        page_range.end.start_address().as_u64()
+    );
 
     for page in page_range {
         let frame = frame_allocator

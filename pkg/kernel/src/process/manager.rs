@@ -226,7 +226,7 @@ impl ProcessManager {
         let (sys_size, sys_size_unit) = memory::humanized_size(heap_size as u64);
 
         output += format!(
-            "System : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
+            "Kernel : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
             2,
             sys_used,
             sys_used_unit,

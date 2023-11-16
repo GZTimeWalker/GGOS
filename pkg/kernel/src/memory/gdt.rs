@@ -17,7 +17,7 @@ lazy_static! {
         tss.privilege_stack_table[0] = {
             const STACK_SIZE: usize = IST_SIZES[0];
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
-            let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
+            let stack_start = VirtAddr::from_ptr(unsafe { STACK.as_ptr() });
             let stack_end = stack_start + STACK_SIZE;
             info!(
                 "Privilege Stack  : 0x{:016x}-0x{:016x}",
@@ -29,7 +29,7 @@ lazy_static! {
         tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] = {
             const STACK_SIZE: usize = IST_SIZES[1];
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
-            let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
+            let stack_start = VirtAddr::from_ptr(unsafe { STACK.as_ptr() });
             let stack_end = stack_start + STACK_SIZE;
             info!(
                 "Double Fault IST : 0x{:016x}-0x{:016x}",
@@ -41,7 +41,7 @@ lazy_static! {
         tss.interrupt_stack_table[SYSCALL_IST_INDEX as usize] = {
             const STACK_SIZE: usize = IST_SIZES[2];
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
-            let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
+            let stack_start = VirtAddr::from_ptr(unsafe { STACK.as_ptr() });
             let stack_end = stack_start + STACK_SIZE;
             info!(
                 "Syscall IST      : 0x{:016x}-0x{:016x}",
@@ -53,7 +53,7 @@ lazy_static! {
         tss.interrupt_stack_table[PAGE_FAULT_IST_INDEX as usize] = {
             const STACK_SIZE: usize = IST_SIZES[3];
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
-            let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
+            let stack_start = VirtAddr::from_ptr(unsafe { STACK.as_ptr() });
             let stack_end = stack_start + STACK_SIZE;
             info!(
                 "Page Fault IST   : 0x{:016x}-0x{:016x}",
@@ -124,7 +124,7 @@ pub fn init() {
         size += s;
     }
 
-    info!("Kernel IST Size : {} KiB", size / 1024);
+    info!("Kernel IST Size  : {} KiB", size / 1024);
 
     // trace!("{:#?}", &GDT.1);
     // trace!("{:#?}", &GDT.2);

@@ -1,8 +1,8 @@
 // reference: https://github.com/phil-opp/blog_os/blob/post-09/src/memory.rs
 // reference: https://github.com/xfoxfu/rust-xos/blob/main/kernel/src/memory.rs
 
-use alloc::vec::Vec;
 use boot::{MemoryMap, MemoryType};
+use roaring::RoaringBitmap;
 use x86_64::structures::paging::{FrameAllocator, FrameDeallocator, PhysFrame, Size4KiB};
 use x86_64::PhysAddr;
 
@@ -19,7 +19,7 @@ pub struct BootInfoFrameAllocator {
     size: usize,
     frames: BootInfoFrameIter,
     used: usize,
-    recycled: Vec<PhysFrame>,
+    recycled: RoaringBitmap,
 }
 
 impl BootInfoFrameAllocator {
@@ -33,7 +33,7 @@ impl BootInfoFrameAllocator {
             size,
             frames: create_frame_iter(memory_map),
             used,
-            recycled: Vec::new(),
+            recycled: RoaringBitmap::new(),
         }
     }
 
@@ -46,14 +46,15 @@ impl BootInfoFrameAllocator {
     }
 
     pub fn recycled_count(&self) -> usize {
-        self.recycled.len()
+        self.recycled.len() as usize
     }
 }
 
 unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
     fn allocate_frame(&mut self) -> Option<PhysFrame> {
-        if let Some(frame) = self.recycled.pop() {
-            Some(frame)
+        if let Some(frame) = self.recycled.iter().next() {
+            self.recycled.remove(frame);
+            Some(u32_to_phys_frame(frame))
         } else {
             self.used += 1;
             self.frames.next()
@@ -63,8 +64,27 @@ unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
 
 impl FrameDeallocator<Size4KiB> for BootInfoFrameAllocator {
     unsafe fn deallocate_frame(&mut self, frame: PhysFrame) {
-        self.recycled.push(frame);
+        let key = phys_frame_to_u32(frame);
+        self.recycled.insert(key);
     }
+}
+
+const RS_ALIGN_4KIB: u64 = 12;
+
+/// Assumes that the physical memory we have is less than 16TB
+/// and we can store the 4KiB aligned address in a u32
+#[inline(always)]
+fn phys_frame_to_u32(frame: PhysFrame) -> u32 {
+    let key = frame.start_address().as_u64() >> RS_ALIGN_4KIB;
+
+    assert!(key <= u32::MAX as u64);
+
+    key as u32
+}
+
+#[inline(always)]
+fn u32_to_phys_frame(key: u32) -> PhysFrame {
+    PhysFrame::containing_address(PhysAddr::new((key as u64) << RS_ALIGN_4KIB))
 }
 
 unsafe fn create_frame_iter(memory_map: &MemoryMap) -> BootInfoFrameIter {

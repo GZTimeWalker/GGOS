@@ -5,6 +5,7 @@ mod paging;
 
 pub mod gdt;
 pub mod user;
+
 pub use address::*;
 pub use frames::*;
 pub use paging::*;
@@ -44,6 +45,8 @@ pub fn init(boot_info: &'static boot::BootInfo) {
         init_PAGE_TABLE(paging::init(physical_memory_offset));
         init_FRAME_ALLOCATOR(BootInfoFrameAllocator::init(memory_map, used, size));
     }
+
+    info!("Frame Allocator initialized.");
 }
 
 pub fn humanized_size(size: u64) -> (f64, &'static str) {

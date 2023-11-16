@@ -30,8 +30,6 @@ pub use drivers::*;
 pub mod memory;
 pub mod tasks;
 
-use memory::allocator;
-use memory::gdt;
 pub use tasks::*;
 
 pub mod interrupt;
@@ -46,13 +44,14 @@ use boot::BootInfo;
 pub fn init(boot_info: &'static BootInfo) {
     serial::init(); // init serial output
     logger::init(); // init logger system
-    gdt::init(); // init gdt
+    memory::gdt::init(); // init gdt
+    memory::allocator::init(); // init kernel heap allocator
     display::init(boot_info); // init vga display
     console::init(); // init graphic console
-    clock::init(boot_info); // init clock (uefi service)
     interrupt::init(); // init interrupts
+    clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
-    allocator::init(); // init heap allocator
+    memory::user::init(); // init user heap allocator
     process::init(boot_info); // init process manager
     keyboard::init(); // init keyboard
     input::init(); // init input

@@ -1,4 +1,5 @@
 use super::*;
+use crate::memory::*;
 use crate::utils::Registers;
 use x86_64::registers::control::Cr2;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
@@ -16,7 +17,7 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
         .set_handler_fn(device_not_available_handler);
     idt.double_fault
         .set_handler_fn(double_fault_handler)
-        .set_stack_index(crate::gdt::DOUBLE_FAULT_IST_INDEX);
+        .set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
 
     idt.invalid_tss.set_handler_fn(invalid_tss_handler);
     idt.segment_not_present
@@ -28,7 +29,7 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
 
     idt.page_fault
         .set_handler_fn(page_fault_handler)
-        .set_stack_index(crate::gdt::PAGE_FAULT_IST_INDEX);
+        .set_stack_index(gdt::PAGE_FAULT_IST_INDEX);
 
     idt.alignment_check.set_handler_fn(alignment_check_handler);
     idt.machine_check.set_handler_fn(machine_check_handler);
@@ -37,11 +38,11 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
 
     idt[(consts::Interrupts::Irq0 as u8 + consts::Irq::Timer as u8) as usize]
         .set_handler_fn(clock_handler)
-        .set_stack_index(crate::gdt::CONTEXT_SWITCH_IST_INDEX);
+        .set_stack_index(gdt::CONTEXT_SWITCH_IST_INDEX);
 
     idt[consts::Interrupts::Syscall as usize]
         .set_handler_fn(syscall_handler)
-        .set_stack_index(crate::gdt::SYSCALL_IST_INDEX)
+        .set_stack_index(gdt::SYSCALL_IST_INDEX)
         .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
 }
 
