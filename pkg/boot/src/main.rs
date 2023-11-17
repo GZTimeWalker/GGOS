@@ -156,7 +156,8 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         system_table: rt,
     };
 
-    let stacktop = config.kernel_stack_address + config.kernel_stack_size * 0x1000 - 1;
+    // align stack to 8 bytes
+    let stacktop = config.kernel_stack_address + config.kernel_stack_size * 0x1000 - 8;
 
     unsafe {
         jump_to_entry(&bootinfo, stacktop);
