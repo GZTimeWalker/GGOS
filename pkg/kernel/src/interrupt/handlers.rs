@@ -46,6 +46,10 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
         .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
 }
 
+pub extern "x86-interrupt" fn test_handler(stack_frame: InterruptStackFrame) {
+    panic!("EXCEPTION: TEST\n\n{:#?}", stack_frame);
+}
+
 pub extern "x86-interrupt" fn divide_error_handler(stack_frame: InterruptStackFrame) {
     panic!("EXCEPTION: DIVIDE ERROR\n\n{:#?}", stack_frame);
 }

@@ -36,8 +36,6 @@ pub mod interrupt;
 
 pub mod process;
 
-pub use interrupt::Syscall;
-
 pub use alloc::format;
 use boot::BootInfo;
 

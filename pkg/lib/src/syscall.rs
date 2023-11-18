@@ -1,5 +1,5 @@
-use crate::Syscall;
 use chrono::naive::*;
+use syscall_def::Syscall;
 
 #[inline(always)]
 pub fn sys_draw(x: i32, y: i32, color: u32) -> usize {
@@ -107,7 +107,7 @@ pub fn sys_get_pid() -> u16 {
 
 #[inline(always)]
 pub fn sys_fork() -> u16 {
-    let pid = syscall!(Syscall::Fork);
+    let pid = syscall!(Syscall::VFork);
     pid as u16
 }
 

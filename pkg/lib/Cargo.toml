@@ -7,4 +7,5 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+syscall_def = { package = "ggos_syscall", path = "../syscall" }
 chrono = { version = "0.4", default-features = false }

@@ -180,6 +180,7 @@ name = "gglib"
 version = "0.3.0"
 dependencies = [
  "chrono",
+ "ggos_syscall",
 ]
 
 [[package]]
@@ -255,12 +256,12 @@ dependencies = [
  "ggfs",
  "ggos_boot",
  "ggos_elf",
+ "ggos_syscall",
  "lazy_static",
  "libm",
  "linked_list_allocator",
  "log",
  "micromath",
- "num_enum",
  "paste",
  "pc-keyboard",
  "roaring",
@@ -290,6 +291,13 @@ name = "ggos_sh"
 version = "0.5.1"
 dependencies = [
  "gglib",
+]
+
+[[package]]
+name = "ggos_syscall"
+version = "0.9.8"
+dependencies = [
+ "num_enum",
 ]
 
 [[package]]
@@ -491,7 +499,7 @@ dependencies = [
 [[package]]
 name = "roaring"
 version = "0.10.2"
-source = "git+https://github.com/GZTimeWalker/roaring-rs.git?branch=no-std#a8dc5f45ee4c837a3fa68f1909d9b8bc453107a2"
+source = "git+https://github.com/GZTimeWalker/roaring-rs.git?branch=no-std#0f10931f00f73ef60ae9dd7030ad7af8fdfad379"
 dependencies = [
  "bytemuck",
  "byteorder",

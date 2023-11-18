@@ -7,6 +7,9 @@
 pub mod macros;
 
 #[macro_use]
+extern crate syscall_def;
+
+#[macro_use]
 pub mod io;
 pub mod allocator;
 pub mod sync;
@@ -23,27 +26,6 @@ pub use io::*;
 pub use sync::*;
 pub use syscall::*;
 pub use utils::*;
-
-#[derive(Clone, Debug)]
-pub enum Syscall {
-    Spawn = 1,
-    Exit = 2,
-    Read = 3,
-    Write = 4,
-    Open = 5,
-    Close = 6,
-    Stat = 7,
-    Time = 8,
-    ListDir = 9,
-    Allocate = 10,
-    Deallocate = 11,
-    Draw = 12,
-    WaitPid = 13,
-    GetPid = 14,
-    Fork = 15,
-    Kill = 16,
-    Sem = 17,
-}
 
 #[macro_export]
 macro_rules! print {
