@@ -8,8 +8,16 @@ pub use uefi::table::runtime::*;
 pub use uefi::table::Runtime;
 pub use uefi::Status as UefiStatus;
 
-use arrayvec::ArrayVec;
+use arrayvec::{ArrayString, ArrayVec};
 use x86_64::structures::paging::page::PageRangeInclusive;
+use xmas_elf::ElfFile;
+
+pub mod allocator;
+pub mod config;
+pub mod fs;
+
+#[macro_use]
+extern crate log;
 
 /// This structure represents the information that the bootloader passes to the kernel.
 pub struct BootInfo {
@@ -27,6 +35,17 @@ pub struct BootInfo {
 
     // Kernel pages
     pub kernel_pages: KernelPages,
+
+    // Loaded apps
+    pub loaded_apps: Option<ArrayVec<App<'static>, 16>>,
+}
+
+/// App information
+pub struct App<'a> {
+    /// The name of app
+    pub name: ArrayString<16>,
+    /// The ELF file
+    pub elf: ElfFile<'a>,
 }
 
 pub type MemoryMap = ArrayVec<MemoryDescriptor, 256>;

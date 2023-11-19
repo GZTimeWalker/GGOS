@@ -13,6 +13,7 @@ use process::*;
 use sync::*;
 
 pub use process::ProcessData;
+use xmas_elf::ElfFile;
 
 use crate::{filesystem::get_volume, Registers, Resource};
 use alloc::{collections::BTreeMap, string::String, vec};
@@ -284,21 +285,25 @@ pub fn spawn(file: &File) -> Result<ProcessId, String> {
 
     let elf = xmas_elf::ElfFile::new(&buf).map_err(|_| "Invalid ELF file")?;
 
+    let pid = elf_spawn(file.entry.filename(), &elf, Some(file))?;
+
+    Ok(pid)
+}
+
+pub fn elf_spawn(name: String, elf: &ElfFile, file: Option<&File>) -> Result<ProcessId, String> {
     let pid = x86_64::instructions::interrupts::without_interrupts(|| {
         let mut manager = get_process_manager_for_sure();
+        let process_name = name.to_lowercase();
 
         let parent = manager.current().pid();
         let pid = manager.spawn(
-            &elf,
-            file.entry.filename(),
+            elf,
+            name,
             parent,
-            Some(ProcessData::new().add_file(file)),
+            file.map(|f| ProcessData::new().add_file(f)),
         );
-        debug!(
-            "Spawned process: {}#{}",
-            file.entry.filename().to_lowercase(),
-            pid
-        );
+
+        debug!("Spawned process: {}#{}", process_name, pid);
         pid
     });
 

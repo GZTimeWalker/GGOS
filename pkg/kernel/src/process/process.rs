@@ -32,7 +32,7 @@ pub struct Process {
     proc_data: ProcessData,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct ProcessData {
     env: BTreeMap<String, String>,
     code_segments: Option<Vec<PageRangeInclusive>>,
@@ -40,6 +40,12 @@ pub struct ProcessData {
     file_handles: BTreeMap<u8, Resource>,
     pub code_memory_usage: usize,
     pub stack_memory_usage: usize,
+}
+
+impl Default for ProcessData {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ProcessData {

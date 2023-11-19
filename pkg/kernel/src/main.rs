@@ -1,8 +1,10 @@
 #![no_std]
 #![no_main]
 
+use alloc::string::ToString;
 use ggos::*;
 use ggos_kernel as ggos;
+use log::*;
 
 extern crate alloc;
 
@@ -13,14 +15,27 @@ pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
 
     let mut executor = Executor::new();
 
+    let init = spawn_init(boot_info);
+    debug!("Init process id: {}", init);
+    ggos::process::print_process_list();
+
     // use executor.spawn() to spawn kernel tasks
-    executor.run(spawn_init());
+    executor.run(init);
     ggos::shutdown(boot_info);
 }
 
-pub fn spawn_init() -> ggos::process::ProcessId {
+pub fn spawn_init(boot_info: &'static boot::BootInfo) -> process::ProcessId {
     print_serial!("\x1b[1;1H\x1b[2J");
 
-    let sh_file = ggos::filesystem::try_get_file("/APP/SH", fs::Mode::ReadOnly).unwrap();
-    ggos::process::spawn(&sh_file).unwrap()
+    if let Some(apps) = &boot_info.loaded_apps {
+        for app in apps {
+            if app.name.eq("sh") {
+                info!("Found sh in loaded apps, spawning...");
+                return process::elf_spawn("sh".to_string(), &app.elf, None).unwrap();
+            }
+        }
+    }
+
+    let sh_file = filesystem::try_get_file("/APP/SH", fs::Mode::ReadOnly).unwrap();
+    process::spawn(&sh_file).unwrap()
 }

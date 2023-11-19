@@ -19,6 +19,8 @@ pub struct Config<'a> {
     pub initramfs: Option<&'a str>,
     /// Kernel command line
     pub cmdline: &'a str,
+    /// Load apps into memory, when no fs implemented in kernel
+    pub load_apps: bool,
 }
 
 const DEFAULT_CONFIG: Config = Config {
@@ -30,6 +32,7 @@ const DEFAULT_CONFIG: Config = Config {
     resolution: None,
     initramfs: None,
     cmdline: "",
+    load_apps: false,
 };
 
 impl<'a> Config<'a> {
@@ -74,6 +77,7 @@ impl<'a> Config<'a> {
             "kernel_stack_auto_grow" => self.kernel_stack_auto_grow = r10,
             "initramfs" => self.initramfs = Some(value),
             "cmdline" => self.cmdline = value,
+            "load_apps" => self.load_apps = r10 != 0,
             _ => warn!("undefined config key: {}", key),
         }
     }

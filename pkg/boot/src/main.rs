@@ -18,18 +18,17 @@ extern crate alloc;
 use alloc::boxed::Box;
 use alloc::vec;
 use core::arch::asm;
+use ggos_boot::allocator::*;
+use ggos_boot::fs::*;
 use ggos_boot::{BootInfo, GraphicInfo, KernelPages};
 use uefi::prelude::*;
 use uefi::proto::console::gop::GraphicsOutput;
-use uefi::proto::media::file::*;
-use uefi::proto::media::fs::SimpleFileSystem;
-use uefi::table::boot::*;
 use uefi::table::cfg::ACPI2_GUID;
 use x86_64::registers::control::*;
 use x86_64::registers::model_specific::EferFlags;
 use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::structures::paging::*;
-use x86_64::{PhysAddr, VirtAddr};
+use x86_64::VirtAddr;
 use xmas_elf::program::ProgramHeader;
 use xmas_elf::ElfFile;
 
@@ -70,6 +69,14 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     unsafe {
         ENTRY = elf.header.pt2.entry_point() as usize;
     }
+
+    let apps = if config.load_apps {
+        info!("Loading apps...");
+        Some(load_apps(system_table.boot_services()))
+    } else {
+        info!("Skip loading apps");
+        None
+    };
 
     let max_mmap_size = system_table.boot_services().memory_map_size();
     let mmap_storage = Box::leak(
@@ -154,6 +161,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         physical_memory_offset: config.physical_memory_offset,
         graphic_info,
         system_table: rt,
+        loaded_apps: apps,
     };
 
     // align stack to 8 bytes
@@ -188,65 +196,6 @@ fn current_page_table() -> OffsetPageTable<'static> {
     let p4_table_addr = Cr3::read().0.start_address().as_u64();
     let p4_table = unsafe { &mut *(p4_table_addr as *mut PageTable) };
     unsafe { OffsetPageTable::new(p4_table, VirtAddr::new(0)) }
-}
-
-/// Use `BootServices::allocate_pages()` as frame allocator
-struct UEFIFrameAllocator<'a>(&'a BootServices);
-
-unsafe impl FrameAllocator<Size4KiB> for UEFIFrameAllocator<'_> {
-    fn allocate_frame(&mut self) -> Option<PhysFrame> {
-        let addr = self
-            .0
-            .allocate_pages(AllocateType::AnyPages, MemoryType::LOADER_DATA, 1)
-            .expect("Failed to allocate frame");
-        let frame = PhysFrame::containing_address(PhysAddr::new(addr));
-        Some(frame)
-    }
-}
-
-/// Open file at `path`
-fn open_file(bs: &BootServices, path: &str) -> RegularFile {
-    info!("Opening file: {}", path);
-
-    let mut buf = [0; 64];
-
-    let cstr_path = uefi::CStr16::from_str_with_buf(path, &mut buf).unwrap();
-
-    let handle = bs
-        .get_handle_for_protocol::<SimpleFileSystem>()
-        .expect("Failed to get handle for SimpleFileSystem");
-
-    let fs = bs
-        .open_protocol_exclusive::<SimpleFileSystem>(handle)
-        .expect("Failed to get FileSystem");
-    let mut fs = fs;
-
-    let mut root = fs.open_volume().expect("Failed to open volume");
-    let handle = root
-        .open(cstr_path, FileMode::Read, FileAttribute::empty())
-        .expect("Failed to open file");
-
-    match handle.into_type().expect("Failed to into_type") {
-        FileType::Regular(regular) => regular,
-        _ => panic!("Invalid file type"),
-    }
-}
-
-/// Load file to new allocated pages
-fn load_file(bs: &BootServices, file: &mut RegularFile) -> &'static mut [u8] {
-    info!("Loading file to memory");
-    let mut info_buf = [0u8; 0x100];
-    let info = file
-        .get_info::<FileInfo>(&mut info_buf)
-        .expect("Failed to get file info");
-    let pages = info.file_size() as usize / 0x1000 + 1;
-    let mem_start = bs
-        .allocate_pages(AllocateType::AnyPages, MemoryType::LOADER_DATA, pages)
-        .expect("Failed to allocate pages");
-    let buf = unsafe { core::slice::from_raw_parts_mut(mem_start as *mut u8, pages * 0x1000) };
-    let len = file.read(buf).expect("Failed to read file");
-    info!("File size={}", len);
-    &mut buf[..len]
 }
 
 pub fn get_page_usage(elf: &ElfFile) -> KernelPages {
