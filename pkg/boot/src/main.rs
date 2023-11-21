@@ -23,6 +23,7 @@ use ggos_boot::fs::*;
 use ggos_boot::{BootInfo, GraphicInfo, KernelPages};
 use uefi::prelude::*;
 use uefi::proto::console::gop::GraphicsOutput;
+use uefi::table::boot::MemoryType;
 use uefi::table::cfg::ACPI2_GUID;
 use x86_64::registers::control::*;
 use x86_64::registers::model_specific::EferFlags;
@@ -151,7 +152,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     info!("Exiting boot services...");
 
-    let (rt, mmap) = system_table.exit_boot_services();
+    let (runtime, mmap) = system_table.exit_boot_services(MemoryType::LOADER_DATA);
     // NOTE: alloc & log can no longer be used
 
     // construct BootInfo
@@ -160,7 +161,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         kernel_pages: get_page_usage(&elf),
         physical_memory_offset: config.physical_memory_offset,
         graphic_info,
-        system_table: rt,
+        system_table: runtime,
         loaded_apps: apps,
     };
 
