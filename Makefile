@@ -22,9 +22,20 @@ ifeq (${RUN_MODE}, nographic)
 	QEMU_OUTPUT = -nographic
 endif
 
+# Only add debug info for kernel
+# this is required for VSCode GUI debugging
+ifeq (${DBG_INFO}, true)
+	PROFILE = release-with-debug
+	PROFILE_ARGS = --profile=release-with-debug
+else
+	PROFILE = ${MODE}
+	PROFILE_ARGS = $(BUILD_ARGS)
+endif
+
+
 .PHONY: build run debug clean launch intdbg \
 	target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi \
-	target/x86_64-unknown-none/$(MODE)/ggos_kernel \
+	target/x86_64-unknown-none/$(PROFILE)/ggos_kernel \
 	target/x86_64-unknown-ggos/$(MODE)
 
 run: build launch
@@ -71,7 +82,7 @@ $(ESP)/EFI/BOOT/BOOTX64.EFI: target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi
 $(ESP)/EFI/BOOT/boot.conf: pkg/kernel/config/boot.conf
 	@mkdir -p $(@D)
 	cp $< $@
-$(ESP)/KERNEL.ELF: target/x86_64-unknown-none/$(MODE)/ggos_kernel
+$(ESP)/KERNEL.ELF: target/x86_64-unknown-none/$(PROFILE)/ggos_kernel
 	@mkdir -p $(@D)
 	cp $< $@
 $(ESP)/APP: target/x86_64-unknown-ggos/$(MODE)
@@ -82,8 +93,8 @@ $(ESP)/APP: target/x86_64-unknown-ggos/$(MODE)
 
 target/x86_64-unknown-uefi/$(MODE)/ggos_boot.efi: pkg/boot
 	cd pkg/boot && cargo build $(BUILD_ARGS)
-target/x86_64-unknown-none/$(MODE)/ggos_kernel: pkg/kernel
-	cd pkg/kernel && cargo build $(if $(ifeq($(DBG_INFO), true)), --profile=release-with-debug, $(BUILD_ARGS))
+target/x86_64-unknown-none/$(PROFILE)/ggos_kernel: pkg/kernel
+	cd pkg/kernel && cargo build $(PROFILE_ARGS)
 target/x86_64-unknown-ggos/$(MODE):
 	@for app in $(APPS); do \
 		echo "Building $$app"; \

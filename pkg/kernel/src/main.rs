@@ -16,8 +16,6 @@ pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
     let mut executor = Executor::new();
 
     let init = spawn_init(boot_info);
-    debug!("Init process id: {}", init);
-    ggos::process::print_process_list();
 
     // use executor.spawn() to spawn kernel tasks
     executor.run(init);

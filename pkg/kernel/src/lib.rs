@@ -1,6 +1,5 @@
 #![no_std]
 #![allow(dead_code)]
-#![feature(core_intrinsics)]
 #![feature(naked_functions)]
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]

@@ -1,6 +1,5 @@
 use crate::utils::*;
 use boot::GraphicInfo;
-use core::intrinsics::{volatile_copy_memory, volatile_set_memory};
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::*;
 
@@ -85,7 +84,7 @@ impl<'a> GOPDisplay<'a> {
         unsafe {
             // if the color is purely grey, set the buffer with bytes
             if color.r() == color.g() && color.g() == color.b() {
-                volatile_set_memory::<u32>(
+                core::ptr::write_bytes(
                     buf.offset((base as isize) * size.0 as isize),
                     color.r(),
                     (size.1 - base) * size.0,
@@ -111,14 +110,14 @@ impl<'a> GOPDisplay<'a> {
         let n = n as isize;
 
         unsafe {
-            volatile_copy_memory::<u32>(
-                buf.offset(base as isize * size.0 as isize),
+            core::ptr::copy(
                 buf.offset((base as isize + n) * size.0 as isize) as *const u32,
+                buf.offset(base as isize * size.0 as isize),
                 (size.1 - base) * size.0,
             );
             // if the color is purely grey, set the buffer with bytes
             if color.r() == color.g() && color.g() == color.b() {
-                volatile_set_memory::<u32>(
+                core::ptr::write_bytes(
                     buf.offset((size.1 as isize - n) * size.0 as isize),
                     color.r(),
                     n as usize * size.0,
