@@ -14,6 +14,8 @@ See also: [GGOS 诞生记](https://blog.gztime.cc/posts/2022/2430028)
 
 use `make run` to start the OS, or run as no-graphic mode with `make run RUN_MODE=nographic`
 
+or you can use `python ggos.py run` to start the OS on windows / linux / macos with qemu and rust toolchain installed.
+
 The development work is based on QEMU v7.0.0.
 
 You can put your files to `esp` directory to read them in the OS.
