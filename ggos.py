@@ -187,8 +187,8 @@ def main():
 
 
 if __name__ == "__main__":
-    # try:
-    main()
-    # except Exception as e:
-    #     error('Error', e)
-    #     exit(1)
+    try:
+        main()
+    except Exception as e:
+        error('Error', e)
+        exit(1)
