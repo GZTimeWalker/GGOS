@@ -332,7 +332,7 @@ impl Process {
                 (physical_to_virtual(frame.start_address().as_u64()) as *mut PageTable)
                     .as_mut()
                     .unwrap(),
-                VirtAddr::new_truncate(crate::memory::PHYSICAL_OFFSET),
+                VirtAddr::new_truncate(*PHYSICAL_OFFSET.get().unwrap()),
             )
         }
     }
@@ -440,8 +440,14 @@ impl Process {
 
         let mut page_table = self.page_table.take().unwrap();
 
-        let code_segments =
-            elf::load_elf(elf, PHYSICAL_OFFSET, &mut page_table, alloc, true).unwrap();
+        let code_segments = elf::load_elf(
+            elf,
+            *PHYSICAL_OFFSET.get().unwrap(),
+            &mut page_table,
+            alloc,
+            true,
+        )
+        .unwrap();
 
         let stack_segment =
             elf::map_range(STACT_INIT_BOT, STACK_DEF_PAGE, &mut page_table, alloc, true).unwrap();

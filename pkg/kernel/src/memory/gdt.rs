@@ -7,7 +7,7 @@ use x86_64::VirtAddr;
 pub const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 pub const SYSCALL_IST_INDEX: u16 = 1;
 pub const PAGE_FAULT_IST_INDEX: u16 = 2;
-pub const CONTEXT_SWITCH_IST_INDEX: u16 = 0;
+pub const CONTEXT_SWITCH_IST_INDEX: u16 = PAGE_FAULT_IST_INDEX;
 
 pub const IST_SIZES: [usize; 4] = [0x1000, 0x1000, 0x4000, 0x1000];
 

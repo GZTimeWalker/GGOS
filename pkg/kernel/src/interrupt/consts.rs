@@ -26,7 +26,7 @@ pub enum Interrupts {
     VirtualizationException = 20,
     SecurityException = 30,
 
-    Irq0 = 0x20,
+    IrqBase = 0x20,
     Syscall = 0x80,
 }
 

@@ -1,6 +1,4 @@
-use super::*;
 use crate::memory::*;
-use crate::utils::Registers;
 use x86_64::registers::control::Cr2;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
@@ -35,19 +33,6 @@ pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
     idt.machine_check.set_handler_fn(machine_check_handler);
     idt.simd_floating_point
         .set_handler_fn(simd_floating_point_handler);
-
-    idt[(consts::Interrupts::Irq0 as u8 + consts::Irq::Timer as u8) as usize]
-        .set_handler_fn(clock_handler)
-        .set_stack_index(gdt::CONTEXT_SWITCH_IST_INDEX);
-
-    idt[consts::Interrupts::Syscall as usize]
-        .set_handler_fn(syscall_handler)
-        .set_stack_index(gdt::SYSCALL_IST_INDEX)
-        .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
-}
-
-pub extern "x86-interrupt" fn test_handler(stack_frame: InterruptStackFrame) {
-    panic!("EXCEPTION: TEST\n\n{:#?}", stack_frame);
 }
 
 pub extern "x86-interrupt" fn divide_error_handler(stack_frame: InterruptStackFrame) {
@@ -149,21 +134,6 @@ pub extern "x86-interrupt" fn machine_check_handler(stack_frame: InterruptStackF
 pub extern "x86-interrupt" fn simd_floating_point_handler(stack_frame: InterruptStackFrame) {
     panic!("EXCEPTION: SIMD FLOATING POINT\n\n{:#?}", stack_frame);
 }
-
-pub extern "C" fn clock(mut regs: Registers, mut sf: InterruptStackFrame) {
-    super::ack(consts::Interrupts::Irq0 as u8);
-    crate::process::switch(&mut regs, &mut sf);
-}
-
-as_handler!(clock);
-
-pub extern "C" fn syscall(mut regs: Registers, mut sf: InterruptStackFrame) {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        super::syscall::dispatcher(&mut regs, &mut sf);
-    });
-}
-
-as_handler!(syscall);
 
 pub extern "x86-interrupt" fn page_fault_handler(
     stack_frame: InterruptStackFrame,

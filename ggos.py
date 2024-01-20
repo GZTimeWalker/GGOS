@@ -13,8 +13,8 @@ parser.add_argument('-i', '--intdbg', action='store_true',
                     help='Enable interrupt output for qemu')
 parser.add_argument('-m', '--memory', default='96M',
                     help='Set memory size for qemu, default is 96M')
-parser.add_argument('-o', '--output', default='-serial stdio',
-                    help='Set output for qemu, default is "-serial stdio"')
+parser.add_argument('-o', '--output', default='graphic', choices=['serial', 'graphic'],
+                    help='Set output for qemu, default is "graphic"')
 parser.add_argument('-p', '--profile', type=str, choices=['release', 'debug'],
                     default='release', help='Set build profile for kernel')
 parser.add_argument('-v', '--verbose', action='store_true',
@@ -71,8 +71,10 @@ def execute_command(cmd: list, workdir: str | None = None, shell: bool = False) 
     return prog.returncode
 
 
-def qemu(output: str = '-nographic', memory: str = '96M', debug: bool = False, intdbg: bool = False):
+def qemu(output: str = 'graphic', memory: str = '96M', debug: bool = False, intdbg: bool = False):
     qemu_exe = shutil.which('qemu-system-x86_64')
+
+    output = '-nographic' if output == 'serial' else '-serial stdio'
 
     # add optional path C:\Program Files\qemu for Windows
     if qemu_exe is None and os.name == 'nt':

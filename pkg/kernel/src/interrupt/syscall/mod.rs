@@ -1,11 +1,27 @@
-use crate::utils::*;
+use crate::{memory::gdt, utils::*};
 use alloc::format;
 use core::convert::TryFrom;
 use syscall_def::Syscall;
-use x86_64::structures::idt::InterruptStackFrame;
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 mod service;
+use super::consts;
 use service::*;
+
+pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
+    idt[consts::Interrupts::Syscall as usize]
+        .set_handler_fn(syscall_handler)
+        .set_stack_index(gdt::SYSCALL_IST_INDEX)
+        .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
+}
+
+pub extern "C" fn syscall(mut regs: Registers, mut sf: InterruptStackFrame) {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        super::syscall::dispatcher(&mut regs, &mut sf);
+    });
+}
+
+as_handler!(syscall);
 
 #[derive(Clone, Debug)]
 pub struct SyscallArgs {

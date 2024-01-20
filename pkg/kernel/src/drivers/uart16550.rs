@@ -26,7 +26,7 @@ bitflags! {
 
 /// A port-mapped UART.
 #[cfg_attr(docsrs, doc(cfg(target_arch = "x86_64")))]
-pub struct SerialPort {
+pub struct SerialPort<const BASE_ADDR: u16> {
     /// - ransmit Holding Register (write)
     /// - receive Holding Register (read)
     data: Port<u8>,
@@ -46,19 +46,19 @@ pub struct SerialPort {
     line_sts: PortReadOnly<u8>,
 }
 
-impl SerialPort {
+impl<const BASE_ADDR: u16> SerialPort<BASE_ADDR> {
     /// Creates a new serial port interface on the given I/O port.
     ///
     /// This function is unsafe because the caller must ensure that the given base address
     /// really points to a serial port device.
-    pub const unsafe fn new(base: u16) -> Self {
+    pub const unsafe fn new() -> Self {
         Self {
-            data: Port::new(base),
-            int_en: PortWriteOnly::new(base + 1),
-            fifo_ctrl: PortWriteOnly::new(base + 2),
-            line_ctrl: PortWriteOnly::new(base + 3),
-            modem_ctrl: PortWriteOnly::new(base + 4),
-            line_sts: PortReadOnly::new(base + 5),
+            data: Port::new(BASE_ADDR),
+            int_en: PortWriteOnly::new(BASE_ADDR + 1),
+            fifo_ctrl: PortWriteOnly::new(BASE_ADDR + 2),
+            line_ctrl: PortWriteOnly::new(BASE_ADDR + 3),
+            modem_ctrl: PortWriteOnly::new(BASE_ADDR + 4),
+            line_sts: PortReadOnly::new(BASE_ADDR + 5),
         }
     }
 
@@ -138,7 +138,7 @@ impl SerialPort {
     }
 }
 
-impl fmt::Write for SerialPort {
+impl<const BASE_ADDR: u16> fmt::Write for SerialPort<BASE_ADDR> {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         for byte in s.bytes() {
             self.send(byte);
