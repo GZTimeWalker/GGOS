@@ -60,7 +60,7 @@ fn producer(id: usize) -> ! {
             COUNT += 1;
         }
         println!("Produced by #{:<3}({:<3}) count={}", id, pid, unsafe {
-            &COUNT
+            COUNT
         });
         MUTEX.release();
         IS_NOT_EMPTY.release();
@@ -78,7 +78,7 @@ fn consumer(id: usize) -> ! {
             COUNT -= 1;
         }
         println!("Consumed by #{:<3}({:<3}) count={}", id, pid, unsafe {
-            &COUNT
+            COUNT
         });
         MUTEX.release();
         IS_NOT_FULL.release();

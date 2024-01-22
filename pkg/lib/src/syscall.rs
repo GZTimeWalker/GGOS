@@ -81,8 +81,7 @@ pub fn sys_stat() {
 
 #[inline(always)]
 pub fn sys_spawn(path: &str) -> u16 {
-    let pid = syscall!(Syscall::Spawn, path.as_ptr() as u64, path.len() as u64) as u16;
-    pid
+    syscall!(Syscall::Spawn, path.as_ptr() as u64, path.len() as u64) as u16
 }
 
 #[inline(always)]
@@ -122,16 +121,16 @@ pub fn sys_new_sem(key: u32, value: usize) -> isize {
 }
 
 #[inline(always)]
-pub fn sys_sem_up(key: u32) -> isize {
+pub fn sys_rm_sem(key: u32) -> isize {
     syscall!(Syscall::Sem, 1, key as usize) as isize
 }
 
 #[inline(always)]
-pub fn sys_sem_down(key: u32) -> isize {
+pub fn sys_sem_up(key: u32) -> isize {
     syscall!(Syscall::Sem, 2, key as usize) as isize
 }
 
 #[inline(always)]
-pub fn sys_rm_sem(key: u32) -> isize {
+pub fn sys_sem_down(key: u32) -> isize {
     syscall!(Syscall::Sem, 3, key as usize) as isize
 }

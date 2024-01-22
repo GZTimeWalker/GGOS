@@ -38,7 +38,7 @@ unsafe fn mother_spin() {
 
     println!(
         "Mother - SPIN : Start to make cheese burger, there are {} cheese burger now",
-        &BURGER
+        BURGER
     );
 
     BURGER += 10;
@@ -49,7 +49,7 @@ unsafe fn mother_spin() {
 
     println!(
         "Mother - SPIN : Oh, Jesus! There are {} cheese burgers",
-        &BURGER
+        BURGER
     );
 
     LOCK.unlock();
@@ -85,7 +85,7 @@ unsafe fn mother_semaphore() {
 
     println!(
         "Mother - SEMA : Start to make cheese burger, there are {} cheese burger now",
-        &BURGER_SEM
+        BURGER_SEM
     );
 
     BURGER_SEM += 10;
@@ -96,7 +96,7 @@ unsafe fn mother_semaphore() {
 
     println!(
         "Mother - SEMA : Oh, Jesus! There are {} cheese burgers",
-        &BURGER_SEM
+        BURGER_SEM
     );
 
     sys_sem_up(0x2323);

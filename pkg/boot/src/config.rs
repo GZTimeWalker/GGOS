@@ -13,14 +13,14 @@ pub struct Config<'a> {
     pub kernel_stack_auto_grow: u64,
     /// The path of kernel ELF
     pub kernel_path: &'a str,
-    /// The resolution of graphic output
-    pub resolution: Option<(usize, usize)>,
     /// The path of initramfs
     pub initramfs: Option<&'a str>,
     /// Kernel command line
     pub cmdline: &'a str,
     /// Load apps into memory, when no fs implemented in kernel
     pub load_apps: bool,
+    /// Log level
+    pub log_level: &'a str,
 }
 
 const DEFAULT_CONFIG: Config = Config {
@@ -29,10 +29,10 @@ const DEFAULT_CONFIG: Config = Config {
     physical_memory_offset: 0xFFFF_8000_0000_0000,
     kernel_stack_auto_grow: 0,
     kernel_path: "\\KERNEL.ELF",
-    resolution: None,
     initramfs: None,
     cmdline: "",
     load_apps: false,
+    log_level: "info",
 };
 
 impl<'a> Config<'a> {
@@ -68,16 +68,11 @@ impl<'a> Config<'a> {
                 self.physical_memory_offset = r16;
             }
             "kernel_path" => self.kernel_path = value,
-            "resolution" => {
-                let mut iter = value.split('x');
-                let x = iter.next().unwrap().parse::<usize>().unwrap();
-                let y = iter.next().unwrap().parse::<usize>().unwrap();
-                self.resolution = Some((x, y));
-            }
             "kernel_stack_auto_grow" => self.kernel_stack_auto_grow = r10,
             "initramfs" => self.initramfs = Some(value),
             "cmdline" => self.cmdline = value,
             "load_apps" => self.load_apps = r10 != 0,
+            "log_level" => self.log_level = value,
             _ => warn!("undefined config key: {}", key),
         }
     }

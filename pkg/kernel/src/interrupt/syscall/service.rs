@@ -1,10 +1,10 @@
 use core::alloc::Layout;
 
-use crate::process::ProcessId;
-use crate::utils::Registers;
-use crate::{display::get_display_for_sure, utils::*};
-use embedded_graphics::prelude::*;
-use x86_64::structures::idt::InterruptStackFrame;
+use embedded_graphics::geometry::Point;
+
+use crate::display::get_display_for_sure;
+use crate::proc::*;
+use crate::utils::*;
 
 use super::SyscallArgs;
 
@@ -69,7 +69,7 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
 
     let file = file.unwrap();
 
-    let pid = crate::process::spawn(&file);
+    let pid = spawn(&file);
 
     if pid.is_err() {
         warn!("spawn_process: failed to spawn process: {}", path);
@@ -80,7 +80,7 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
 }
 
 pub fn sys_read(args: &SyscallArgs) -> usize {
-    let fd = get_handle(args.arg0 as u8);
+    let fd = handle(args.arg0 as u8);
     if let Some(res) = fd {
         let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
         if let Ok(size) = res.read(buf) {
@@ -94,7 +94,7 @@ pub fn sys_read(args: &SyscallArgs) -> usize {
 }
 
 pub fn sys_write(args: &SyscallArgs) -> usize {
-    let fd = get_handle(args.arg0 as u8);
+    let fd = handle(args.arg0 as u8);
     if let Some(res) = fd {
         let buf = unsafe { core::slice::from_raw_parts_mut(args.arg1 as *mut u8, args.arg2) };
         if let Ok(size) = res.write(buf) {
@@ -108,11 +108,11 @@ pub fn sys_write(args: &SyscallArgs) -> usize {
 }
 
 pub fn sys_get_pid() -> u16 {
-    u16::from(crate::process::current_pid())
+    u16::from(current_pid())
 }
 
-pub fn sys_fork(regs: &mut Registers, sf: &mut InterruptStackFrame) {
-    crate::process::fork(regs, sf)
+pub fn sys_fork(context: &mut ProcessContext) {
+    fork(context)
 }
 
 pub fn sys_open(args: &SyscallArgs) -> usize {
@@ -123,7 +123,7 @@ pub fn sys_open(args: &SyscallArgs) -> usize {
         ))
     };
 
-    let fd = crate::process::open(path, args.arg2 as u8);
+    let fd = open(path, args.arg2 as u8);
 
     if fd.is_none() {
         warn!("sys_open: failed to open: {}", path);
@@ -138,15 +138,15 @@ pub fn sys_open(args: &SyscallArgs) -> usize {
 }
 
 pub fn sys_close(args: &SyscallArgs) -> usize {
-    crate::process::close(args.arg0 as u8) as usize
+    close(args.arg0 as u8) as usize
 }
 
-pub fn exit_process(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
-    crate::process::process_exit(args.arg0 as isize, regs, sf);
+pub fn exit_process(args: &SyscallArgs, context: &mut ProcessContext) {
+    process_exit(args.arg0 as isize, context);
 }
 
 pub fn list_process() {
-    crate::process::print_process_list();
+    print_process_list();
 }
 
 pub fn list_dir(args: &SyscallArgs) {
@@ -159,31 +159,27 @@ pub fn list_dir(args: &SyscallArgs) {
     crate::filesystem::ls(root);
 }
 
-pub fn get_handle(fd: u8) -> Option<Resource> {
-    crate::process::handle(fd)
-}
-
 pub fn sys_wait_pid(args: &SyscallArgs) -> usize {
     let pid = ProcessId(args.arg0 as u16);
-    let ret = crate::process::wait_pid(pid);
+    let ret = wait_pid(pid);
     ret as usize
 }
 
-pub fn sys_kill(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
+pub fn sys_kill(args: &SyscallArgs, context: &mut ProcessContext) {
     let pid = ProcessId(args.arg0 as u16);
     if pid == ProcessId(1) {
         warn!("sys_kill: cannot kill kernel!");
         return;
     }
-    crate::process::kill(pid, regs, sf);
+    kill(pid, context);
 }
 
-pub fn sys_sem(args: &SyscallArgs, regs: &mut Registers, sf: &mut InterruptStackFrame) {
+pub fn sys_sem(args: &SyscallArgs, context: &mut ProcessContext) {
     match args.arg0 {
-        0 => regs.set_rax(crate::process::new_sem(args.arg1 as u32, args.arg2) as usize),
-        1 => regs.set_rax(crate::process::sem_up(args.arg1 as u32) as usize),
-        2 => crate::process::sem_down(args.arg1 as u32, regs, sf),
-        3 => regs.set_rax(crate::process::remove_sem(args.arg1 as u32) as usize),
-        _ => regs.set_rax(usize::MAX),
+        0 => context.set_rax(new_sem(args.arg1 as u32, args.arg2) as usize),
+        1 => context.set_rax(remove_sem(args.arg1 as u32) as usize),
+        2 => sem_up(args.arg1 as u32, context),
+        3 => sem_down(args.arg1 as u32, context),
+        _ => context.set_rax(usize::MAX),
     }
 }

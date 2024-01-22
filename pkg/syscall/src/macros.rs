@@ -5,12 +5,14 @@ use core::arch::asm;
 #[inline(always)]
 pub fn syscall0(n: Syscall) -> usize {
     let ret: usize;
+
     unsafe {
         asm!(
             "int 0x80", in("rax") n as usize,
             lateout("rax") ret
         );
     }
+
     ret
 }
 

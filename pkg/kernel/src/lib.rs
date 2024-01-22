@@ -32,8 +32,7 @@ pub mod tasks;
 pub use tasks::*;
 
 pub mod interrupt;
-
-pub mod process;
+pub mod proc;
 
 pub use alloc::format;
 use boot::BootInfo;
@@ -50,7 +49,7 @@ pub fn init(boot_info: &'static BootInfo) {
     clock::init(boot_info); // init clock (uefi service)
     memory::init(boot_info); // init memory manager
     memory::user::init(); // init user heap allocator
-    process::init(boot_info); // init process manager
+    proc::init(boot_info); // init process manager
     keyboard::init(); // init keyboard
     input::init(); // init input
     ata::init(); // init ata

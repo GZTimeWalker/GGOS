@@ -38,6 +38,9 @@ pub struct BootInfo {
 
     // Loaded apps
     pub loaded_apps: Option<ArrayVec<App<'static>, 16>>,
+
+    // Log Level
+    pub log_level: &'static str,
 }
 
 /// App information

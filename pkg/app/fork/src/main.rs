@@ -17,9 +17,9 @@ fn main() -> usize {
     if ret == 0 {
         println!("I am the child process");
         unsafe {
-            println!("child read value of M: {:#x}", &M);
+            println!("child read value of M: {:#x}", M);
             M = 0x2333;
-            println!("child changed the value of M: {:#x}", &M);
+            println!("child changed the value of M: {:#x}", M);
         }
         c += 32;
     } else {
@@ -34,7 +34,7 @@ fn main() -> usize {
         println!("Child exited with status {}", ret);
 
         unsafe {
-            println!("parent read value of M: {:#x}", &M);
+            println!("parent read value of M: {:#x}", M);
         }
 
         c += 1024;

@@ -1,12 +1,3 @@
-//! Simple ELF OS Loader on UEFI @ 2022.03.23
-//!
-//! 1. Load config from "\EFI\Boot\rboot.conf"
-//! 2. Load kernel ELF file
-//! 3. Map ELF segments to virtual memory
-//! 4. Map kernel stack and all physical memory
-//! 5. Startup all processors
-//! 6. Exit boot and jump to ELF entry
-
 #![no_std]
 #![no_main]
 #![feature(alloc_error_handler)]
@@ -17,14 +8,9 @@ extern crate alloc;
 
 use alloc::boxed::Box;
 use alloc::vec;
+use ggos_boot::GraphicInfo;
 use core::arch::asm;
-use ggos_boot::allocator::*;
-use ggos_boot::fs::*;
-use ggos_boot::{BootInfo, GraphicInfo, KernelPages};
 use uefi::prelude::*;
-use uefi::proto::console::gop::GraphicsOutput;
-use uefi::table::boot::MemoryType;
-use uefi::table::cfg::ACPI2_GUID;
 use x86_64::registers::control::*;
 use x86_64::registers::model_specific::EferFlags;
 use x86_64::structures::paging::page::PageRangeInclusive;
@@ -32,6 +18,9 @@ use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
 use xmas_elf::program::ProgramHeader;
 use xmas_elf::ElfFile;
+use ggos_boot::allocator::*;
+use ggos_boot::fs::*;
+use ggos_boot::*;
 
 mod config;
 
@@ -53,14 +42,6 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     let graphic_info = init_graphic(bs);
     info!("config: {:#x?}", config);
-
-    let acpi2_addr = system_table
-        .config_table()
-        .iter()
-        .find(|entry| entry.guid == ACPI2_GUID)
-        .expect("failed to find ACPI 2 RSDP")
-        .address;
-    info!("ACPI2: {:?}", acpi2_addr);
 
     let elf = {
         let mut file = open_file(bs, config.kernel_path);
@@ -95,9 +76,9 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         .unwrap()
         .max(0x1_0000_0000); // include IOAPIC MMIO area
 
+    // Map ELF segments, kernel stack and physical memory to virtual memory
     let mut page_table = current_page_table();
-    // root page table is readonly
-    // disable write protect
+    // root page table is readonly, disable write protect
     unsafe {
         Cr0::update(|f| f.remove(Cr0Flags::WRITE_PROTECT));
         Efer::update(|f| f.insert(EferFlags::NO_EXECUTE_ENABLE));
@@ -140,16 +121,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         Cr0::update(|f| f.insert(Cr0Flags::WRITE_PROTECT));
     }
 
-    // FIXME: multi-core
-    //  All application processors will be shutdown after ExitBootService.
-    //  Disable now.
-    // start_aps(bs);
-
-    // for i in 0..5 {
-    //     info!("Waiting for next stage... {}", 5 - i);
-    //     bs.stall(100_000);
-    // }
-
+    // 5. Exit boot and jump to ELF entry
     info!("Exiting boot services...");
 
     let (runtime, mmap) = system_table.exit_boot_services(MemoryType::LOADER_DATA);
@@ -160,9 +132,10 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         memory_map: mmap.entries().copied().collect(),
         kernel_pages: get_page_usage(&elf),
         physical_memory_offset: config.physical_memory_offset,
-        graphic_info,
         system_table: runtime,
         loaded_apps: apps,
+        log_level: config.log_level,
+        graphic_info
     };
 
     // align stack to 8 bytes
@@ -170,25 +143,6 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
 
     unsafe {
         jump_to_entry(&bootinfo, stacktop);
-    }
-}
-
-/// If `resolution` is some, then set graphic mode matching the resolution.
-/// Return information of the final graphic mode.
-fn init_graphic(bs: &BootServices) -> GraphicInfo {
-    let handle = bs
-        .get_handle_for_protocol::<GraphicsOutput>()
-        .expect("Failed to get GOP handle");
-    let gop = bs
-        .open_protocol_exclusive::<GraphicsOutput>(handle)
-        .expect("Failed to get GraphicsOutput");
-
-    let mut gop = gop;
-
-    GraphicInfo {
-        mode: gop.current_mode_info(),
-        fb_addr: gop.frame_buffer().as_mut_ptr() as u64,
-        fb_size: gop.frame_buffer().size() as u64,
     }
 }
 
@@ -212,6 +166,25 @@ fn get_page_range(header: ProgramHeader) -> PageRangeInclusive {
     let start_page = Page::containing_address(virt_start_addr);
     let end_page = Page::containing_address(virt_start_addr + mem_size - 1u64);
     Page::range_inclusive(start_page, end_page)
+}
+
+/// If `resolution` is some, then set graphic mode matching the resolution.
+/// Return information of the final graphic mode.
+fn init_graphic(bs: &BootServices) -> GraphicInfo {
+    let handle = bs
+        .get_handle_for_protocol::<GraphicsOutput>()
+        .expect("Failed to get GOP handle");
+    let gop = bs
+        .open_protocol_exclusive::<GraphicsOutput>(handle)
+        .expect("Failed to get GraphicsOutput");
+
+    let mut gop = gop;
+
+    GraphicInfo {
+        mode: gop.current_mode_info(),
+        fb_addr: gop.frame_buffer().as_mut_ptr() as u64,
+        fb_size: gop.frame_buffer().size() as u64,
+    }
 }
 
 /// The entry point of kernel, set by BSP.

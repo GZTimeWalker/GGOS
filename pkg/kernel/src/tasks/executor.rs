@@ -1,7 +1,7 @@
-use crate::process;
+use crate::proc;
 
 use super::{Task, TaskId};
-use crate::process::ProcessId;
+use crate::proc::ProcessId;
 use alloc::{collections::BTreeMap, sync::Arc, task::Wake};
 use core::future::Future;
 use core::task::{Context, Poll, Waker};
@@ -41,7 +41,7 @@ impl Executor {
     pub fn run(&mut self, init: ProcessId) {
         loop {
             self.run_ready_tasks();
-            if process::still_alive(init) {
+            if proc::still_alive(init) {
                 self.sleep_if_idle();
             } else {
                 break;
