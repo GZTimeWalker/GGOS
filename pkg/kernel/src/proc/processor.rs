@@ -59,7 +59,7 @@ impl Processor {
 
     #[inline]
     pub fn set_pid(&self, pid: ProcessId) {
-        self.0.store(u16::from(pid), Ordering::Relaxed);
+        self.0.store(pid.0, Ordering::Relaxed);
     }
 
     #[inline]

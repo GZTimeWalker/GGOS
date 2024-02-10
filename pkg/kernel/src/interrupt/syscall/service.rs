@@ -76,7 +76,7 @@ pub fn spawn_process(args: &SyscallArgs) -> usize {
         return 0;
     }
 
-    u16::from(pid.unwrap()) as usize
+    pid.unwrap().0 as usize
 }
 
 pub fn sys_read(args: &SyscallArgs) -> usize {
@@ -108,7 +108,7 @@ pub fn sys_write(args: &SyscallArgs) -> usize {
 }
 
 pub fn sys_get_pid() -> u16 {
-    u16::from(current_pid())
+    current_pid().0
 }
 
 pub fn sys_fork(context: &mut ProcessContext) {

@@ -97,7 +97,7 @@ impl Process {
         });
 
         // fork ret value
-        inner.context.set_rax(u16::from(child.pid) as usize);
+        inner.context.set_rax(child.pid.0 as usize);
 
         // record child pid
         inner.add_child(child.clone());
@@ -491,8 +491,8 @@ impl core::fmt::Display for Process {
         write!(
             f,
             " #{:-3} | #{:-3} | {:12} | {:7} | {:>5.1} {} | {:?}",
-            u16::from(self.pid),
-            inner.parent().map(|p| u16::from(p.pid)).unwrap_or(0),
+            self.pid.0,
+            inner.parent().map(|p| p.pid.0).unwrap_or(0),
             inner.name,
             inner.ticks_passed,
             size,
