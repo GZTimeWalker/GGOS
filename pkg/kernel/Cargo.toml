@@ -28,4 +28,4 @@ crossbeam-queue = { version = "0.3", default-features = false, features = ["allo
 volatile = "0.5"
 xmas-elf = "0.9"
 futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
-roaring = { git = "https://github.com/GZTimeWalker/roaring-rs.git", branch = "no-std", default-features = false }
+roaring = { git = "https://github.com/RoaringBitmap/roaring-rs", branch = "main", default-features = false }
