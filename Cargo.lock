@@ -494,8 +494,9 @@ dependencies = [
 
 [[package]]
 name = "roaring"
-version = "0.10.2"
-source = "git+https://github.com/RoaringBitmap/roaring-rs?branch=main#a2aa2a5644de40e7c69d52dc74dbae82e7457403"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1c77081a55300e016cb86f2864415b7518741879db925b8d488a0ee0d2da6bf"
 
 [[package]]
 name = "rustversion"
