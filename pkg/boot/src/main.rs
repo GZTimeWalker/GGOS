@@ -8,19 +8,17 @@ extern crate alloc;
 
 use alloc::boxed::Box;
 use alloc::vec;
-use ggos_boot::GraphicInfo;
 use core::arch::asm;
+use ggos_boot::allocator::*;
+use ggos_boot::fs::*;
+use ggos_boot::*;
 use uefi::prelude::*;
 use x86_64::registers::control::*;
-use x86_64::registers::model_specific::EferFlags;
 use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::structures::paging::*;
 use x86_64::VirtAddr;
 use xmas_elf::program::ProgramHeader;
 use xmas_elf::ElfFile;
-use ggos_boot::allocator::*;
-use ggos_boot::fs::*;
-use ggos_boot::*;
 
 mod config;
 
@@ -135,7 +133,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         system_table: runtime,
         loaded_apps: apps,
         log_level: config.log_level,
-        graphic_info
+        graphic_info,
     };
 
     // align stack to 8 bytes

@@ -1,8 +1,5 @@
-use super::ProcessId;
 use super::*;
 use crate::memory::{self, *};
-use alloc::string::String;
-use alloc::sync::Arc;
 use alloc::sync::Weak;
 use alloc::vec::Vec;
 use core::intrinsics::copy_nonoverlapping;
@@ -10,8 +7,6 @@ use spin::*;
 use x86_64::structures::paging::mapper::{CleanUp, MapToError};
 use x86_64::structures::paging::page::PageRange;
 use x86_64::structures::paging::*;
-use x86_64::VirtAddr;
-use xmas_elf::ElfFile;
 
 #[derive(Clone)]
 pub struct Process {

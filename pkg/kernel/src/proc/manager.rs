@@ -6,11 +6,8 @@ use crate::memory::{
     user::{USER_ALLOCATOR, USER_HEAP_SIZE},
     PAGE_SIZE,
 };
-use alloc::{collections::BTreeMap, sync::Weak};
-use alloc::{collections::VecDeque, format, sync::Arc};
+use alloc::{collections::BTreeMap, collections::VecDeque, format, sync::Weak};
 use spin::{Mutex, RwLock};
-use x86_64::VirtAddr;
-use xmas_elf::ElfFile;
 
 pub static PROCESS_MANAGER: spin::Once<ProcessManager> = spin::Once::new();
 

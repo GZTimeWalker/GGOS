@@ -1,15 +1,12 @@
-use alloc::{collections::BTreeMap, string::String, sync::Arc, vec::Vec};
+use alloc::{collections::BTreeMap, vec::Vec};
 use boot::KernelPages;
 use spin::RwLock;
-use x86_64::{
-    structures::paging::{
-        page::{PageRange, PageRangeInclusive},
-        Page,
-    },
-    VirtAddr,
+use x86_64::structures::paging::{
+    page::{PageRange, PageRangeInclusive},
+    Page,
 };
 
-use crate::{filesystem::StdIO, Resource};
+use crate::filesystem::StdIO;
 
 use super::*;
 

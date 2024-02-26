@@ -2,8 +2,6 @@
 #![no_main]
 #![allow(unreachable_code)]
 
-use chrono::Duration;
-
 use embedded_graphics::pixelcolor::Rgb888;
 use lib::*;
 
