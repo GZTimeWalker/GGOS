@@ -2,29 +2,25 @@ use crate::drivers::{console, serial};
 use alloc::string::String;
 use crossbeam_queue::ArrayQueue;
 use pc_keyboard::DecodedKey;
-use x86_64::instructions::interrupts;
-
-once_mutex!(pub INPUT_BUF: ArrayQueue<DecodedKey>);
 
 const DEFAULT_BUF_SIZE: usize = 128;
 
-guard_access_fn!(pub get_input_buf(INPUT_BUF: ArrayQueue<DecodedKey>));
+type Key = DecodedKey;
 
-pub fn init() {
-    init_INPUT_BUF(ArrayQueue::new(DEFAULT_BUF_SIZE));
-    info!("Input Initialized.");
+lazy_static! {
+    static ref INPUT_BUF: ArrayQueue<Key> = ArrayQueue::new(DEFAULT_BUF_SIZE);
 }
 
-pub fn push_key(key: DecodedKey) {
-    if let Some(queue) = get_input_buf() {
-        if queue.push(key).is_err() {
-            warn!("Input buffer is full. Dropping key '{:?}'", key);
-        }
+#[inline]
+pub fn push_key(key: Key) {
+    if INPUT_BUF.push(key).is_err() {
+        warn!("Input buffer is full. Dropping key '{:?}'", key);
     }
 }
 
-pub fn try_get_key() -> Option<DecodedKey> {
-    interrupts::without_interrupts(|| get_input_buf_for_sure().pop())
+#[inline]
+pub fn try_get_key() -> Option<Key> {
+    INPUT_BUF.pop()
 }
 
 pub fn get_key() -> DecodedKey {
