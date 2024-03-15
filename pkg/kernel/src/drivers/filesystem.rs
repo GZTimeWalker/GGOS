@@ -1,14 +1,16 @@
 use crate::ata::*;
-use alloc::{borrow::ToOwned, string::ToString};
-use fs::*;
+use alloc::boxed::Box;
+use chrono::DateTime;
+use fs::{FileSystem, Mount};
 
-pub type Disk = fs::device::Disk<Drive>;
-pub type Volume = fs::device::FAT16Volume<Drive>;
+pub type Disk = fs::mbr::Disk<Drive>;
+pub type Volume = fs::mbr::Volume<Drive>;
+pub type Fat16 = fs::fat16::Fat16<Volume>;
 
-pub static FILESYSTEM: spin::Once<Volume> = spin::Once::new();
+pub static ROOTFS: spin::Once<Mount> = spin::Once::new();
 
-pub fn get_volume() -> &'static Volume {
-    FILESYSTEM.get().unwrap()
+pub fn get_rootfs() -> &'static Mount {
+    ROOTFS.get().unwrap()
 }
 
 #[derive(Debug, Clone)]
@@ -21,74 +23,46 @@ pub enum StdIO {
 pub fn init() {
     info!("Opening disk device...");
     let disk = Disk::new(Drive::open(0, 0).unwrap());
+
+    // QEMU's default disk image has a single partition
     let [p0, _, _, _] = disk.volumes().unwrap();
 
     info!("Mounting filesystem...");
-    FILESYSTEM.call_once(|| FAT16Volume::new(p0));
+    ROOTFS.call_once(|| Mount::new(Box::new(Fat16::new(p0)), "/".into()));
+
+    trace!("Root filesystem: {:#?}", ROOTFS.get().unwrap());
 
     info!("Initialized Filesystem.");
 }
 
-pub fn resolve_path(root_path: &str) -> Option<Directory> {
-    let mut path = root_path.to_owned();
-    let mut root = fs::root_dir();
-
-    while let Some(pos) = path.find('/') {
-        let dir = path[..pos].to_owned();
-
-        let tmp = fs::find_directory_entry(get_volume(), &root, dir.as_str());
-
-        if tmp.is_err() {
-            warn!("Directory not found: {}, {:?}", root_path, tmp);
-            return None;
-        }
-
-        root = tmp.unwrap();
-
-        path = path[pos + 1..].to_string();
-        trace!("Resolving path: {}", path);
-
-        if path.is_empty() {
-            break;
-        }
-    }
-
-    Some(root)
-}
-
-pub fn try_get_file(path: &str, mode: file::Mode) -> Result<File, VolumeError> {
-    let path = path.to_owned();
-    let pos = path.rfind('/');
-
-    if pos.is_none() {
-        return Err(VolumeError::FileNotFound);
-    }
-    let pos = pos.unwrap();
-
-    trace!("Root: {}, Filename: {}", &path[..=pos], &path[pos + 1..]);
-
-    let root = resolve_path(&path[..=pos]);
-    let filename = &path[pos + 1..];
-
-    if root.is_none() {
-        return Err(VolumeError::FileNotFound);
-    }
-    let root = root.unwrap();
-
-    fs::open_file(get_volume(), &root, filename, mode)
-}
-
 pub fn ls(root_path: &str) {
-    let root = match resolve_path(root_path) {
-        Some(root) => root,
-        None => return,
-    };
+    let iter = get_rootfs().read_dir(root_path);
+
+    if let Err(err) = iter {
+        warn!("{:?}", err);
+        return;
+    }
+
+    let iter = iter.unwrap();
 
     println!("  Size | Last Modified       | Name");
 
-    if let Err(err) = fs::iterate_dir(get_volume(), &root, |entry| {
-        println!("{}", entry);
-    }) {
-        println!("{:?}", err);
+    for meta in iter {
+        let (size, unit) = fs::humanized_size(meta.len);
+        println!(
+            "{:>5.*}{} | {} | {}{}",
+            1,
+            size,
+            unit,
+            meta.modified
+                .map(|t| t.format("%Y/%m/%d %H:%M:%S"))
+                .unwrap_or(
+                    DateTime::from_timestamp_millis(0)
+                        .unwrap()
+                        .format("%Y/%m/%d %H:%M:%S")
+                ),
+            meta.name,
+            if meta.is_dir() { "/" } else { "" }
+        );
     }
 }

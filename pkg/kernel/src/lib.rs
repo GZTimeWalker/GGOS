@@ -51,7 +51,6 @@ pub fn init(boot_info: &'static BootInfo) {
     memory::user::init(); // init user heap allocator
     proc::init(boot_info); // init process manager
     keyboard::init(); // init keyboard
-    ata::init(); // init ata
     filesystem::init(); // init filesystem
 
     x86_64::instructions::interrupts::enable();

@@ -4,7 +4,7 @@
 //! - <https://wiki.osdev.org/FAT#Directories_on_FAT12.2F16.2F32>
 //! - <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/filesystem.rs>
 
-use crate::dir_entry::*;
+use super::*;
 
 #[derive(Debug)]
 pub struct Directory {
@@ -19,6 +19,13 @@ impl Directory {
     pub fn new(cluster: Cluster) -> Self {
         Directory {
             cluster,
+            entry: None,
+        }
+    }
+
+    pub const fn root() -> Self {
+        Directory {
+            cluster: Cluster::ROOT_DIR,
             entry: None,
         }
     }

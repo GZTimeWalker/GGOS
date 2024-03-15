@@ -29,11 +29,10 @@ pub fn spawn_init(boot_info: &'static boot::BootInfo) -> proc::ProcessId {
         for app in apps {
             if app.name.eq("sh") {
                 info!("Found sh in loaded apps, spawning...");
-                return proc::elf_spawn("sh".to_string(), &app.elf, None).unwrap();
+                return proc::elf_spawn("sh".to_string(), &app.elf).unwrap();
             }
         }
     }
 
-    let sh_file = filesystem::try_get_file("/APP/SH", fs::Mode::ReadOnly).unwrap();
-    proc::spawn(&sh_file).unwrap()
+    proc::fs_spawn("/APP/SH").unwrap()
 }

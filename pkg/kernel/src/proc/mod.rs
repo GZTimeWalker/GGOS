@@ -8,7 +8,8 @@ mod processor;
 mod sync;
 
 use alloc::sync::Arc;
-use fs::File;
+use alloc::vec::Vec;
+use fs::FileSystem;
 use manager::*;
 use paging::*;
 use process::*;
@@ -19,8 +20,8 @@ pub use data::ProcessData;
 pub use pid::ProcessId;
 use xmas_elf::ElfFile;
 
-use crate::{filesystem::get_volume, Resource};
-use alloc::{string::String, vec};
+use crate::get_rootfs;
+use alloc::string::{String, ToString};
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::{registers::control::Cr2, structures::idt::InterruptStackFrame, VirtAddr};
 
@@ -118,10 +119,12 @@ pub fn wait_pid(pid: ProcessId) -> isize {
     x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().wait_pid(pid))
 }
 
-pub fn handle(fd: u8) -> Option<Resource> {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager().current().read().handle(fd)
-    })
+pub fn read(fd: u8, buf: &mut [u8]) -> isize {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().read(fd, buf))
+}
+
+pub fn write(fd: u8, buf: &[u8]) -> isize {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().write(fd, buf))
 }
 
 pub fn open(path: &str, mode: u8) -> Option<u8> {
@@ -210,33 +213,48 @@ pub fn try_resolve_page_fault(
     Err(())
 }
 
-pub fn spawn(file: &File) -> Result<ProcessId, String> {
-    let size = file.length();
-    let pages = (size as usize + 0x1000 - 1) / 0x1000;
-    let mut buf = vec![0u8; pages * 0x1000];
+pub fn fs_spawn(path: &str) -> Option<ProcessId> {
+    let handle = get_rootfs().open_file(path);
 
-    fs::read_to_buf(get_volume(), file, &mut buf).map_err(|_| "Failed to read file")?;
+    if let Err(e) = handle {
+        warn!("fs_spawn: file error: {}, err: {:?}", path, e);
+        return None;
+    }
 
-    let elf = xmas_elf::ElfFile::new(&buf).map_err(|_| "Invalid ELF file")?;
+    let mut handle = handle.unwrap();
 
-    let pid = elf_spawn(file.entry.filename(), &elf, Some(file))?;
+    let mut file_buffer = Vec::new();
+
+    if let Err(e) = handle.read_all(&mut file_buffer) {
+        warn!("fs_spawn: failed to read file: {}, err: {:?}", path, e);
+        return None;
+    }
+
+    match spawn(handle.meta.name, file_buffer) {
+        Ok(pid) => Some(pid),
+        Err(e) => {
+            warn!("fs_spawn: failed to spawn process: {}, {}", path, e);
+            None
+        }
+    }
+}
+
+pub fn spawn(name: String, file_buffer: Vec<u8>) -> Result<ProcessId, String> {
+    let elf = xmas_elf::ElfFile::new(&file_buffer).map_err(|e| e.to_string())?;
+
+    let pid = elf_spawn(name, &elf)?;
 
     Ok(pid)
 }
 
-pub fn elf_spawn(name: String, elf: &ElfFile, file: Option<&File>) -> Result<ProcessId, String> {
+pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
     let pid = x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
         let process_name = name.to_lowercase();
 
         let parent = Arc::downgrade(&manager.current());
-        let mut proc_data = ProcessData::new();
 
-        if let Some(f) = file {
-            proc_data.open(Resource::File(f.clone()));
-        }
-
-        let pid = manager.spawn(elf, name, Some(parent), Some(proc_data));
+        let pid = manager.spawn(elf, name, Some(parent), None);
 
         debug!("Spawned process: {}#{}", process_name, pid);
         pid

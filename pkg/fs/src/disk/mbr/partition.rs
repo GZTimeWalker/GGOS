@@ -18,7 +18,7 @@ impl MBRPartitions {
                     .unwrap(),
             );
             if partitions[i].is_active() {
-                trace!("Partition {}: {:?}", i, partitions[i]);
+                trace!("Partition {}: {:#?}", i, partitions[i]);
             }
         }
         Self {
@@ -76,17 +76,48 @@ impl PartitionMetaData {
 
 impl core::fmt::Debug for PartitionMetaData {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        writeln!(f, "Partition Meta Data: {{")?;
-        writeln!(f, "  Active: {}", self.is_active())?;
-        writeln!(f, "  Begin Head: 0x{:02x}", self.begin_head())?;
-        writeln!(f, "  Begin Sector: 0x{:04x}", self.begin_sector())?;
-        writeln!(f, "  Begin Cylinder: 0x{:04x}", self.begin_cylinder())?;
-        writeln!(f, "  Filesystem Flag: 0x{:02x}", self.filesystem_flag())?;
-        writeln!(f, "  End Head: 0x{:02x}", self.end_head())?;
-        writeln!(f, "  End Sector: 0x{:04x}", self.end_sector())?;
-        writeln!(f, "  End Cylinder: 0x{:04x}", self.end_cylinder())?;
-        writeln!(f, "  Begin LBA: 0x{:08x}", self.begin_lba())?;
-        writeln!(f, "  Total LBA: 0x{:08x}", self.total_lba())?;
-        write!(f, "}}")
+        f.debug_struct("Partition Meta Data")
+            .field("Active", &self.is_active())
+            .field("Begin Head", &format!("0x{:02x}", self.begin_head()))
+            .field("Begin Sector", &format!("0x{:04x}", self.begin_sector()))
+            .field(
+                "Begin Cylinder",
+                &format!("0x{:04x}", self.begin_cylinder()),
+            )
+            .field(
+                "Filesystem Flag",
+                &format!("0x{:02x}", self.filesystem_flag()),
+            )
+            .field("End Head", &format!("0x{:02x}", self.end_head()))
+            .field("End Sector", &format!("0x{:04x}", self.end_sector()))
+            .field("End Cylinder", &format!("0x{:04x}", self.end_cylinder()))
+            .field("Begin LBA", &format!("0x{:08x}", self.begin_lba()))
+            .field("Total LBA", &format!("0x{:08x}", self.total_lba()))
+            .finish()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn partition_test() {
+        let data = hex_literal::hex!("80 01 01 00 0b fe bf fc 3f 00 00 00 7e 86 bb 00");
+
+        let meta = PartitionMetaData::parse(&data);
+
+        println!("{:?}", meta);
+
+        assert!(meta.is_active());
+        assert_eq!(meta.begin_head(), 1);
+        assert_eq!(meta.begin_sector(), 1);
+        assert_eq!(meta.begin_cylinder(), 0);
+        assert_eq!(meta.filesystem_flag(), 0x0b);
+        assert_eq!(meta.end_head(), 254);
+        assert_eq!(meta.end_sector(), 63);
+        assert_eq!(meta.end_cylinder(), 764);
+        assert_eq!(meta.begin_lba(), 63);
+        assert_eq!(meta.total_lba(), 12289662);
     }
 }

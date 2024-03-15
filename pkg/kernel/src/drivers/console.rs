@@ -291,20 +291,20 @@ impl Console {
 }
 
 impl Device<u8> for Console {
-    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize, DeviceError> {
+    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> fs::Result<usize> {
         if offset + size >= buf.len() {
-            return Err(DeviceError::ReadError);
+            return Err(DeviceError::ReadError.into());
         }
         // TODO: get key
         Ok(0)
     }
 
-    fn write(&mut self, buf: &[u8], offset: usize, size: usize) -> Result<usize, DeviceError> {
+    fn write(&mut self, buf: &[u8], offset: usize, size: usize) -> fs::Result<usize> {
         if let Ok(s) = core::str::from_utf8(&buf[offset..offset + size]) {
             self.write(s);
             Ok(size)
         } else {
-            Err(DeviceError::WriteError)
+            Err(DeviceError::WriteError.into())
         }
     }
 }

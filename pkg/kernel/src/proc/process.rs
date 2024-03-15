@@ -1,7 +1,6 @@
 use super::*;
 use crate::memory::{self, *};
 use alloc::sync::Weak;
-use alloc::vec::Vec;
 use core::intrinsics::copy_nonoverlapping;
 use spin::*;
 use x86_64::structures::paging::mapper::{CleanUp, MapToError};

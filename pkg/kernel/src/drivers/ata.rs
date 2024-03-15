@@ -4,28 +4,28 @@
 //! reference: https://wiki.osdev.org/ATA_PIO_Mode
 //! reference: https://github.com/xfoxfu/rust-xos/blob/main/kernel/src/drivers/ide.rs
 
-use alloc::boxed::Box;
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
+use alloc::vec;
+use alloc::{boxed::Box, vec::Vec};
 use bit_field::BitField;
 use core::hint::spin_loop;
+use spin::Mutex;
 use x86_64::instructions::port::*;
 
-once_mutex!(pub BUSES: Vec<Bus>);
+lazy_static! {
+    static ref BUSES: Vec<Mutex<Bus>> = {
+        let buses = vec![
+            Mutex::new(Bus::new(0, 14, 0x1F0, 0x3F6)),
+            Mutex::new(Bus::new(1, 15, 0x170, 0x376)),
+        ];
 
-pub fn init() {
-    init_BUSES(Vec::new());
+        info!("Initialized ATA Buses.");
 
-    let mut buses = get_buses_for_sure();
-    buses.push(Bus::new(0, 14, 0x1F0, 0x3F6));
-    buses.push(Bus::new(1, 15, 0x170, 0x376));
-
-    info!("Initialized ATA Buses.");
+        buses
+    };
 }
 
-guard_access_fn! {
-    pub get_buses(BUSES: Vec<Bus>)
-}
-
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Bus {
     id: u8,
@@ -163,7 +163,8 @@ impl Bus {
     }
 
     fn read(&mut self, drive: u8, block: u32, buf: &mut [u8]) -> Result<(), ()> {
-        debug_assert!(buf.len() == fs::Block::SIZE);
+        debug_assert!(buf.len() == fs::Block512::size());
+
         self.setup_pio(drive, block)?;
         self.write_command(ATACommand::ReadSectors)?;
         for chunk in buf.chunks_mut(2) {
@@ -180,7 +181,8 @@ impl Bus {
     }
 
     fn write(&mut self, drive: u8, block: u32, buf: &[u8]) -> Result<(), ()> {
-        debug_assert!(buf.len() == fs::Block::SIZE);
+        debug_assert!(buf.len() == fs::Block512::size());
+
         self.setup_pio(drive, block)?;
         self.write_command(ATACommand::WriteSectors)?;
         for chunk in buf.chunks(2) {
@@ -244,7 +246,6 @@ impl Bus {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 enum ATACommand {
-    Nop = 0x00,
     ReadSectors = 0x20,
     WriteSectors = 0x30,
     Identify = 0xEC,
@@ -252,7 +253,7 @@ enum ATACommand {
 
 #[repr(usize)]
 #[derive(Debug, Clone, Copy)]
-#[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::upper_case_acronyms, dead_code)]
 enum Status {
     #[doc = "Indicates an error occurred. Send a new command to clear it (or nuke it with a Software Reset)."]
     ERR = 0,
@@ -290,9 +291,8 @@ enum IdentifyResponse {
 
 impl Drive {
     pub fn open(bus: u8, dsk: u8) -> Option<Self> {
-        let mut buses = get_buses_for_sure();
         trace!("Opening drive {}@{}...", bus, dsk);
-        if let Ok(IdentifyResponse::Ata(res)) = buses[bus as usize].identify_drive(dsk) {
+        if let Ok(IdentifyResponse::Ata(res)) = BUSES[bus as usize].lock().identify_drive(dsk) {
             let buf = res.map(u16::to_be_bytes).concat();
             let serial = String::from_utf8_lossy(&buf[20..40]).trim().into();
             let model = String::from_utf8_lossy(&buf[54..94]).trim().into();
@@ -312,7 +312,7 @@ impl Drive {
     }
 
     pub const fn block_size(&self) -> usize {
-        fs::Block::SIZE
+        fs::Block512::size()
     }
 
     fn humanized_size(&self) -> (usize, &'static str) {
@@ -336,22 +336,24 @@ impl core::fmt::Display for Drive {
     }
 }
 
-use fs::device::{Block, BlockDevice, DeviceError};
+use fs::{Block512, BlockDevice};
 
-impl BlockDevice for Drive {
-    fn block_count(&self) -> Result<usize, DeviceError> {
+impl BlockDevice<Block512> for Drive {
+    fn block_count(&self) -> fs::Result<usize> {
         Ok(self.blocks as usize)
     }
 
-    fn read_block(&self, offset: usize, block: &mut Block) -> Result<(), DeviceError> {
-        get_buses_for_sure()[self.bus as usize]
+    fn read_block(&self, offset: usize, block: &mut Block512) -> fs::Result<()> {
+        BUSES[self.bus as usize]
+            .lock()
             .read(self.dsk, offset as u32, block.as_mut_u8_slice())
-            .map_err(|_| DeviceError::ReadError)
+            .map_err(|_| fs::DeviceError::ReadError.into())
     }
 
-    fn write_block(&self, offset: usize, block: &Block) -> Result<(), DeviceError> {
-        get_buses_for_sure()[self.bus as usize]
+    fn write_block(&self, offset: usize, block: &Block512) -> fs::Result<()> {
+        BUSES[self.bus as usize]
+            .lock()
             .write(self.dsk, offset as u32, block.as_u8_slice())
-            .map_err(|_| DeviceError::WriteError)
+            .map_err(|_| fs::DeviceError::WriteError.into())
     }
 }

@@ -1,10 +1,13 @@
 use super::*;
-use crate::memory::{
-    self,
-    allocator::{ALLOCATOR, HEAP_SIZE},
-    get_frame_alloc_for_sure,
-    user::{USER_ALLOCATOR, USER_HEAP_SIZE},
-    PAGE_SIZE,
+use crate::{
+    memory::{
+        self,
+        allocator::{ALLOCATOR, HEAP_SIZE},
+        get_frame_alloc_for_sure,
+        user::{USER_ALLOCATOR, USER_HEAP_SIZE},
+        PAGE_SIZE,
+    },
+    Resource,
 };
 use alloc::{collections::BTreeMap, collections::VecDeque, format, sync::Weak};
 use spin::{Mutex, RwLock};
@@ -102,20 +105,15 @@ impl ProcessManager {
         pid
     }
 
-    pub fn open(&self, path: &str, mode: u8) -> Option<u8> {
+    pub fn open(&self, path: &str, _mode: u8) -> Option<u8> {
         let res = match path {
-            "/dev/random" => Resource::Random(fs::Random::new(
-                crate::utils::clock::now().timestamp() as u64,
+            "/dev/random" => Resource::Random(fs::random::Random::new(
+                crate::utils::clock::now().and_utc().timestamp() as u64,
             )),
-            path => {
-                let file = crate::filesystem::try_get_file(path, fs::Mode::try_from(mode).unwrap());
-
-                if file.is_err() {
-                    return None;
-                }
-
-                Resource::File(file.unwrap())
-            }
+            path => match get_rootfs().open_file(path) {
+                Ok(file) => Resource::File(file),
+                Err(_) => return None,
+            },
         };
 
         trace!("Opening {}...\n{:#?}", path, &res);
@@ -131,6 +129,16 @@ impl ProcessManager {
         } else {
             self.current().write().close(fd)
         }
+    }
+
+    #[inline]
+    pub fn read(&self, fd: u8, buf: &mut [u8]) -> isize {
+        self.current().read().read(fd, buf)
+    }
+
+    #[inline]
+    pub fn write(&self, fd: u8, buf: &[u8]) -> isize {
+        self.current().read().write(fd, buf)
     }
 
     pub fn spawn(

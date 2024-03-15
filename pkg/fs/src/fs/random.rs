@@ -1,4 +1,4 @@
-use super::*;
+use crate::*;
 use rand::{RngCore, SeedableRng};
 use rand_hc::Hc128Rng;
 use x86_64::instructions::random::RdRand;
@@ -9,13 +9,13 @@ pub static GLOBAL_RNG: spin::Once<spin::Mutex<Hc128Rng>> = spin::Once::new();
 pub struct Random;
 
 impl Device<u8> for Random {
-    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize, DeviceError> {
+    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize> {
         if let Some(rng) = RdRand::new() {
             for i in 0..size {
                 if let Some(num) = rng.get_u16() {
                     buf[offset + i] = num as u8;
                 } else {
-                    return Err(DeviceError::ReadError);
+                    return Err(DeviceError::ReadError.into());
                 }
             }
             Ok(size)
@@ -25,11 +25,11 @@ impl Device<u8> for Random {
             }
             Ok(size)
         } else {
-            Err(DeviceError::ReadError)
+            Err(DeviceError::ReadError.into())
         }
     }
 
-    fn write(&mut self, _: &[u8], _: usize, _: usize) -> Result<usize, DeviceError> {
+    fn write(&mut self, _: &[u8], _: usize, _: usize) -> Result<usize> {
         Ok(0)
     }
 }

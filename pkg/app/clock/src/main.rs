@@ -28,7 +28,7 @@ fn clock() -> ! {
         let start = sys_time();
         let mut current = start;
 
-        while (current - start) < Duration::seconds(1) {
+        while (current - start) < Duration::try_seconds(1).unwrap() {
             current = sys_time();
         }
 
