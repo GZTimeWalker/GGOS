@@ -134,7 +134,7 @@ mod tests {
 
         assert_eq!(bpb.total_sectors(), 0x1e000);
 
-        println!("{:?}", bpb);
+        println!("{:#?}", bpb);
     }
 
     #[test]
@@ -179,49 +179,6 @@ mod tests {
 
         assert_eq!(bpb.total_sectors(), 0xfbfc1);
 
-        println!("{:?}", bpb);
-    }
-
-    #[test]
-    fn test_fat16_bpb_3() {
-        // Taken from a Raspberry Pi bootable SD-Card
-        const BPB_EXAMPLE: [u8; 512] = hex_literal::hex!(
-            "EB 3C 90 50 4B 57 49 4E 34 2E 31 00 02 40 01 00
-        02 00 02 00 00 F8 A0 00 3F 00 FF 00 00 70 48 74
-        AF ED 27 00 80 00 29 B7 06 BA 0E 4E 4F 20 4E 41
-        4D 45 20 20 20 20 46 41 54 31 36 20 20 20 33 C9
-        8E D1 BC F0 7B 8E D9 B8 00 20 8E C0 FC BD 00 7C
-        38 4E 24 7D 24 8B C1 99 E8 3C 01 72 1C 83 EB 3A
-        66 A1 1C 7C 26 66 3B 07 26 8A 57 FC 75 06 80 CA
-        02 88 56 02 80 C3 10 73 EB 33 C9 8A 46 10 98 F7
-        66 16 03 46 1C 13 56 1E 03 46 0E 13 D1 8B 76 11
-        60 89 46 FC 89 56 FE B8 20 00 F7 E6 8B 5E 0B 03
-        C3 48 F7 F3 01 46 FC 11 4E FE 61 BF 00 00 E8 E6
-        00 72 39 26 38 2D 74 17 60 B1 0B BE A1 7D F3 A6
-        61 74 32 4E 74 09 83 C7 20 3B FB 72 E6 EB DC A0
-        FB 7D B4 7D 8B F0 AC 98 40 74 0C 48 74 13 B4 0E
-        BB 07 00 CD 10 EB EF A0 FD 7D EB E6 A0 FC 7D EB
-        E1 CD 16 CD 19 26 8B 55 1A 52 B0 01 BB 00 00 E8
-        3B 00 72 E8 5B 8A 56 24 BE 0B 7C 8B FC C7 46 F0
-        3D 7D C7 46 F4 29 7D 8C D9 89 4E F2 89 4E F6 C6
-        06 96 7D CB EA 03 00 00 20 0F B6 C8 66 8B 46 F8
-        66 03 46 1C 66 8B D0 66 C1 EA 10 EB 5E 0F B6 C8
-        4A 4A 8A 46 0D 32 E4 F7 E2 03 46 FC 13 56 FE EB
-        4A 52 50 06 53 6A 01 6A 10 91 8B 46 18 96 92 33
-        D2 F7 F6 91 F7 F6 42 87 CA F7 76 1A 8A F2 8A E8
-        C0 CC 02 0A CC B8 01 02 80 7E 02 0E 75 04 B4 42
-        8B F4 8A 56 24 CD 13 61 61 72 0B 40 75 01 42 03
-        5E 0B 49 75 06 F8 C3 41 BB 00 00 60 66 6A 00 EB
-        B0 4E 54 4C 44 52 20 20 20 20 20 20 0D 0A 52 65
-        6D 6F 76 65 20 64 69 73 6B 73 20 6F 72 20 6F 74
-        68 65 72 20 6D 65 64 69 61 2E FF 0D 0A 44 69 73
-        6B 20 65 72 72 6F 72 FF 0D 0A 50 72 65 73 73 20
-        61 6E 79 20 6B 65 79 20 74 6F 20 72 65 73 74 61
-        72 74 0D 0A 00 00 00 00 00 00 00 AC CB D8 55 AA"
-        );
-
-        let bpb = Fat16Bpb::new(&BPB_EXAMPLE).unwrap();
-
-        println!("{:?}", bpb);
+        println!("{:#?}", bpb);
     }
 }

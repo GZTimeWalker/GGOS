@@ -1,5 +1,4 @@
-use super::*;
-use alloc::vec::Vec;
+use crate::*;
 
 /// The `Read` trait allows for reading bytes from a source.
 pub trait Read {
@@ -18,8 +17,8 @@ pub trait Read {
                     return Ok(buf.len());
                 }
                 Ok(n) => {
-                    buf.truncate(start_len + n);
                     start_len += n;
+                    buf.truncate(start_len);
                 }
                 Err(e) => {
                     buf.truncate(start_len);
@@ -92,12 +91,6 @@ pub trait Seek {
     fn seek(&mut self, pos: SeekFrom) -> Result<usize>;
 }
 
-/// Trait combining Seek and Read, return value for opening files
-pub trait SeekAndRead: Seek + Read {}
+pub trait FileIO: Read + Write + Seek {}
 
-/// Trait combining Seek and Write, return value for writing files
-pub trait SeekAndWrite: Seek + Write {}
-
-impl<T> SeekAndRead for T where T: Seek + Read {}
-
-impl<T> SeekAndWrite for T where T: Seek + Write {}
+impl<T: Read + Write + Seek> FileIO for T {}

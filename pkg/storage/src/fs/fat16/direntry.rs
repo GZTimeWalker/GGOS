@@ -6,7 +6,6 @@
 //! - <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/filesystem.rs>
 
 use crate::*;
-use alloc::string::String;
 use bitflags::bitflags;
 use chrono::LocalResult::Single;
 use chrono::{DateTime, TimeZone, Utc};

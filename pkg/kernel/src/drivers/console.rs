@@ -9,7 +9,7 @@ use embedded_graphics::{
     prelude::*,
     text::{renderer::CharacterStyle, Baseline, Text},
 };
-use fs::*;
+use storage::*;
 
 once_mutex!(pub CONSOLE: Console);
 
@@ -291,7 +291,7 @@ impl Console {
 }
 
 impl Device<u8> for Console {
-    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> fs::Result<usize> {
+    fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> storage::Result<usize> {
         if offset + size >= buf.len() {
             return Err(DeviceError::ReadError.into());
         }
@@ -299,7 +299,7 @@ impl Device<u8> for Console {
         Ok(0)
     }
 
-    fn write(&mut self, buf: &[u8], offset: usize, size: usize) -> fs::Result<usize> {
+    fn write(&mut self, buf: &[u8], offset: usize, size: usize) -> storage::Result<usize> {
         if let Ok(s) = core::str::from_utf8(&buf[offset..offset + size]) {
             self.write(s);
             Ok(size)

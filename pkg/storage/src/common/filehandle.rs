@@ -4,17 +4,17 @@ use core::ops::{Deref, DerefMut};
 
 pub struct FileHandle {
     pub meta: Metadata,
-    file: Box<dyn SeekAndRead + Send>,
+    file: Box<dyn FileIO + Send>,
 }
 
 impl FileHandle {
-    pub fn new(meta: Metadata, file: Box<dyn SeekAndRead + Send>) -> Self {
+    pub fn new(meta: Metadata, file: Box<dyn FileIO + Send>) -> Self {
         Self { meta, file }
     }
 }
 
 impl Deref for FileHandle {
-    type Target = Box<dyn SeekAndRead + Send>;
+    type Target = Box<dyn FileIO + Send>;
 
     fn deref(&self) -> &Self::Target {
         &self.file

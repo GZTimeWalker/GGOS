@@ -1,11 +1,10 @@
-use crate::ata::*;
+use super::ata::*;
+use super::cache::*;
 use alloc::boxed::Box;
 use chrono::DateTime;
-use fs::{FileSystem, Mount};
-
-pub type Disk = fs::mbr::Disk<Drive>;
-pub type Volume = fs::mbr::Volume<Drive>;
-pub type Fat16 = fs::fat16::Fat16<Volume>;
+use storage::fat16::Fat16;
+use storage::mbr::*;
+use storage::*;
 
 pub static ROOTFS: spin::Once<Mount> = spin::Once::new();
 
@@ -13,22 +12,34 @@ pub fn get_rootfs() -> &'static Mount {
     ROOTFS.get().unwrap()
 }
 
-#[derive(Debug, Clone)]
-pub enum StdIO {
-    Stdin,
-    Stdout,
-    Stderr,
+static CACHE: spin::Once<LruSharedInner> = spin::Once::new();
+
+pub fn cache_usage() -> (usize, usize) {
+    let cache = CACHE.get().unwrap().lock();
+    (cache.len(), cache.cap().into())
 }
 
 pub fn init() {
     info!("Opening disk device...");
-    let disk = Disk::new(Drive::open(0, 0).unwrap());
 
-    // QEMU's default disk image has a single partition
-    let [p0, _, _, _] = disk.volumes().unwrap();
+    let drive = AtaDrive::open(0, 0).expect("Failed to open disk device");
+
+    // only get the first partition
+    let part = MbrTable::parse(drive)
+        .expect("Failed to parse MBR")
+        .partitions()
+        .expect("Failed to get partitions")
+        .remove(0);
+
+    let lru = LruCacheImpl::new();
+
+    CACHE.call_once(|| lru.inner());
+
+    let cache_layer = ATACachedDevice::new(part, lru);
 
     info!("Mounting filesystem...");
-    ROOTFS.call_once(|| Mount::new(Box::new(Fat16::new(p0)), "/".into()));
+
+    ROOTFS.call_once(|| Mount::new(Box::new(Fat16::new(cache_layer)), "/".into()));
 
     trace!("Root filesystem: {:#?}", ROOTFS.get().unwrap());
 
@@ -36,19 +47,18 @@ pub fn init() {
 }
 
 pub fn ls(root_path: &str) {
-    let iter = get_rootfs().read_dir(root_path);
-
-    if let Err(err) = iter {
-        warn!("{:?}", err);
-        return;
-    }
-
-    let iter = iter.unwrap();
+    let iter = match get_rootfs().read_dir(root_path) {
+        Ok(iter) => iter,
+        Err(err) => {
+            warn!("{:?}", err);
+            return;
+        }
+    };
 
     println!("  Size | Last Modified       | Name");
 
     for meta in iter {
-        let (size, unit) = fs::humanized_size(meta.len);
+        let (size, unit) = crate::humanized_size_short(meta.len as u64);
         println!(
             "{:>5.*}{} | {} | {}{}",
             1,

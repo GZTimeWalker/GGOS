@@ -7,7 +7,7 @@ use x86_64::{
 };
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
-    idt[Interrupts::IrqBase as usize + Irq::Keyboard as usize].set_handler_fn(interrupt_handler);
+    idt[Interrupts::IrqBase as u8 + Irq::Keyboard as u8].set_handler_fn(interrupt_handler);
 }
 
 pub fn init() {

@@ -5,26 +5,19 @@
 //! - <https://github.com/rust-embedded-community/embedded-sdmmc-rs/blob/develop/src/filesystem.rs>
 
 use super::*;
-use num_enum::TryFromPrimitive;
 
 #[derive(Debug, Clone)]
-pub struct File<T>
-where
-    T: BlockDevice<Block512>,
-{
+pub struct File {
     /// The current offset in the file.
     pub offset: usize,
     /// DirEntry of this file
     entry: DirEntry,
     /// The file system handle that contains this file.
-    handle: Fat16Handle<T>,
+    handle: Fat16Handle,
 }
 
-impl<T> File<T>
-where
-    T: BlockDevice<Block512>,
-{
-    pub fn new(handle: Fat16Handle<T>, entry: DirEntry) -> Self {
+impl File {
+    pub fn new(handle: Fat16Handle, entry: DirEntry) -> Self {
         Self {
             offset: 0,
             entry,
@@ -37,10 +30,7 @@ where
     }
 }
 
-impl<T> Seek for File<T>
-where
-    T: BlockDevice<Block512>,
-{
+impl Seek for File {
     fn seek(&mut self, pos: SeekFrom) -> Result<usize> {
         match pos {
             SeekFrom::Start(offset) => {
@@ -57,10 +47,7 @@ where
     }
 }
 
-impl<T> Read for File<T>
-where
-    T: BlockDevice<Block512>,
-{
+impl Read for File {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let length = self.length();
 
@@ -79,7 +66,7 @@ where
             current_block = self.offset / BLOCK_SIZE;
             let current_offset = self.offset % BLOCK_SIZE;
             self.handle
-                .volume
+                .inner
                 .read_block(sector + current_block, &mut block)?;
 
             let block_remain = BLOCK_SIZE - current_offset;
@@ -95,5 +82,15 @@ where
         }
 
         Ok(bytes_read)
+    }
+}
+
+impl Write for File {
+    fn write(&mut self, _buf: &[u8]) -> Result<usize> {
+        unimplemented!()
+    }
+
+    fn flush(&mut self) -> Result<()> {
+        unimplemented!()
     }
 }

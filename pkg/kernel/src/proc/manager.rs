@@ -1,12 +1,13 @@
 use super::*;
 use crate::{
+    filesystem::cache_usage,
     memory::{
-        self,
         allocator::{ALLOCATOR, HEAP_SIZE},
         get_frame_alloc_for_sure,
         user::{USER_ALLOCATOR, USER_HEAP_SIZE},
         PAGE_SIZE,
     },
+    utils::humanized_size,
     Resource,
 };
 use alloc::{collections::BTreeMap, collections::VecDeque, format, sync::Weak};
@@ -107,7 +108,7 @@ impl ProcessManager {
 
     pub fn open(&self, path: &str, _mode: u8) -> Option<u8> {
         let res = match path {
-            "/dev/random" => Resource::Random(fs::random::Random::new(
+            "/dev/random" => Resource::Random(storage::random::Random::new(
                 crate::utils::clock::now().and_utc().timestamp() as u64,
             )),
             path => match get_rootfs().open_file(path) {
@@ -270,61 +271,26 @@ impl ProcessManager {
         let heap_used = ALLOCATOR.lock().used();
         let heap_size = HEAP_SIZE;
 
+        output += &format_usage("Kernel", heap_used, heap_size);
+
         let user_heap_used = USER_ALLOCATOR.lock().used();
         let user_heap_size = USER_HEAP_SIZE;
+
+        output += &format_usage("User", user_heap_used, user_heap_size);
 
         let alloc = get_frame_alloc_for_sure();
         let frames_used = alloc.frames_used();
         let frames_recycled = alloc.recycled_count();
         let frames_total = alloc.frames_total();
 
-        let (sys_used, sys_used_unit) = memory::humanized_size(heap_used as u64);
-        let (sys_size, sys_size_unit) = memory::humanized_size(heap_size as u64);
+        let used = (frames_used - frames_recycled) * PAGE_SIZE as usize;
+        let total = frames_total * PAGE_SIZE as usize;
 
-        output += format!(
-            "Kernel : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
-            2,
-            sys_used,
-            sys_used_unit,
-            2,
-            sys_size,
-            sys_size_unit,
-            heap_used as f64 / heap_size as f64 * 100.0
-        )
-        .as_str();
+        output += &format_usage("Memory", used, total);
 
-        let (user_used, user_used_unit) = memory::humanized_size(user_heap_used as u64);
-        let (user_size, user_size_unit) = memory::humanized_size(user_heap_size as u64);
+        let (cache_used, cache_total) = cache_usage();
 
-        output += format!(
-            "User   : {:>6.*} {} / {:>6.*} {} ({:>5.2}%)\n",
-            2,
-            user_used,
-            user_used_unit,
-            2,
-            user_size,
-            user_size_unit,
-            user_heap_used as f64 / user_heap_size as f64 * 100.0
-        )
-        .as_str();
-
-        // put used/total frames in MiB
-        let (used_size, used_unit) =
-            memory::humanized_size((frames_used - frames_recycled) as u64 * PAGE_SIZE);
-        let (tot_size, tot_unit) = memory::humanized_size(frames_total as u64 * PAGE_SIZE);
-
-        output += format!(
-            "Memory : {:>6.*} {} / {:>6.*} {} ({:>5.2}%) [{} recycled]\n",
-            2,
-            used_size,
-            used_unit,
-            2,
-            tot_size,
-            tot_unit,
-            (frames_used - frames_recycled) as f64 / frames_total as f64 * 100.0,
-            frames_recycled
-        )
-        .as_str();
+        output += &format_res_usage("Cache", cache_used, cache_total);
 
         output += format!("Queue  : {:?}\n", self.ready_queue.lock()).as_str();
 
@@ -332,4 +298,31 @@ impl ProcessManager {
 
         print!("{}", output);
     }
+}
+
+fn format_usage(name: &str, used: usize, total: usize) -> String {
+    let (used_float, used_unit) = humanized_size(used as u64);
+    let (total_float, total_unit) = humanized_size(total as u64);
+
+    format!(
+        "{:<6} : {:>6.*} {:>3} / {:>6.*} {:>3} ({:>5.2}%)\n",
+        name,
+        2,
+        used_float,
+        used_unit,
+        2,
+        total_float,
+        total_unit,
+        used as f32 / total as f32 * 100.0
+    )
+}
+
+fn format_res_usage(name: &str, used: usize, total: usize) -> String {
+    format!(
+        "{:<6} : {:>10} / {:<10} ({:>5.2}%)\n",
+        name,
+        used,
+        total,
+        used as f32 / total as f32 * 100.0
+    )
 }

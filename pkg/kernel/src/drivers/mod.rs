@@ -2,6 +2,7 @@ mod gop;
 mod uart16550;
 
 pub mod ata;
+pub mod cache;
 pub mod console;
 pub mod display;
 pub mod filesystem;

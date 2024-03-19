@@ -12,7 +12,7 @@ pub fn init() {
     static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
     let heap_start = VirtAddr::from_ptr(unsafe { HEAP.as_ptr() });
-    let heap_end = heap_start + HEAP_SIZE;
+    let heap_end = heap_start + HEAP_SIZE as u64;
 
     debug!(
         "Kernel Heap      : 0x{:016x}-0x{:016x}",

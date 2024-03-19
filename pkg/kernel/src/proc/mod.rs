@@ -9,10 +9,10 @@ mod sync;
 
 use alloc::sync::Arc;
 use alloc::vec::Vec;
-use fs::FileSystem;
 use manager::*;
 use paging::*;
 use process::*;
+use storage::FileSystem;
 use sync::*;
 
 pub use context::ProcessContext;

@@ -5,7 +5,7 @@ use pc_keyboard::DecodedKey;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
-    idt[consts::Interrupts::IrqBase as usize + consts::Irq::Serial0 as usize]
+    idt[consts::Interrupts::IrqBase as u8 + consts::Irq::Serial0 as u8]
         .set_handler_fn(interrupt_handler);
 }
 

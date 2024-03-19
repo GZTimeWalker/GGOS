@@ -1,5 +1,8 @@
+use self::memory::PHYSICAL_OFFSET;
+
 use super::*;
-use crate::memory::{self, *};
+use crate::memory::get_frame_alloc_for_sure;
+use crate::*;
 use alloc::sync::Weak;
 use core::intrinsics::copy_nonoverlapping;
 use spin::*;
@@ -481,7 +484,7 @@ impl core::fmt::Debug for Process {
 impl core::fmt::Display for Process {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         let inner = self.inner.read();
-        let (size, unit) = memory::humanized_size(inner.memory_usage() as u64 * 4096);
+        let (size, unit) = humanized_size(inner.memory_usage() as u64 * 4096);
         write!(
             f,
             " #{:-3} | #{:-3} | {:12} | {:7} | {:>5.1} {} | {:?}",

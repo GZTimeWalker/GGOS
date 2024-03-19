@@ -1,4 +1,4 @@
-use super::Result;
+use super::*;
 
 pub trait Device<T> {
     /// Read data from the device into the buffer
@@ -10,7 +10,7 @@ pub trait Device<T> {
 
 pub trait BlockDevice<B>: Send + Sync + 'static
 where
-    B: AsMut<[u8]> + AsRef<[u8]> + Default + Send + Sync + 'static,
+    B: BlockTrait,
 {
     /// Returns the number of blocks in the device
     fn block_count(&self) -> Result<usize>;
@@ -20,4 +20,9 @@ where
 
     /// Writes a block to the device from the provided buffer
     fn write_block(&self, offset: usize, block: &B) -> Result<()>;
+
+    /// Returns the block size of the device
+    fn block_size(&self) -> usize {
+        B::size()
+    }
 }

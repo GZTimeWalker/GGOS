@@ -3,9 +3,9 @@ resolver = "2"
 members = [
     "pkg/boot",
     "pkg/elf",
-    "pkg/fs",
     "pkg/kernel",
     "pkg/syscall",
+    "pkg/storage",
     "pkg/lib",
     "pkg/app/*"
 ]
