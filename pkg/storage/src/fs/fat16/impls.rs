@@ -63,7 +63,7 @@ impl Fat16Impl {
     }
 
     /// look for next cluster in FAT
-    fn next_cluster(&self, cluster: Cluster) -> Result<Cluster> {
+    pub fn next_cluster(&self, cluster: &Cluster) -> Result<Cluster> {
         let fat_offset = (cluster.0 * 2) as usize;
         let mut block = Block::default();
         let block_size = Block512::size();
@@ -115,7 +115,7 @@ impl Fat16Impl {
                 }
             }
             current_cluster = if cluster != Cluster::ROOT_DIR {
-                match self.next_cluster(cluster) {
+                match self.next_cluster(&cluster) {
                     Ok(n) => {
                         dir_sector_num = self.cluster_to_sector(&n);
                         Some(n)
@@ -147,7 +147,7 @@ impl Fat16Impl {
                 }
             }
             current_cluster = if cluster != Cluster::ROOT_DIR {
-                match self.next_cluster(cluster) {
+                match self.next_cluster(&cluster) {
                     Ok(n) => {
                         dir_sector_num = self.cluster_to_sector(&n);
                         Some(n)
