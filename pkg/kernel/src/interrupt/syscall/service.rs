@@ -131,10 +131,9 @@ pub fn list_dir(args: &SyscallArgs) {
     crate::filesystem::ls(root);
 }
 
-pub fn sys_wait_pid(args: &SyscallArgs) -> usize {
+pub fn sys_wait_pid(args: &SyscallArgs, context: &mut ProcessContext) {
     let pid = ProcessId(args.arg0 as u16);
-    let ret = wait_pid(pid);
-    ret as usize
+    wait_pid(pid, context);
 }
 
 pub fn sys_kill(args: &SyscallArgs, context: &mut ProcessContext) {

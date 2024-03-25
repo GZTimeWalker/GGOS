@@ -54,12 +54,7 @@ pub fn sys_exit(code: usize) -> ! {
 
 #[inline(always)]
 pub fn sys_wait_pid(pid: u16) -> isize {
-    loop {
-        let ret = syscall!(Syscall::WaitPid, pid as u64) as isize;
-        if !ret.is_negative() {
-            return ret;
-        }
-    }
+    syscall!(Syscall::WaitPid, pid as u64) as isize
 }
 
 #[inline(always)]
