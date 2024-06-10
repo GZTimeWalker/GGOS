@@ -1,3 +1,3 @@
 {
-    "rust-analyzer.cargo.target": "x86_64-unknown-uefi"
+    "rust-analyzer.cargo.target": "x86_64-unknown-none"
 }
