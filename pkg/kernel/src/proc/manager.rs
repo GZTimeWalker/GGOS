@@ -1,3 +1,5 @@
+use alloc::collections::BTreeSet;
+
 use super::*;
 use crate::{
     filesystem::cache_usage,
@@ -8,13 +10,8 @@ use crate::{
         PAGE_SIZE,
     },
     utils::humanized_size,
-    Resource,
 };
-use alloc::{
-    collections::{BTreeMap, BTreeSet, VecDeque},
-    format,
-    sync::Weak,
-};
+use alloc::{collections::BTreeMap, collections::VecDeque, format, sync::Weak};
 use spin::{Mutex, RwLock};
 
 pub static PROCESS_MANAGER: spin::Once<ProcessManager> = spin::Once::new();
@@ -68,24 +65,18 @@ impl ProcessManager {
             .expect("No current process")
     }
 
-    pub fn wait_pid(&self, pid: ProcessId) -> Option<isize> {
-        if let Some(ret) = self.get_ret(pid) {
-            return Some(ret);
-        };
-
+    pub fn wait_pid(&self, pid: ProcessId) {
         // push the current process to the wait queue
         let mut wait_queue = self.wait_queue.lock();
         let entry = wait_queue.entry(pid).or_default();
         entry.insert(processor::current_pid());
-
-        None
     }
 
-    pub(super) fn get_ret(&self, pid: ProcessId) -> Option<isize> {
+    pub(super) fn get_exit_code(&self, pid: ProcessId) -> Option<isize> {
         self.get_proc(&pid).and_then(|p| p.read().exit_code())
     }
 
-    pub fn save_current(&self, context: &mut ProcessContext) -> ProcessId {
+    pub fn save_current(&self, context: &ProcessContext) -> ProcessId {
         let current = self.current();
         let pid = current.pid();
 
@@ -122,18 +113,13 @@ impl ProcessManager {
         pid
     }
 
-    pub fn open(&self, path: &str, _mode: u8) -> Option<u8> {
-        let res = match path {
-            "/dev/random" => Resource::Random(storage::random::Random::new(
-                crate::utils::clock::now().and_utc().timestamp() as u64,
-            )),
-            path => match get_rootfs().open_file(path) {
-                Ok(file) => Resource::File(file),
-                Err(_) => return None,
-            },
+    pub fn open(&self, path: &str) -> Option<u8> {
+        let res = match get_rootfs().open_file(path) {
+            Ok(file) => Resource::File(file),
+            Err(_) => return None,
         };
 
-        trace!("Opening {}...\n{:#?}", path, &res);
+        trace!("Opening {}...", path);
 
         let fd = self.current().write().open(res);
 
@@ -166,15 +152,16 @@ impl ProcessManager {
         proc_data: Option<ProcessData>,
     ) -> ProcessId {
         let kproc = self.get_proc(&KERNEL_PID).unwrap();
-        let page_table = kproc.read().clont_page_table();
-        let proc = Process::new(name, parent, page_table, proc_data);
+        let page_table = kproc.read().clone_page_table();
+        let proc_vm = Some(ProcessVm::new(page_table));
+        let proc = Process::new(name, parent, proc_vm, proc_data);
 
         let mut inner = proc.write();
         inner.pause();
         inner.load_elf(elf);
         inner.init_stack_frame(
             VirtAddr::new_truncate(elf.header.pt2.entry_point()),
-            VirtAddr::new_truncate(STACK_INIT_TOP),
+            VirtAddr::new_truncate(super::stack::STACK_INIT_TOP),
         );
         drop(inner);
 
@@ -186,32 +173,6 @@ impl ProcessManager {
 
         pid
     }
-
-    // DEPRECATED: do not spawn kernel thread
-    // pub fn spawn_kernel_thread(
-    //     &self,
-    //     entry: VirtAddr,
-    //     stack_top: VirtAddr,
-    //     name: String,
-    //     parent: ProcessId,
-    //     proc_data: Option<ProcessData>,
-    // ) -> ProcessId {
-    //     let kproc = self.get_proc(KERNEL_PID).unwrap();
-    //     let page_table = kproc.read().clont_page_table();
-    //     let mut p = Process::new(
-    //         &mut crate::memory::get_frame_alloc_for_sure(),
-    //         name,
-    //         parent,
-    //         page_table,
-    //         proc_data,
-    //     );
-    //     p.pause();
-    //     p.init_stack_frame(entry, stack_top);
-    //     info!("Spawn process: {}#{}", p.name(), p.pid());
-    //     let pid = p.pid();
-    //     self.processes.push(p);
-    //     pid
-    // }
 
     pub fn fork(&self) {
         let proc = self.current().fork();
@@ -225,9 +186,13 @@ impl ProcessManager {
         self.kill(processor::current_pid(), ret);
     }
 
-    pub fn wake_up(&self, pid: ProcessId) {
+    pub fn wake_up(&self, pid: ProcessId, ret: Option<isize>) {
         if let Some(proc) = self.get_proc(&pid) {
-            proc.write().pause();
+            let mut inner = proc.write();
+            if let Some(ret) = ret {
+                inner.set_return(ret as usize);
+            }
+            inner.pause();
             self.push_ready(pid);
         }
     }
@@ -238,25 +203,22 @@ impl ProcessManager {
         }
     }
 
-    pub fn handle_page_fault(
-        &self,
-        addr: VirtAddr,
-        err_code: PageFaultErrorCode,
-    ) -> Result<(), ()> {
+    pub fn handle_page_fault(&self, addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {
         if !err_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION) {
             let cur_proc = self.current();
             trace!(
                 "Page Fault! Checking if {:#x} is on current process's stack",
                 addr
             );
-            if cur_proc.read().is_on_stack(addr) {
-                cur_proc.write().try_alloc_new_stack_page(addr).unwrap();
-                Ok(())
-            } else {
-                Err(())
+
+            if cur_proc.pid() == KERNEL_PID {
+                info!("Page Fault on Kernel at {:#x}", addr);
             }
+
+            let mut inner = cur_proc.write();
+            inner.handle_page_fault(addr)
         } else {
-            Err(())
+            false
         }
     }
 
@@ -276,7 +238,7 @@ impl ProcessManager {
 
         if let Some(pids) = self.wait_queue.lock().remove(&pid) {
             for p in pids {
-                self.wake_up(p);
+                self.wake_up(p, Some(ret));
             }
         }
     }
@@ -284,11 +246,12 @@ impl ProcessManager {
     pub fn print_process_list(&self) {
         let mut output =
             String::from("  PID | PPID | Process Name |  Ticks  |   Memory  | Status\n");
-        for (_, p) in self.processes.read().iter() {
-            if p.read().status() != ProgramStatus::Dead {
-                output += format!("{}\n", p).as_str();
-            }
-        }
+
+        self.processes
+            .read()
+            .values()
+            .filter(|p| p.read().status() != ProgramStatus::Dead)
+            .for_each(|p| output += format!("{}\n", p).as_str());
 
         let heap_used = ALLOCATOR.lock().used();
         let heap_size = HEAP_SIZE;
@@ -302,7 +265,7 @@ impl ProcessManager {
 
         let alloc = get_frame_alloc_for_sure();
         let frames_used = alloc.frames_used();
-        let frames_recycled = alloc.recycled_count();
+        let frames_recycled = alloc.frames_recycled();
         let frames_total = alloc.frames_total();
 
         let used = (frames_used - frames_recycled) * PAGE_SIZE as usize;

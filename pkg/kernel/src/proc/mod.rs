@@ -6,53 +6,27 @@ mod pid;
 mod process;
 mod processor;
 mod sync;
+mod vm;
 
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use manager::*;
-use paging::*;
 use process::*;
 use storage::FileSystem;
 use sync::*;
 
 pub use context::ProcessContext;
 pub use data::ProcessData;
+pub use paging::PageTableContext;
 pub use pid::ProcessId;
+pub use vm::*;
 use xmas_elf::ElfFile;
 
-use crate::get_rootfs;
+use crate::filesystem::get_rootfs;
+use crate::Resource;
 use alloc::string::{String, ToString};
 use x86_64::structures::idt::PageFaultErrorCode;
-use x86_64::{registers::control::Cr2, structures::idt::InterruptStackFrame, VirtAddr};
-
-// 0xffff_ff00_0000_0000 is the kernel's address space
-pub const STACK_MAX: u64 = 0x0000_4000_0000_0000;
-// stack max addr, every thread has a stack space
-// from 0x????_????_0000_0000 to 0x????_????_ffff_ffff
-// 0x100000000 bytes -> 4GiB
-// allow 0x2000 (4096) threads run as a time
-// 0x????_2000_????_???? -> 0x????_3fff_????_????
-// init alloc stack has size of 0x2000 (2 frames)
-// every time we meet a page fault, we alloc more frames
-pub const STACK_MAX_PAGES: u64 = 0x100000;
-pub const STACK_MAX_SIZE: u64 = STACK_MAX_PAGES * crate::memory::PAGE_SIZE;
-pub const STACK_START_MASK: u64 = !(STACK_MAX_SIZE - 1);
-// [bot..0x2000_0000_0000..top..0x3fff_ffff_ffff]
-// init stack
-pub const STACK_DEF_BOT: u64 = STACK_MAX - STACK_MAX_SIZE;
-pub const STACK_DEF_PAGE: u64 = 1;
-pub const STACK_DEF_SIZE: u64 = STACK_DEF_PAGE * crate::memory::PAGE_SIZE;
-pub const STACT_INIT_BOT: u64 = STACK_MAX - STACK_DEF_SIZE;
-pub const STACK_INIT_TOP: u64 = STACK_MAX - 8;
-// [bot..0xffffff0100000000..top..0xffffff01ffffffff]
-// kernel stack
-pub const KSTACK_MAX: u64 = 0xffff_ff02_0000_0000;
-pub const KSTACK_DEF_BOT: u64 = KSTACK_MAX - STACK_MAX_SIZE;
-pub const KSTACK_DEF_PAGE: u64 = 8;
-pub const KSTACK_DEF_SIZE: u64 = KSTACK_DEF_PAGE * crate::memory::PAGE_SIZE;
-
-pub const KSTACK_INIT_BOT: u64 = KSTACK_MAX - KSTACK_DEF_SIZE;
-pub const KSTACK_INIT_TOP: u64 = KSTACK_MAX - 8;
+use x86_64::VirtAddr;
 
 pub const KERNEL_PID: ProcessId = ProcessId(1);
 
@@ -66,19 +40,12 @@ pub enum ProgramStatus {
 
 /// init process manager
 pub fn init(boot_info: &'static boot::BootInfo) {
-    let kproc_data = ProcessData::new()
-        .set_stack(KSTACK_INIT_BOT, KSTACK_DEF_PAGE)
-        .set_kernel_code(&boot_info.kernel_pages);
+    let proc_vm = ProcessVm::new(PageTableContext::new()).init_kernel_vm(&boot_info.kernel_pages);
 
-    trace!("Init process data: {:#?}", kproc_data);
+    trace!("Init kernel vm: {:#?}", proc_vm);
 
     // kernel process
-    let kproc = Process::new(
-        String::from("kernel"),
-        None,
-        PageTableContext::new(),
-        Some(kproc_data),
-    );
+    let kproc = Process::new(String::from("kernel"), None, Some(proc_vm), None);
 
     kproc.write().resume();
     manager::init(kproc);
@@ -118,13 +85,20 @@ pub fn process_exit(ret: isize, context: &mut ProcessContext) {
 pub fn wait_pid(pid: ProcessId, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
-        if let Some(ret) = manager.wait_pid(pid) {
+        if let Some(ret) = manager.get_exit_code(pid) {
             context.set_rax(ret as usize);
         } else {
+            manager.wait_pid(pid);
             manager.save_current(context);
             manager.current().write().block();
             manager.switch_next(context);
         }
+    })
+}
+
+pub(crate) fn wait_no_block(pid: ProcessId) -> Option<isize> {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager().get_exit_code(pid)
     })
 }
 
@@ -136,22 +110,22 @@ pub fn write(fd: u8, buf: &[u8]) -> isize {
     x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().write(fd, buf))
 }
 
-pub fn open(path: &str, mode: u8) -> Option<u8> {
-    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().open(path, mode))
+pub fn open(path: &str) -> Option<u8> {
+    x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().open(path))
 }
 
 pub fn close(fd: u8) -> bool {
     x86_64::instructions::interrupts::without_interrupts(|| get_process_manager().close(fd))
 }
 
-pub fn still_alive(pid: ProcessId) -> bool {
-    x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager().get_ret(pid).is_none()
-    })
-}
-
 pub fn current_pid() -> ProcessId {
     x86_64::instructions::interrupts::without_interrupts(processor::current_pid)
+}
+
+pub fn brk(addr: Option<usize>) -> usize {
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        get_process_manager().current().read().brk(addr)
+    })
 }
 
 pub fn kill(pid: ProcessId, context: &mut ProcessContext) {
@@ -166,39 +140,47 @@ pub fn kill(pid: ProcessId, context: &mut ProcessContext) {
     })
 }
 
-pub fn new_sem(key: u32, value: usize) -> isize {
+pub fn new_sem(key: u32, value: usize) -> usize {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager().current().write().new_sem(key, value) as isize
+        if get_process_manager().current().write().new_sem(key, value) {
+            0
+        } else {
+            1
+        }
     })
 }
 
-pub fn remove_sem(key: u32) -> isize {
+pub fn remove_sem(key: u32) -> usize {
     x86_64::instructions::interrupts::without_interrupts(|| {
-        get_process_manager().current().write().remove_sem(key) as isize
+        if get_process_manager().current().write().remove_sem(key) {
+            0
+        } else {
+            1
+        }
     })
 }
 
-pub fn sem_up(key: u32, context: &mut ProcessContext) {
+pub fn sem_signal(key: u32, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
-        let ret = manager.current().write().sem_up(key);
+        let ret = manager.current().write().sem_signal(key);
         match ret {
             SemaphoreResult::Ok => context.set_rax(0),
-            SemaphoreResult::NoExist => context.set_rax(1),
-            SemaphoreResult::WakeUp(pid) => manager.wake_up(pid),
+            SemaphoreResult::NotExist => context.set_rax(1),
+            SemaphoreResult::WakeUp(pid) => manager.wake_up(pid, None),
             _ => unreachable!(),
         }
     })
 }
 
-pub fn sem_down(key: u32, context: &mut ProcessContext) {
+pub fn sem_wait(key: u32, context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
         let pid = processor::current_pid();
-        let ret = manager.current().write().sem_down(key, pid);
+        let ret = manager.current().write().sem_wait(key, pid);
         match ret {
             SemaphoreResult::Ok => context.set_rax(0),
-            SemaphoreResult::NoExist => context.set_rax(1),
+            SemaphoreResult::NotExist => context.set_rax(1),
             SemaphoreResult::Block(pid) => {
                 manager.save_current(context);
                 manager.block(pid);
@@ -209,19 +191,27 @@ pub fn sem_down(key: u32, context: &mut ProcessContext) {
     })
 }
 
-pub fn try_resolve_page_fault(
-    _err_code: PageFaultErrorCode,
-    _sf: &mut InterruptStackFrame,
-) -> Result<(), ()> {
-    let addr = Cr2::read();
-    debug!("Trying to access address: {:?}", addr);
+pub fn spawn(name: String, file_buffer: Vec<u8>) -> Result<ProcessId, String> {
+    let elf = xmas_elf::ElfFile::new(&file_buffer).map_err(|e| e.to_string())?;
 
-    x86_64::instructions::interrupts::without_interrupts(|| {
+    let pid = elf_spawn(name, &elf)?;
+
+    Ok(pid)
+}
+
+pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
+    let pid = x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
-        debug!("Current process: {:#?}", manager.current());
+        let process_name = name.to_lowercase();
+
+        let parent = Arc::downgrade(&manager.current());
+        let pid = manager.spawn(elf, name, Some(parent), None);
+
+        debug!("Spawned process: {}#{}", process_name, pid);
+        pid
     });
 
-    Err(())
+    Ok(pid)
 }
 
 pub fn fs_spawn(path: &str) -> Option<ProcessId> {
@@ -250,30 +240,6 @@ pub fn fs_spawn(path: &str) -> Option<ProcessId> {
     }
 }
 
-pub fn spawn(name: String, file_buffer: Vec<u8>) -> Result<ProcessId, String> {
-    let elf = xmas_elf::ElfFile::new(&file_buffer).map_err(|e| e.to_string())?;
-
-    let pid = elf_spawn(name, &elf)?;
-
-    Ok(pid)
-}
-
-pub fn elf_spawn(name: String, elf: &ElfFile) -> Result<ProcessId, String> {
-    let pid = x86_64::instructions::interrupts::without_interrupts(|| {
-        let manager = get_process_manager();
-        let process_name = name.to_lowercase();
-
-        let parent = Arc::downgrade(&manager.current());
-
-        let pid = manager.spawn(elf, name, Some(parent), None);
-
-        debug!("Spawned process: {}#{}", process_name, pid);
-        pid
-    });
-
-    Ok(pid)
-}
-
 pub fn fork(context: &mut ProcessContext) {
     x86_64::instructions::interrupts::without_interrupts(|| {
         let manager = get_process_manager();
@@ -288,7 +254,7 @@ pub fn current_proc_info() {
     debug!("{:#?}", get_process_manager().current())
 }
 
-pub fn handle_page_fault(addr: VirtAddr, err_code: PageFaultErrorCode) -> Result<(), ()> {
+pub fn handle_page_fault(addr: VirtAddr, err_code: PageFaultErrorCode) -> bool {
     x86_64::instructions::interrupts::without_interrupts(|| {
         get_process_manager().handle_page_fault(addr, err_code)
     })

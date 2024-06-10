@@ -33,6 +33,7 @@ pub fn print_processors() -> String {
     )
 }
 
+/// Processor is a struct to store the current process id.
 pub struct Processor(AtomicU16);
 
 impl Processor {

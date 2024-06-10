@@ -1,5 +1,4 @@
 use crate::{memory::gdt, proc::ProcessContext};
-use alloc::format;
 use syscall_def::Syscall;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
@@ -47,21 +46,20 @@ pub fn dispatcher(context: &mut ProcessContext) {
         Syscall::Open => context.set_rax(sys_open(&args)),
         // fd: arg0 as u8 -> success: bool
         Syscall::Close => context.set_rax(sys_close(&args)),
-
+        // addr: usize -> success: bool
+        Syscall::Brk => context.set_rax(sys_brk(&args)),
         // None -> pid: u16
         Syscall::GetPid => context.set_rax(sys_get_pid() as usize),
-
         // None -> pid: u16 (diff from parent and child)
         Syscall::VFork => sys_fork(context),
         // path: &str (arg0 as *const u8, arg1 as len) -> pid: u16
-        Syscall::Spawn => context.set_rax(spawn_process(&args)),
+        Syscall::Spawn => context.set_rax(spawn_process(&args) as usize),
         // pid: arg0 as u16
         Syscall::Exit => exit_process(&args, context),
         // pid: arg0 as u16 -> status: isize
         Syscall::WaitPid => sys_wait_pid(&args, context),
         // pid: arg0 as u16
         Syscall::Kill => sys_kill(&args, context),
-
         // op: u8, key: u32, val: usize -> ret: any
         Syscall::Sem => sys_sem(&args, context),
         // None -> time: usize
@@ -72,7 +70,6 @@ pub fn dispatcher(context: &mut ProcessContext) {
         Syscall::Stat => list_process(),
         // path: &str (arg0 as *const u8, arg1 as len)
         Syscall::ListDir => list_dir(&args),
-
         // layout: arg0 as *const Layout -> ptr: *mut u8
         Syscall::Allocate => context.set_rax(sys_allocate(&args)),
         // ptr: arg0 as *mut u8
@@ -98,7 +95,7 @@ impl core::fmt::Display for SyscallArgs {
         write!(
             f,
             "SYSCALL: {:<10} (0x{:016x}, 0x{:016x}, 0x{:016x})",
-            format!("{:?}", self.syscall),
+            alloc::format!("{:?}", self.syscall),
             self.arg0,
             self.arg1,
             self.arg2

@@ -12,7 +12,7 @@ impl Dimensions for SysDisplay {
     }
 }
 
-impl<'a> DrawTarget for SysDisplay {
+impl DrawTarget for SysDisplay {
     type Color = Rgb888;
     type Error = ();
 

@@ -9,16 +9,20 @@ pub struct SpinLock {
     bolt: AtomicBool,
 }
 
-impl SpinLock {
-    pub const INIT: Self = Self {
-        bolt: AtomicBool::new(false),
-    };
+impl Default for SpinLock {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
+impl SpinLock {
     pub const fn new() -> Self {
-        Self::INIT
+        Self {
+            bolt: AtomicBool::new(false),
+        }
     }
 
-    pub fn lock(&mut self) {
+    pub fn acquire(&self) {
         while self
             .bolt
             .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
@@ -28,7 +32,7 @@ impl SpinLock {
         }
     }
 
-    pub fn unlock(&mut self) {
+    pub fn release(&self) {
         self.bolt.store(false, Ordering::Relaxed);
     }
 }
@@ -36,34 +40,36 @@ impl SpinLock {
 unsafe impl Sync for SpinLock {}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Semaphore(pub u32);
+pub struct Semaphore {
+    key: u32,
+}
 
 impl Semaphore {
-    pub fn new(key: u32) -> Self {
-        Semaphore(key)
+    pub const fn new(key: u32) -> Self {
+        Semaphore { key }
     }
 
     #[inline(always)]
-    pub fn init(&self, value: usize) -> isize {
-        sys_new_sem(self.0, value)
-    }
-
-    /// use after init
-    #[inline(always)]
-    pub fn release(&self) {
-        while sys_sem_up(self.0) != 0 {}
+    pub fn init(&self, value: usize) -> bool {
+        sys_new_sem(self.key, value)
     }
 
     /// use after init
     #[inline(always)]
-    pub fn acquire(&self) {
-        while sys_sem_down(self.0) != 0 {}
+    pub fn signal(&self) {
+        sys_sem_signal(self.key)
     }
 
     /// use after init
     #[inline(always)]
-    pub fn free(&self) -> isize {
-        sys_rm_sem(self.0)
+    pub fn wait(&self) {
+        sys_sem_wait(self.key)
+    }
+
+    /// use after init
+    #[inline(always)]
+    pub fn free(&self) -> bool {
+        sys_rm_sem(self.key)
     }
 }
 
@@ -72,6 +78,6 @@ unsafe impl Sync for Semaphore {}
 #[macro_export]
 macro_rules! semaphore_array {
     [$($x:expr),+ $(,)?] => {
-        [ $($crate::Semaphore($x),)* ]
+        [ $($crate::Semaphore::new($x),)* ]
     }
 }

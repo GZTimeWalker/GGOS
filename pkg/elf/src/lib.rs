@@ -64,44 +64,26 @@ pub fn unmap_elf(elf: &ElfFile, page_table: &mut impl Mapper<Size4KiB>) -> Resul
 }
 
 /// map a range of memory
-pub fn map_range(
+pub fn map_pages(
     addr: u64,
     pages: u64,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_allocator: &mut impl FrameAllocator<Size4KiB>,
     user_access: bool,
 ) -> Result<PageRange, MapToError<Size4KiB>> {
-    trace!("Mapping stack at {:#x}", addr);
-    // create a stack
+    debug_assert!(pages > 0, "pages must be greater than 0");
     let range_start = Page::containing_address(VirtAddr::new(addr));
     let range_end = range_start + pages;
-    trace!(
-        "Page Range: {:?}({})",
-        Page::range(range_start, range_end),
-        pages
-    );
 
-    let mut flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
-
-    if user_access {
-        flags |= PageTableFlags::USER_ACCESSIBLE;
-    }
-
-    trace!("Flags: {:?}", flags);
-
-    for page in Page::range(range_start, range_end) {
-        let frame = frame_allocator
-            .allocate_frame()
-            .ok_or(MapToError::FrameAllocationFailed)?;
-        unsafe {
-            page_table
-                .map_to(page, frame, flags, frame_allocator)?
-                .flush();
-        }
-    }
+    map_range(
+        Page::range_inclusive(range_start, range_end - 1),
+        page_table,
+        frame_allocator,
+        user_access,
+    )?;
 
     trace!(
-        "Stack hint: {:#x} -> {:#x}",
+        "Map hint: {:#x} -> {:#x}",
         addr,
         page_table
             .translate_page(range_start)
@@ -112,43 +94,82 @@ pub fn map_range(
     Ok(Page::range(range_start, range_end))
 }
 
+pub fn map_range(
+    page_range: PageRangeInclusive,
+    page_table: &mut impl Mapper<Size4KiB>,
+    frame_allocator: &mut impl FrameAllocator<Size4KiB>,
+    user_access: bool,
+) -> Result<(), MapToError<Size4KiB>> {
+    trace!(
+        "Map Range: {:#x} - {:#x} ({})",
+        page_range.start.start_address().as_u64(),
+        page_range.end.start_address().as_u64(),
+        page_range.count()
+    );
+
+    let mut flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
+
+    if user_access {
+        flags |= PageTableFlags::USER_ACCESSIBLE;
+    }
+
+    trace!("Flags: {:?}", flags);
+
+    for page in page_range {
+        let frame = frame_allocator
+            .allocate_frame()
+            .ok_or(MapToError::FrameAllocationFailed)?;
+        unsafe {
+            page_table
+                .map_to(page, frame, flags, frame_allocator)?
+                .flush();
+        }
+    }
+
+    Ok(())
+}
+
 /// map a range of memory
-pub fn unmap_range(
+pub fn unmap_pages(
     addr: u64,
     pages: u64,
     page_table: &mut impl Mapper<Size4KiB>,
     frame_deallocator: &mut impl FrameDeallocator<Size4KiB>,
     do_dealloc: bool,
 ) -> Result<(), UnmapError> {
-    trace!("Unmapping stack at {:#x}", addr);
+    debug_assert!(pages > 0, "pages must be greater than 0");
+    let start = Page::containing_address(VirtAddr::new(addr));
+    let end = start + pages - 1;
 
-    let range_start = Page::containing_address(VirtAddr::new(addr));
+    unmap_range(
+        Page::range_inclusive(start, end),
+        page_table,
+        frame_deallocator,
+        do_dealloc,
+    )
+}
 
+pub fn unmap_range(
+    page_range: PageRangeInclusive,
+    page_table: &mut impl Mapper<Size4KiB>,
+    frame_deallocator: &mut impl FrameDeallocator<Size4KiB>,
+    do_dealloc: bool,
+) -> Result<(), UnmapError> {
     trace!(
-        "Mem range hint: {:#x} -> {:#x}",
-        addr,
-        page_table
-            .translate_page(range_start)
-            .unwrap()
-            .start_address()
+        "Unmap Range: {:#x} - {:#x} ({})",
+        page_range.start.start_address().as_u64(),
+        page_range.end.start_address().as_u64(),
+        page_range.count()
     );
 
-    let range_end = range_start + pages;
-
-    trace!(
-        "Page Range: {:?}({})",
-        Page::range(range_start, range_end),
-        pages
-    );
-
-    for page in Page::range(range_start, range_end) {
-        let info = page_table.unmap(page)?;
+    for page in page_range {
+        let (frame, flush) = page_table.unmap(page)?;
         if do_dealloc {
             unsafe {
-                frame_deallocator.deallocate_frame(info.0);
+                frame_deallocator.deallocate_frame(frame);
             }
         }
-        info.1.flush();
+        flush.flush();
     }
 
     Ok(())

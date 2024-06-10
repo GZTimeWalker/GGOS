@@ -1,5 +1,5 @@
 use crate::*;
-use alloc::string::{String, ToString};
+use alloc::string::*;
 use alloc::vec;
 
 pub struct Stdin;
@@ -34,7 +34,7 @@ impl Stdin {
 
     pub fn read_line(&self) -> String {
         let mut string = String::new();
-        let mut buf = vec![0; 4];
+        let mut buf = [0; 4];
         loop {
             if let Some(k) = self.read_char_with_buf(&mut buf[..4]) {
                 match k {
@@ -113,6 +113,12 @@ impl Random {
             }
         }
         0
+    }
+}
+
+impl Default for Random {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

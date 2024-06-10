@@ -2,48 +2,50 @@ use alloc::{format, string::*, vec};
 use lib::*;
 
 pub fn show_hex(data: &[u8]) {
+    let mut string = String::with_capacity(data.len() * 3);
+
     let mut count = 0;
     for (idx, b) in data.iter().enumerate() {
         if count == 0 {
-            print!("    ");
+            string.push_str("    ");
         }
-        print!("{:02x}", b);
+        string.push_str(&format!("{:02x}", b));
         count += 1;
         if count % 8 == 0 {
-            print!(" ");
+            string.push(' ');
         }
         if count == 24 {
-            print!(" | ");
-            for i in idx - 23..=idx {
-                let d = data[i];
-                if (d as char).is_ascii_graphic() || d == 0x20 {
-                    print!("{}", d as char);
+            string.push_str(" | ");
+            for d in data.iter().take(idx + 1).skip(idx - 23) {
+                if (*d as char).is_ascii_graphic() || *d == 0x20 {
+                    string.push(*d as char);
                 } else {
-                    print!(".");
+                    string.push('.');
                 }
             }
-            println!();
+            string.push('\n');
             count = 0;
         }
     }
     if count > 0 {
         for _ in count..24 {
-            print!("  ");
+            string.push_str("  ");
         }
         for _ in 0..3 - (count / 8) {
-            print!(" ");
+            string.push(' ');
         }
-        print!(" | ");
-        for i in data.len() - count..data.len() {
-            let d = data[i];
-            if (d as char).is_ascii_graphic() || d == 0x20 {
-                print!("{}", d as char);
+        string.push_str(" | ");
+        for d in data.iter().skip(data.len() - count) {
+            if (*d as char).is_ascii_graphic() || *d == 0x20 {
+                string.push(*d as char);
             } else {
-                print!(".");
+                string.push('.');
             }
         }
-        println!();
+        string.push('\n');
     }
+
+    stdout().write(&string);
 }
 
 pub fn cat(path: &str, root_dir: &str) {
@@ -64,24 +66,27 @@ pub fn cat(path: &str, root_dir: &str) {
     let mut buf = if path == "/dev/random" {
         vec![0; 24]
     } else {
-        vec![0; 0x4000]
+        vec![0; 3072]
     };
 
-    let size = sys_read(fd, &mut buf);
+    let mut bytes_read = 0;
 
-    if size.is_none() {
-        errln!("Cannot read file");
-        return;
+    loop {
+        if let Some(size) = sys_read(fd, &mut buf) {
+            show_hex(&buf[..size]);
+            bytes_read += size;
+            if size < buf.len() {
+                break;
+            }
+        } else {
+            errln!("Cannot read file");
+            return;
+        }
     }
 
-    let size = size.unwrap();
-    if size == 0 {
-        errln!("File is empty or buffer is too small!");
-        return;
-    }
-
-    show_hex(&buf[..size]);
     sys_close(fd);
+
+    println!("    > Read {} bytes from {}.", bytes_read, path);
 }
 
 pub fn cd(path: &str, root_dir: &mut String) {

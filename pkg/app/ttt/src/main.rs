@@ -13,22 +13,22 @@ extern crate lib;
 
 #[derive(PartialEq, Eq)]
 enum CellState {
-    StateEmpty,
-    StatePlayer,
-    StateComputer,
+    Empty,
+    Player,
+    Computer,
 }
 
-fn main() -> usize {
+fn main() -> isize {
     let mut state = [
-        CellState::StateEmpty,
-        CellState::StateEmpty,
-        CellState::StateEmpty,
-        CellState::StateEmpty,
-        CellState::StateEmpty,
-        CellState::StateEmpty,
-        CellState::StateEmpty,
-        CellState::StateEmpty,
-        CellState::StateEmpty,
+        CellState::Empty,
+        CellState::Empty,
+        CellState::Empty,
+        CellState::Empty,
+        CellState::Empty,
+        CellState::Empty,
+        CellState::Empty,
+        CellState::Empty,
+        CellState::Empty,
     ];
 
     println!("Let's play Tic-Tac-Toe!");
@@ -46,10 +46,10 @@ fn main() -> usize {
             continue;
         }
 
-        state[guess] = CellState::StatePlayer;
+        state[guess] = CellState::Player;
 
         // check for player win
-        if check_win(&state, CellState::StatePlayer) {
+        if check_win(&state, CellState::Player) {
             println!("\nPLAYER WINS!");
             break;
         }
@@ -64,7 +64,7 @@ fn main() -> usize {
         get_computer_input(&mut state, &rng);
 
         // check for computer win
-        if check_win(&state, CellState::StateComputer) {
+        if check_win(&state, CellState::Computer) {
             println!("\nCOMPUTER WINS!");
             break;
         }
@@ -79,7 +79,7 @@ fn main() -> usize {
 fn check_win(state: &[CellState; 9], who: CellState) -> bool {
     // check rows
     for row in 0..3 {
-        let idx: usize = row * 3 + 0;
+        let idx: usize = row * 3;
         if who == state[idx] && who == state[idx + 1] && who == state[idx + 2] {
             return true;
         }
@@ -94,12 +94,10 @@ fn check_win(state: &[CellState; 9], who: CellState) -> bool {
     }
 
     // check diagonals
-    if who == state[4] {
-        if who == state[0] && who == state[8] {
-            return true;
-        } else if who == state[2] && who == state[6] {
-            return true;
-        }
+    if who == state[4]
+        && ((who == state[0] && who == state[8]) || (who == state[2] && who == state[6]))
+    {
+        return true;
     }
 
     // failed
@@ -109,22 +107,22 @@ fn check_win(state: &[CellState; 9], who: CellState) -> bool {
 fn get_computer_input(state: &mut [CellState; 9], rng: &Random) {
     let mut options: Vec<usize> = Vec::new();
 
-    for i in 0..9 {
-        if CellState::StateEmpty == state[i] {
+    for (i, s) in state.iter().enumerate() {
+        if *s == CellState::Empty {
             options.push(i);
         }
     }
 
     let sel = rng.next_u32() as usize % options.len();
 
-    if let CellState::StateEmpty = state[options[sel]] {
-        state[options[sel]] = CellState::StateComputer
+    if let CellState::Empty = state[options[sel]] {
+        state[options[sel]] = CellState::Computer
     }
 }
 
 fn check_draw(state: &[CellState; 9]) -> bool {
-    for i in 0..9 {
-        if CellState::StateEmpty == state[i] {
+    for s in state.iter() {
+        if *s == CellState::Empty {
             return false;
         }
     }
@@ -135,11 +133,11 @@ fn check_draw(state: &[CellState; 9]) -> bool {
 fn draw_board(state: &[CellState; 9]) {
     let mut board = Vec::new();
 
-    for i in 0..9 {
-        match state[i] {
-            CellState::StatePlayer => board.push(String::from("X")),
-            CellState::StateComputer => board.push(String::from("O")),
-            CellState::StateEmpty => board.push((i + 1).to_string()),
+    for (i, s) in state.iter().enumerate() {
+        match s {
+            CellState::Player => board.push(String::from("X")),
+            CellState::Computer => board.push(String::from("O")),
+            CellState::Empty => board.push((i + 1).to_string()),
         }
     }
 
@@ -158,13 +156,13 @@ fn get_player_input(state: &[CellState; 9]) -> usize {
     let guess = lib::stdin().read_line();
 
     let guess = guess.as_bytes()[0];
-    if guess < 49 || guess > 57 {
+    if !(49..=57).contains(&guess) {
         return 10; // invalid choice
     }
 
     let guess: usize = (guess - 49).into();
 
-    if state[guess] == CellState::StateEmpty {
+    if state[guess] == CellState::Empty {
         return guess;
     }
 

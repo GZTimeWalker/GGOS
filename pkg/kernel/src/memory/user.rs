@@ -6,6 +6,9 @@ use x86_64::structures::paging::{
 };
 use x86_64::VirtAddr;
 
+use crate::memory::get_frame_alloc_for_sure;
+use crate::proc::PageTableContext;
+
 pub const USER_HEAP_START: usize = 0x4000_0000_0000;
 pub const USER_HEAP_SIZE: usize = 512 * 1024; // 512 KiB
 const USER_HEAP_PAGE: usize = USER_HEAP_SIZE / crate::memory::PAGE_SIZE as usize;
@@ -18,8 +21,8 @@ pub fn init() {
 }
 
 pub fn init_user_heap() -> Result<(), MapToError<Size4KiB>> {
-    let mapper = &mut *super::get_page_table_for_sure();
-    let frame_allocator = &mut *super::get_frame_alloc_for_sure();
+    let mapper = &mut PageTableContext::new().mapper();
+    let frame_allocator = &mut *get_frame_alloc_for_sure();
 
     let page_range = {
         let heap_start = VirtAddr::new(USER_HEAP_START as u64);

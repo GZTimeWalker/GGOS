@@ -12,6 +12,8 @@ pub enum Syscall {
     Open = 2,
     Close = 3,
 
+    Brk = 12,
+
     GetPid = 39,
 
     VFork = 58,

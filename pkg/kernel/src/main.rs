@@ -23,7 +23,7 @@ pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
 }
 
 pub fn spawn_init(boot_info: &'static boot::BootInfo) -> proc::ProcessId {
-    print_serial!("\x1b[1;1H\x1b[2J");
+    // print_serial!("\x1b[1;1H\x1b[2J");
 
     if let Some(apps) = &boot_info.loaded_apps {
         for app in apps {

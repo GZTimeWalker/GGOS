@@ -12,7 +12,7 @@ use lib::*;
 
 extern crate lib;
 
-fn main() -> usize {
+fn main() -> isize {
     let mut root_dir = String::from("/APP/");
     println!("            <<< Welcome to GGOS shell >>>            ");
     println!("                                 type `help` for help");

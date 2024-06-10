@@ -1,4 +1,4 @@
-use volatile::VolatileRef;
+use volatile::{access::ReadOnly, VolatileRef};
 use x86_64::{
     registers::rflags::RFlags,
     structures::{gdt::SegmentSelector, idt::InterruptStackFrameValue},
@@ -22,8 +22,13 @@ pub struct ProcessContext {
 
 impl ProcessContext {
     #[inline]
-    pub unsafe fn as_ref(&mut self) -> VolatileRef<ProcessContextValue> {
+    pub fn as_mut(&mut self) -> VolatileRef<ProcessContextValue> {
         VolatileRef::from_mut_ref(&mut self.value)
+    }
+
+    #[inline]
+    pub fn as_ref(&self) -> VolatileRef<'_, ProcessContextValue, ReadOnly> {
+        VolatileRef::from_ref(&self.value)
     }
 
     #[inline]
@@ -37,13 +42,13 @@ impl ProcessContext {
     }
 
     #[inline]
-    pub unsafe fn save(&mut self, context: &mut ProcessContext) {
+    pub fn save(&mut self, context: &ProcessContext) {
         self.value = context.as_ref().as_ptr().read();
     }
 
     #[inline]
-    pub unsafe fn restore(&self, context: &mut ProcessContext) {
-        context.as_ref().as_mut_ptr().write(self.value);
+    pub fn restore(&self, context: &mut ProcessContext) {
+        context.as_mut().as_mut_ptr().write(self.value);
     }
 
     pub fn init_stack_frame(&mut self, entry: VirtAddr, stack_top: VirtAddr) {

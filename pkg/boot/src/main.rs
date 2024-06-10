@@ -98,7 +98,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         stack_start + stack_size * 0x1000
     );
 
-    elf::map_range(
+    elf::map_pages(
         stack_start,
         stack_size,
         &mut page_table,

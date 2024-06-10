@@ -1,5 +1,5 @@
 use super::ProcessId;
-use alloc::{collections::BTreeMap, vec::Vec};
+use alloc::collections::*;
 use spin::Mutex;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -15,14 +15,14 @@ impl SemaphoreId {
 #[derive(Debug, Clone)]
 pub struct Semaphore {
     count: usize,
-    wait_queue: Vec<ProcessId>,
+    wait_queue: VecDeque<ProcessId>,
 }
 
 /// Semaphore result
 #[derive(Debug)]
 pub enum SemaphoreResult {
     Ok,
-    NoExist,
+    NotExist,
     Block(ProcessId),
     WakeUp(ProcessId),
 }
@@ -32,17 +32,17 @@ impl Semaphore {
     pub fn new(value: usize) -> Self {
         Self {
             count: value,
-            wait_queue: Vec::new(),
+            wait_queue: VecDeque::new(),
         }
     }
 
-    /// Down the semaphore (acquire)
+    /// Wait the semaphore (acquire/down/proberen)
     ///
     /// if the count is 0, then push the process into the wait queue
     /// else decrease the count and return Ok
-    pub fn down(&mut self, pid: ProcessId) -> SemaphoreResult {
+    pub fn wait(&mut self, pid: ProcessId) -> SemaphoreResult {
         if self.count == 0 {
-            self.wait_queue.push(pid);
+            self.wait_queue.push_back(pid);
             SemaphoreResult::Block(pid)
         } else {
             self.count -= 1;
@@ -50,13 +50,13 @@ impl Semaphore {
         }
     }
 
-    /// Up the semaphore (release)
+    /// Signal the semaphore (release/up/verhogen)
     ///
     /// if the wait queue is not empty, then pop a process from the wait queue
     /// else increase the count
-    pub fn up(&mut self) -> SemaphoreResult {
-        if !self.wait_queue.is_empty() {
-            SemaphoreResult::WakeUp(self.wait_queue.pop().unwrap())
+    pub fn signal(&mut self) -> SemaphoreResult {
+        if let Some(pid) = self.wait_queue.pop_front() {
+            SemaphoreResult::WakeUp(pid)
         } else {
             self.count += 1;
             SemaphoreResult::Ok
@@ -71,36 +71,38 @@ pub struct SemaphoreSet {
 
 impl SemaphoreSet {
     pub fn insert(&mut self, key: u32, value: usize) -> bool {
-        trace!("Sem Ins : <{:#x}>{}", key, value);
+        trace!("Sem Insert: <{:#x}>{}", key, value);
         self.sems
             .insert(SemaphoreId::new(key), Mutex::new(Semaphore::new(value)))
             .is_none()
     }
 
     pub fn remove(&mut self, key: u32) -> bool {
-        trace!("Sem Rem : <{:#x}>", key);
+        trace!("Sem Remove: <{:#x}>", key);
         self.sems.remove(&SemaphoreId::new(key)).is_some()
     }
 
-    pub fn up(&self, key: u32) -> SemaphoreResult {
+    /// Signal the semaphore (release/up/verhogen)
+    pub fn signal(&self, key: u32) -> SemaphoreResult {
         let sid = SemaphoreId::new(key);
         if let Some(sem) = self.sems.get(&sid) {
             let mut locked = sem.lock();
-            trace!("Sem Up  : <{:#x}>{}", key, locked);
-            locked.up()
+            trace!("Sem Signal: <{:#x}>{}", key, locked);
+            locked.signal()
         } else {
-            SemaphoreResult::NoExist
+            SemaphoreResult::NotExist
         }
     }
 
-    pub fn down(&self, key: u32, pid: ProcessId) -> SemaphoreResult {
+    /// Wait the semaphore (acquire/down/proberen)
+    pub fn wait(&self, key: u32, pid: ProcessId) -> SemaphoreResult {
         let sid = SemaphoreId::new(key);
         if let Some(sem) = self.sems.get(&sid) {
             let mut locked = sem.lock();
-            trace!("Sem Down: <{:#x}>{}", key, locked);
-            locked.down(pid)
+            trace!("Sem Wait  : <{:#x}>{}", key, locked);
+            locked.wait(pid)
         } else {
-            SemaphoreResult::NoExist
+            SemaphoreResult::NotExist
         }
     }
 }

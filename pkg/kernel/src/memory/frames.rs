@@ -45,7 +45,7 @@ impl BootInfoFrameAllocator {
         self.size
     }
 
-    pub fn recycled_count(&self) -> usize {
+    pub fn frames_recycled(&self) -> usize {
         self.recycled.len() as usize
     }
 }

@@ -47,8 +47,8 @@ pub fn sys_deallocate(ptr: *mut u8, layout: &core::alloc::Layout) -> usize {
 }
 
 #[inline(always)]
-pub fn sys_exit(code: usize) -> ! {
-    syscall!(Syscall::Exit, code);
+pub fn sys_exit(code: isize) -> ! {
+    syscall!(Syscall::Exit, code as usize);
     unreachable!();
 }
 
@@ -111,21 +111,30 @@ pub fn sys_kill(pid: u16) {
 }
 
 #[inline(always)]
-pub fn sys_new_sem(key: u32, value: usize) -> isize {
-    syscall!(Syscall::Sem, 0, key as usize, value) as isize
+pub fn sys_new_sem(key: u32, value: usize) -> bool {
+    syscall!(Syscall::Sem, 0, key as u64, value) == 0
 }
 
 #[inline(always)]
-pub fn sys_rm_sem(key: u32) -> isize {
-    syscall!(Syscall::Sem, 1, key as usize) as isize
+pub fn sys_rm_sem(key: u32) -> bool {
+    syscall!(Syscall::Sem, 1, key as u64) == 0
 }
 
 #[inline(always)]
-pub fn sys_sem_up(key: u32) -> isize {
-    syscall!(Syscall::Sem, 2, key as usize) as isize
+pub fn sys_sem_signal(key: u32) {
+    _ = syscall!(Syscall::Sem, 2, key as u64)
 }
 
 #[inline(always)]
-pub fn sys_sem_down(key: u32) -> isize {
-    syscall!(Syscall::Sem, 3, key as usize) as isize
+pub fn sys_sem_wait(key: u32) {
+    _ = syscall!(Syscall::Sem, 3, key as u64)
+}
+
+#[inline(always)]
+pub fn sys_brk(addr: Option<usize>) -> Option<usize> {
+    const BRK_FAILED: usize = !0;
+    match syscall!(Syscall::Brk, addr.unwrap_or(0)) {
+        BRK_FAILED => None,
+        ret => Some(ret),
+    }
 }

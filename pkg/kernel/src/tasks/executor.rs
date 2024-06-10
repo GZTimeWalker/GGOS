@@ -41,7 +41,7 @@ impl Executor {
     pub fn run(&mut self, init: ProcessId) {
         loop {
             self.run_ready_tasks();
-            if proc::still_alive(init) {
+            if proc::wait_no_block(init).is_none() {
                 self.sleep_if_idle();
             } else {
                 break;

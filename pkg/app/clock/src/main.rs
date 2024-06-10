@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![allow(unreachable_code)]
+#![allow(clippy::diverging_sub_expression)]
 
 use embedded_graphics::pixelcolor::Rgb888;
 use lib::*;
@@ -39,7 +40,7 @@ fn clock() -> ! {
         let value = angle / 180f32 * core::f32::consts::PI;
 
         let len = 24i32;
-        let (cx, cy) = (cx as i32 - len - 10, len + 8);
+        let (cx, cy) = (cx - len - 10, len + 8);
 
         let (dx, dy) = (
             (len as f32 * value.cos()) as i32,
