@@ -126,11 +126,11 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     } else {
         "Unknown location".to_string()
     };
-    let msg = if let Some(msg) = info.message() {
-        alloc::format!("{}", msg)
-    } else {
-        "No more message...".to_string()
-    };
-    error!("\n\n\rERROR: panicked at {}\n\n\r{}", location, msg);
+
+    error!(
+        "\n\n\rERROR: panicked at {}\n\n\r{}",
+        location,
+        info.message()
+    );
     loop {}
 }
