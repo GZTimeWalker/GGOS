@@ -6,8 +6,6 @@
 extern crate log;
 extern crate alloc;
 
-use alloc::boxed::Box;
-use alloc::vec;
 use core::arch::asm;
 use ggos_boot::allocator::*;
 use ggos_boot::fs::*;
@@ -58,13 +56,9 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
         None
     };
 
-    let max_mmap_size = system_table.boot_services().memory_map_size();
-    let mmap_storage = Box::leak(
-        vec![0; max_mmap_size.map_size + 10 * max_mmap_size.entry_size].into_boxed_slice(),
-    );
     let mmap = system_table
         .boot_services()
-        .memory_map(mmap_storage)
+        .memory_map(MemoryType::LOADER_DATA)
         .expect("Failed to get memory map");
 
     let max_phys_addr = mmap
@@ -122,7 +116,7 @@ fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status 
     // 5. Exit boot and jump to ELF entry
     info!("Exiting boot services...");
 
-    let (runtime, mmap) = system_table.exit_boot_services(MemoryType::LOADER_DATA);
+    let (runtime, mmap) = unsafe { system_table.exit_boot_services(MemoryType::LOADER_DATA) };
     // NOTE: alloc & log can no longer be used
 
     // construct BootInfo
