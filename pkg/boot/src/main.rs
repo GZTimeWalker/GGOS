@@ -10,6 +10,7 @@ use core::arch::asm;
 use ggos_boot::allocator::*;
 use ggos_boot::fs::*;
 use ggos_boot::*;
+use uefi::mem::memory_map::MemoryMap;
 use uefi::prelude::*;
 use x86_64::registers::control::*;
 use x86_64::structures::paging::page::PageRangeInclusive;
@@ -23,8 +24,8 @@ mod config;
 const CONFIG_PATH: &str = "\\EFI\\BOOT\\boot.conf";
 
 #[entry]
-fn efi_main(image: uefi::Handle, mut system_table: SystemTable<Boot>) -> Status {
-    uefi::helpers::init(&mut system_table).expect("Failed to initialize utilities");
+fn efi_main(image: uefi::Handle, system_table: SystemTable<Boot>) -> Status {
+    uefi::helpers::init().expect("Failed to initialize utilities");
 
     log::set_max_level(log::LevelFilter::Info);
     info!("Running UEFI bootloader...");
