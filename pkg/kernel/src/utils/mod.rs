@@ -1,5 +1,3 @@
-mod uefi;
-
 #[macro_use]
 mod macros;
 #[macro_use]

@@ -7,6 +7,7 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [dependencies]
 boot = { package = "ggos_boot", path = "../boot", default-features = false }
+uefi = { version = "0.32", default-features = false }
 storage = { package = "ggos_storage", path = "../storage" }
 elf = { package = "ggos_elf", path = "../elf" }
 syscall_def = { package = "ggos_syscall", path = "../syscall" }
@@ -23,7 +24,7 @@ bitflags = "2.3"
 chrono = { version = "0.4", default-features = false }
 libm = "0.2"
 linked_list_allocator = "0.10"
-pc-keyboard = "0.7"
+pc-keyboard = "0.8"
 crossbeam-queue = { version = "0.3", default-features = false, features = ["alloc"] }
 volatile = "0.6"
 xmas-elf = "0.9"

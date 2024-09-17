@@ -19,7 +19,7 @@ pub fn kernel_main(boot_info: &'static boot::BootInfo) -> ! {
 
     // use executor.spawn() to spawn kernel tasks
     executor.run(init);
-    ggos::shutdown(boot_info);
+    ggos::shutdown();
 }
 
 pub fn spawn_init(boot_info: &'static boot::BootInfo) -> proc::ProcessId {

@@ -1,12 +1,11 @@
 #![no_std]
+use core::ptr::NonNull;
+
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
-pub use uefi::prelude::SystemTable;
 pub use uefi::proto::console::gop::{GraphicsOutput, ModeInfo};
 pub use uefi::table::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
-pub use uefi::table::runtime::*;
-pub use uefi::table::Runtime;
-pub use uefi::Status as UefiStatus;
+pub use uefi::Status;
 
 use arrayvec::{ArrayString, ArrayVec};
 use x86_64::structures::paging::page::PageRangeInclusive;
@@ -30,16 +29,16 @@ pub struct BootInfo {
     /// The graphic output information
     pub graphic_info: GraphicInfo,
 
-    /// UEFI SystemTable
-    pub system_table: SystemTable<Runtime>,
-
-    // Kernel pages
+    /// Kernel pages
     pub kernel_pages: KernelPages,
 
-    // Loaded apps
+    /// The system table virtual address
+    pub system_table: NonNull<core::ffi::c_void>,
+
+    /// Loaded apps
     pub loaded_apps: Option<ArrayVec<App<'static>, 16>>,
 
-    // Log Level
+    /// Log Level
     pub log_level: &'static str,
 }
 

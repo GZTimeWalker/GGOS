@@ -1,15 +1,11 @@
-use super::uefi;
-use boot::BootInfo;
-use chrono::naive::*;
-
-pub fn init(boot_info: &'static BootInfo) {
-    if uefi::get_uefi_runtime().is_none() {
-        uefi::init(boot_info);
-    }
-}
+use chrono::{naive::*, DateTime};
 
 pub fn now() -> NaiveDateTime {
-    let time = uefi::get_uefi_runtime_for_sure().get_time();
+    let time = match uefi::runtime::get_time() {
+        Ok(time) => time,
+        Err(_) => return DateTime::from_timestamp(0, 0).unwrap().naive_utc(),
+    };
+
     NaiveDate::from_ymd_opt(time.year() as i32, time.month() as u32, time.day() as u32)
         .unwrap_or_default()
         .and_hms_nano_opt(
