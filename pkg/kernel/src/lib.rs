@@ -1,5 +1,6 @@
 #![no_std]
 #![allow(dead_code)]
+#![feature(array_ptr_get)]
 #![feature(naked_functions)]
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
