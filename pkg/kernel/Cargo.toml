@@ -7,7 +7,7 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [dependencies]
 boot = { package = "ggos_boot", path = "../boot", default-features = false }
-uefi = { version = "0.32", default-features = false }
+uefi = { version = "0.33", default-features = false }
 storage = { package = "ggos_storage", path = "../storage" }
 elf = { package = "ggos_elf", path = "../elf" }
 syscall_def = { package = "ggos_syscall", path = "../syscall" }
