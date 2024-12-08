@@ -79,16 +79,14 @@ impl Resource {
                 }
             }
             Resource::Console(stdio) => match stdio {
-                &mut StdIO::Stdin => {
-                    return Some(if buf.len() < 4 {
-                        0
-                    } else if let Some(DecodedKey::Unicode(k)) = try_get_key() {
-                        let s = k.encode_utf8(buf);
-                        s.len()
-                    } else {
-                        0
-                    });
-                }
+                &mut StdIO::Stdin => Some(if buf.len() < 4 {
+                    0
+                } else if let Some(DecodedKey::Unicode(k)) = try_get_key() {
+                    let s = k.encode_utf8(buf);
+                    s.len()
+                } else {
+                    0
+                }),
                 _ => Some(0),
             },
             Resource::Random(random) => Some(random.read(buf, 0, buf.len()).unwrap()),

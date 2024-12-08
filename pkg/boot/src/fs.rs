@@ -1,7 +1,7 @@
 use arrayvec::{ArrayString, ArrayVec};
+use uefi::boot::*;
 use uefi::proto::media::file::*;
 use uefi::proto::media::fs::SimpleFileSystem;
-use uefi::boot::*;
 use uefi::Char16;
 use xmas_elf::ElfFile;
 

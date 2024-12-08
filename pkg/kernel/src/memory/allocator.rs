@@ -22,7 +22,9 @@ pub fn init() {
     );
 
     unsafe {
-        ALLOCATOR.lock().init(addr_of_mut!(HEAP).as_mut_ptr(), HEAP_SIZE);
+        ALLOCATOR
+            .lock()
+            .init(addr_of_mut!(HEAP).as_mut_ptr(), HEAP_SIZE);
     }
 
     info!("Kernel Heap Initialized.");

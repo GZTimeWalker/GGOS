@@ -12,7 +12,7 @@ impl Fat16Impl {
 
         // FirstDataSector = BPB_ResvdSecCnt + (BPB_NumFATs * FATSz) + RootDirSectors;
         let root_dir_size =
-            ((bpb.root_entries_count() as usize * DirEntry::LEN) + block_size - 1) / block_size;
+            (bpb.root_entries_count() as usize * DirEntry::LEN).div_ceil(block_size);
 
         let fat_start = bpb.reserved_sector_count() as usize;
         let first_root_dir_sector =

@@ -13,14 +13,14 @@ pub struct GOPDisplay<'a> {
     buffer: &'a mut [u32],
 }
 
-impl<'a> OriginDimensions for GOPDisplay<'a> {
+impl OriginDimensions for GOPDisplay<'_> {
     fn size(&self) -> Size {
         let (x, y) = self.info.mode.resolution();
         Size::new(x as u32, y as u32)
     }
 }
 
-impl<'a> DrawTarget for GOPDisplay<'a> {
+impl DrawTarget for GOPDisplay<'_> {
     type Color = Rgb888;
     type Error = DisplayError;
 

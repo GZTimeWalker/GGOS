@@ -7,7 +7,7 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lib = { path="../../lib", package="gglib"}
+lib = { workspace = true }
 embedded-graphics = { version = "0.8", features = ['fixed_point'] }
 micromath = { version = "2.0", features = ["num-traits"] }
 chrono = { version = "0.4", default-features = false }
