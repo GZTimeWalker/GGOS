@@ -37,8 +37,6 @@ impl SpinLock {
     }
 }
 
-unsafe impl Sync for SpinLock {}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Semaphore {
     key: u32,
@@ -72,8 +70,6 @@ impl Semaphore {
         sys_rm_sem(self.key)
     }
 }
-
-unsafe impl Sync for Semaphore {}
 
 #[macro_export]
 macro_rules! semaphore_array {

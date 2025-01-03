@@ -41,7 +41,7 @@ impl MbrPartition {
     }
 
     pub fn begin_cylinder(&self) -> u16 {
-        (self.data[2] as u16 & 0xc0) << 2 | (self.data[3] as u16)
+        ((self.data[2] as u16 & 0xc0) << 2) | (self.data[3] as u16)
     }
 
     pub fn end_sector(&self) -> u8 {
@@ -49,7 +49,7 @@ impl MbrPartition {
     }
 
     pub fn end_cylinder(&self) -> u16 {
-        (self.data[6] as u16 & 0xc0) << 2 | (self.data[7] as u16)
+        ((self.data[6] as u16 & 0xc0) << 2) | (self.data[7] as u16)
     }
 }
 

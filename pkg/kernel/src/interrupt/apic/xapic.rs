@@ -49,7 +49,7 @@ impl LocalApic for XApic {
 
             // Disable performance counter overflow interrupts
             // on machines that provide that interrupt entry.
-            if (self.read(VER) >> 16 & 0xFF) >= 4 {
+            if ((self.read(VER) >> 16) & 0xFF) >= 4 {
                 self.write(PCINT, MASKED);
             }
 
@@ -82,7 +82,7 @@ impl LocalApic for XApic {
     }
 
     fn icr(&self) -> u64 {
-        unsafe { (self.read(ICRHI) as u64) << 32 | self.read(ICRLO) as u64 }
+        unsafe { ((self.read(ICRHI) as u64) << 32) | self.read(ICRLO) as u64 }
     }
 
     fn set_icr(&mut self, value: u64) {

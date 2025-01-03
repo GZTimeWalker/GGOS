@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![allow(static_mut_refs)]
 
 use lib::*;
 
@@ -37,13 +36,14 @@ fn try_spin() {
 
 unsafe fn mother_spin() {
     LOCK.acquire();
+    let burger_ptr = &raw mut BURGER;
 
     println!(
         "Mother - SPIN : Start to make cheese burger, there are {} cheese burger now",
-        BURGER
+        *burger_ptr
     );
 
-    BURGER += 10;
+    *burger_ptr += 10;
 
     println!("Mother - SPIN : Oh, I have to hang clothes out.");
 
@@ -51,7 +51,7 @@ unsafe fn mother_spin() {
 
     println!(
         "Mother - SPIN : Oh, Jesus! There are {} cheese burgers",
-        BURGER
+        *burger_ptr
     );
 
     LOCK.release();
@@ -59,11 +59,12 @@ unsafe fn mother_spin() {
 
 unsafe fn boy_spin() {
     sleep(200);
+    let burger_ptr = &raw mut BURGER;
 
     LOCK.acquire();
 
     println!("Boy    - SPIN : Look what I found!");
-    BURGER -= 10;
+    *burger_ptr -= 10;
 
     LOCK.release();
 }
@@ -84,13 +85,14 @@ fn try_semaphore() {
 
 unsafe fn mother_semaphore() {
     MUTEX.wait();
+    let burger_ptr = &raw mut BURGER_SEM;
 
     println!(
         "Mother - SEMA : Start to make cheese burger, there are {} cheese burger now",
-        BURGER_SEM
+        *burger_ptr
     );
 
-    BURGER_SEM += 10;
+    *burger_ptr += 10;
 
     println!("Mother - SEMA : Oh, I have to hang clothes out.");
 
@@ -98,7 +100,7 @@ unsafe fn mother_semaphore() {
 
     println!(
         "Mother - SEMA : Oh, Jesus! There are {} cheese burgers",
-        BURGER_SEM
+        *burger_ptr
     );
 
     MUTEX.signal();
@@ -106,11 +108,12 @@ unsafe fn mother_semaphore() {
 
 unsafe fn boy_semaphore() {
     sleep(200);
+    let burger_ptr = &raw mut BURGER_SEM;
 
     MUTEX.wait();
 
     println!("Boy    - SEMA : Look what I found!");
-    BURGER_SEM -= 10;
+    *burger_ptr -= 10;
 
     MUTEX.signal();
 }

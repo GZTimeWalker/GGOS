@@ -119,10 +119,10 @@ impl DirEntry {
         time = u32::from_le_bytes([0, 0, data[18], data[19]]);
         let accessed_time = prase_datetime(time);
 
-        let cluster = (data[27] as u32) << 8
+        let cluster = ((data[27] as u32) << 8)
             | (data[26] as u32)
-            | (data[21] as u32) << 24
-            | (data[20] as u32) << 16;
+            | ((data[21] as u32) << 24)
+            | ((data[20] as u32) << 16);
 
         time = u32::from_le_bytes([data[22], data[23], data[24], data[25]]);
         let moditified_time = prase_datetime(time);
