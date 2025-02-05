@@ -1,5 +1,6 @@
 use crate::*;
-use rand::{RngCore, SeedableRng};
+use core::cmp::min;
+use rand::{Rng, RngCore, SeedableRng};
 use rand_hc::Hc128Rng;
 use x86_64::instructions::random::RdRand;
 
@@ -11,18 +12,18 @@ pub struct Random;
 impl Device<u8> for Random {
     fn read(&self, buf: &mut [u8], offset: usize, size: usize) -> Result<usize> {
         if let Some(rng) = RdRand::new() {
-            for i in 0..size {
-                if let Some(num) = rng.get_u16() {
-                    buf[offset + i] = num as u8;
+            for i in (0..size).step_by(8) {
+                if let Some(num) = rng.get_u64() {
+                    for j in (i..min(i + 8, size)).rev() {
+                        buf[offset + j] = (num >> (j * 8)) as u8;
+                    }
                 } else {
                     return Err(DeviceError::ReadError.into());
                 }
             }
             Ok(size)
         } else if let Some(mut rng) = GLOBAL_RNG.get().and_then(spin::Mutex::try_lock) {
-            for i in 0..size {
-                buf[offset + i] = rng.next_u32() as u8;
-            }
+            rng.fill(&mut buf[offset..offset + size]);
             Ok(size)
         } else {
             Err(DeviceError::ReadError.into())
@@ -35,10 +36,17 @@ impl Device<u8> for Random {
 }
 
 impl Random {
-    pub fn new(seed: u64) -> Self {
+    pub fn new() -> Self {
         if !GLOBAL_RNG.is_completed() {
+            let seed = RdRand::new().and_then(|rng| rng.get_u64()).unwrap_or(0);
             GLOBAL_RNG.call_once(|| spin::Mutex::new(Hc128Rng::seed_from_u64(seed)));
         }
         Self
+    }
+}
+
+impl Default for Random {
+    fn default() -> Self {
+        Self::new()
     }
 }

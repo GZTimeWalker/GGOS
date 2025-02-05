@@ -114,6 +114,10 @@ impl Random {
         }
         0
     }
+
+    pub fn fill_bytes(&self, buf: &mut [u8]) {
+        sys_read(self.0, buf);
+    }
 }
 
 impl Default for Random {

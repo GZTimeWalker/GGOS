@@ -1,4 +1,5 @@
 use alloc::collections::BTreeSet;
+use storage::random::Random;
 
 use super::*;
 use crate::{
@@ -114,9 +115,13 @@ impl ProcessManager {
     }
 
     pub fn open(&self, path: &str) -> Option<u8> {
-        let res = match get_rootfs().open_file(path) {
-            Ok(file) => Resource::File(file),
-            Err(_) => return None,
+        let res = match path {
+            // as a special case, we can open "/dev/random" to get random numbers
+            "/dev/random" => Resource::Random(Random::new()),
+            _ => match get_rootfs().open_file(path) {
+                Ok(file) => Resource::File(file),
+                Err(_) => return None,
+            },
         };
 
         trace!("Opening {}...", path);
