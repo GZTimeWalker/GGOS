@@ -31,7 +31,7 @@ volatile = "0.6"
 x86 = "0.52"
 x86_64 = "0.15"
 xmas-elf = "0.9"
-uefi = { version = "0.33", default-features = false }
+uefi = { version = "0.34", default-features = false }
 chrono = { version = "0.4", default-features = false }
 arrayvec = { version = "0.7", default-features = false }
 num_enum = { version = "0.7", default-features = false }
