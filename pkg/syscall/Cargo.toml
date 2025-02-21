@@ -1,8 +1,8 @@
 [package]
 name = "ggos_syscall"
-version = "0.10.0"
-edition = "2021"
-authors = ["GZTime <Time.GZ@outlook.com>"]
+edition.workspace = true
+version.workspace = true
+authors.workspace = true
 
 [dependencies]
 num_enum = { workspace = true }

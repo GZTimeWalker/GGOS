@@ -118,9 +118,9 @@ dependencies = [
 
 [[package]]
 name = "equivalent"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
+checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "fixed"
@@ -184,7 +184,7 @@ dependencies = [
 
 [[package]]
 name = "ggos_boot"
-version = "0.2.0"
+version = "0.14.0"
 dependencies = [
  "arrayvec",
  "ggos_elf",
@@ -196,14 +196,14 @@ dependencies = [
 
 [[package]]
 name = "ggos_brk"
-version = "0.0.1"
+version = "0.14.0"
 dependencies = [
  "gglib",
 ]
 
 [[package]]
 name = "ggos_clock"
-version = "0.1.0"
+version = "0.14.0"
 dependencies = [
  "chrono",
  "embedded-graphics",
@@ -213,14 +213,14 @@ dependencies = [
 
 [[package]]
 name = "ggos_dining"
-version = "0.2.0"
+version = "0.14.0"
 dependencies = [
  "gglib",
 ]
 
 [[package]]
 name = "ggos_elf"
-version = "0.1.0"
+version = "0.14.0"
 dependencies = [
  "log",
  "x86_64",
@@ -229,21 +229,21 @@ dependencies = [
 
 [[package]]
 name = "ggos_fact"
-version = "0.1.0"
+version = "0.14.0"
 dependencies = [
  "gglib",
 ]
 
 [[package]]
 name = "ggos_fork"
-version = "0.3.0"
+version = "0.14.0"
 dependencies = [
  "gglib",
 ]
 
 [[package]]
 name = "ggos_hello"
-version = "0.1.0"
+version = "0.14.0"
 dependencies = [
  "gglib",
 ]
@@ -281,28 +281,28 @@ dependencies = [
 
 [[package]]
 name = "ggos_mq"
-version = "0.3.0"
+version = "0.14.0"
 dependencies = [
  "gglib",
 ]
 
 [[package]]
 name = "ggos_mutex"
-version = "0.1.0"
+version = "0.14.0"
 dependencies = [
  "gglib",
 ]
 
 [[package]]
 name = "ggos_sh"
-version = "0.5.1"
+version = "0.14.0"
 dependencies = [
  "gglib",
 ]
 
 [[package]]
 name = "ggos_storage"
-version = "0.12.0"
+version = "0.14.0"
 dependencies = [
  "bitflags 2.8.0",
  "chrono",
@@ -318,14 +318,14 @@ dependencies = [
 
 [[package]]
 name = "ggos_syscall"
-version = "0.10.0"
+version = "0.14.0"
 dependencies = [
  "num_enum",
 ]
 
 [[package]]
 name = "ggos_ttt"
-version = "0.1.0"
+version = "0.14.0"
 dependencies = [
  "gglib",
 ]
@@ -518,9 +518,9 @@ dependencies = [
 
 [[package]]
 name = "rand_core"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b08f3c9802962f7e1b25113931d94f43ed9725bebc59db9d0c3e9a23b67e15ff"
+checksum = "a88e0da7a2c97baa202165137c158d0a2e824ac465d13d81046727b34cb247d3"
 dependencies = [
  "zerocopy",
 ]
@@ -592,9 +592,9 @@ dependencies = [
 
 [[package]]
 name = "typenum"
-version = "1.17.0"
+version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
+checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
 
 [[package]]
 name = "ucs2"
@@ -650,9 +650,9 @@ checksum = "ab14ea9660d240e7865ce9d54ecdbd1cd9fa5802ae6f4512f093c7907e921533"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.16"
+version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a210d160f08b701c8721ba1c726c11662f877ea6b7094007e1ca9a1041945034"
+checksum = "00e2473a93778eb0bad35909dff6a10d28e63f792f16ed15e404fca9d5eeedbe"
 
 [[package]]
 name = "volatile"
@@ -706,18 +706,18 @@ checksum = "2fe21bcc34ca7fe6dd56cc2cb1261ea59d6b93620215aefb5ea6032265527784"
 
 [[package]]
 name = "zerocopy"
-version = "0.8.17"
+version = "0.8.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa91407dacce3a68c56de03abe2760159582b846c6a4acd2f456618087f12713"
+checksum = "dde3bb8c68a8f3f1ed4ac9221aad6b10cece3e60a8e2ea54a6a2dec806d0084c"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.17"
+version = "0.8.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06718a168365cad3d5ff0bb133aad346959a2074bd4a85c121255a11304a8626"
+checksum = "eea57037071898bf96a6da35fd626f4f27e9cee3ead2a6c703cf09d472b2e700"
 dependencies = [
  "proc-macro2",
  "quote",

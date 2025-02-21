@@ -11,9 +11,10 @@ members = [
 ]
 exclude = ["pkg/app/config", "pkg/app/.cargo"]
 
-[profile.release-with-debug]
-debug = true
-inherits = "release"
+[workspace.package]
+version = "0.14.0"
+edition = "2024"
+authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [workspace.dependencies]
 bit_field = "0.10"
@@ -50,3 +51,7 @@ elf = { path = "pkg/elf", package = "ggos_elf" }
 storage = { path = "pkg/storage", package = "ggos_storage" }
 syscall_def = { path = "pkg/syscall", package = "ggos_syscall" }
 boot = { path = "pkg/boot", default-features = false, package = "ggos_boot" }
+
+[profile.release-with-debug]
+debug = true
+inherits = "release"

@@ -1,9 +1,8 @@
 [package]
-name = "ggos_ttt" # while the length limit is 8
-version = "0.1.0"
-edition = "2021"
-authors = ["GZTime <Time.GZ@outlook.com>"]
-
+name = "ggos_ttt"
+edition.workspace = true
+version.workspace = true
+authors.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
