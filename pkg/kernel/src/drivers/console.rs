@@ -7,7 +7,7 @@ use embedded_graphics::{
     mono_font::{MonoFont, MonoTextStyle},
     pixelcolor::Rgb888,
     prelude::*,
-    text::{renderer::CharacterStyle, Baseline, Text},
+    text::{Baseline, Text, renderer::CharacterStyle},
 };
 use storage::*;
 

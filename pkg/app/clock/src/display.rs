@@ -1,7 +1,7 @@
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::{Dimensions, IntoStorage, Point};
 use embedded_graphics::primitives::Rectangle;
-use embedded_graphics::{draw_target::DrawTarget, prelude::Size, Pixel};
+use embedded_graphics::{Pixel, draw_target::DrawTarget, prelude::Size};
 use lib::*;
 
 pub struct SysDisplay;

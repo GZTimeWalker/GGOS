@@ -20,7 +20,7 @@ extern crate libm;
 
 #[macro_use]
 pub mod utils;
-use uefi::{runtime::ResetType, Status};
+use uefi::{Status, runtime::ResetType};
 pub use utils::*;
 
 #[macro_use]

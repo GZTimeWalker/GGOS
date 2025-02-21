@@ -7,10 +7,12 @@ use super::consts;
 use service::*;
 
 pub unsafe fn reg_idt(idt: &mut InterruptDescriptorTable) {
-    idt[consts::Interrupts::Syscall as u8]
-        .set_handler_fn(syscall_handler)
-        .set_stack_index(gdt::SYSCALL_IST_INDEX)
-        .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
+    unsafe {
+        idt[consts::Interrupts::Syscall as u8]
+            .set_handler_fn(syscall_handler)
+            .set_stack_index(gdt::SYSCALL_IST_INDEX)
+            .set_privilege_level(x86_64::PrivilegeLevel::Ring3);
+    }
 }
 
 pub extern "C" fn syscall(mut context: ProcessContext) {

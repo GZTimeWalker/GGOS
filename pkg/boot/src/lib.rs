@@ -1,11 +1,11 @@
 #![no_std]
 use core::ptr::NonNull;
 
+pub use uefi::Status;
 pub use uefi::boot::{MemoryAttribute, MemoryDescriptor, MemoryType};
 pub use uefi::data_types::chars::*;
 pub use uefi::data_types::*;
 pub use uefi::proto::console::gop::{GraphicsOutput, ModeInfo};
-pub use uefi::Status;
 
 use arrayvec::{ArrayString, ArrayVec};
 use x86_64::structures::paging::page::PageRangeInclusive;
@@ -77,7 +77,7 @@ pub type KernelPages = ArrayVec<PageRangeInclusive, 8>;
 #[macro_export]
 macro_rules! entry_point {
     ($path:path) => {
-        #[export_name = "_start"]
+        #[unsafe(export_name = "_start")]
         pub extern "C" fn __impl_start(boot_info: &'static $crate::BootInfo) -> ! {
             // validate the signature of the program entry point
             let f: fn(&'static $crate::BootInfo) -> ! = $path;

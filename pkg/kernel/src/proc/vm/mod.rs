@@ -1,12 +1,12 @@
 use alloc::{format, vec::Vec};
 use boot::KernelPages;
 use x86_64::{
+    VirtAddr,
     structures::paging::{
         mapper::{CleanUp, UnmapError},
         page::*,
         *,
     },
-    VirtAddr,
 };
 use xmas_elf::ElfFile;
 
@@ -43,7 +43,7 @@ trait VmPartExt {
     ///
     /// This function will free the memory used by the process
     fn clean_up(&mut self, mapper: MapperRef, dealloc: FrameAllocatorRef)
-        -> Result<(), UnmapError>;
+    -> Result<(), UnmapError>;
 
     /// Create a new empty memory part
     fn empty() -> Self;

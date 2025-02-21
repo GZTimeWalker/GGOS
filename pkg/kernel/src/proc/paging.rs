@@ -3,9 +3,9 @@ use core::ptr::copy_nonoverlapping;
 
 use alloc::sync::Arc;
 use x86_64::{
+    VirtAddr,
     registers::control::{Cr3, Cr3Flags},
     structures::paging::*,
-    VirtAddr,
 };
 
 pub struct Cr3RegValue {

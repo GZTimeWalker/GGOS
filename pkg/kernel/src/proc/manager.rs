@@ -5,10 +5,10 @@ use super::*;
 use crate::{
     filesystem::cache_usage,
     memory::{
+        PAGE_SIZE,
         allocator::{ALLOCATOR, HEAP_SIZE},
         get_frame_alloc_for_sure,
         user::{USER_ALLOCATOR, USER_HEAP_SIZE},
-        PAGE_SIZE,
     },
     utils::humanized_size,
 };

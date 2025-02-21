@@ -1,7 +1,7 @@
 use embedded_graphics::{
     geometry::Size,
     image::ImageRaw,
-    mono_font::{mapping::ASCII, DecorationDimensions, MonoFont},
+    mono_font::{DecorationDimensions, MonoFont, mapping::ASCII},
 };
 
 pub const JBMONO: MonoFont = MonoFont {

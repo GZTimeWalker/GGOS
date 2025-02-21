@@ -1,4 +1,4 @@
-use pc_keyboard::{layouts, HandleControl, Keyboard, ScancodeSet1};
+use pc_keyboard::{HandleControl, Keyboard, ScancodeSet1, layouts};
 pub type DefaultKeyBoard = Keyboard<layouts::Us104Key, ScancodeSet1>;
 
 once_mutex!(pub KEYBOARD: DefaultKeyBoard);

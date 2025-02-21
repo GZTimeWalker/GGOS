@@ -66,10 +66,6 @@ impl Processor {
     #[inline]
     pub fn get_pid(&self) -> Option<ProcessId> {
         let pid = self.0.load(Ordering::Relaxed);
-        if pid == 0 {
-            None
-        } else {
-            Some(ProcessId(pid))
-        }
+        if pid == 0 { None } else { Some(ProcessId(pid)) }
     }
 }

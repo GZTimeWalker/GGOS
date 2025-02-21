@@ -1,10 +1,10 @@
 // reference: https://github.com/xfoxfu/rust-xos/blob/main/kernel/src/allocator.rs
 
 use linked_list_allocator::LockedHeap;
-use x86_64::structures::paging::{
-    mapper::MapToError, FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB,
-};
 use x86_64::VirtAddr;
+use x86_64::structures::paging::{
+    FrameAllocator, Mapper, Page, PageTableFlags, Size4KiB, mapper::MapToError,
+};
 
 use crate::memory::get_frame_alloc_for_sure;
 use crate::proc::PageTableContext;

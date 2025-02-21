@@ -1,7 +1,7 @@
 use alloc::{collections::BTreeMap, string::String};
 use pc_keyboard::DecodedKey;
 use spin::Mutex;
-use storage::{random::Random, Device, FileHandle};
+use storage::{Device, FileHandle, random::Random};
 
 use crate::input::try_get_key;
 

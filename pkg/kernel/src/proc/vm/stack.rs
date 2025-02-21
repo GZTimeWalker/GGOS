@@ -1,15 +1,15 @@
 use core::ptr::copy_nonoverlapping;
 
 use x86_64::{
+    VirtAddr,
     structures::paging::{
+        Page,
         mapper::{MapToError, UnmapError},
         page::*,
-        Page,
     },
-    VirtAddr,
 };
 
-use crate::proc::{processor, KERNEL_PID};
+use crate::proc::{KERNEL_PID, processor};
 
 use super::*;
 

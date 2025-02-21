@@ -1,6 +1,6 @@
+use x86_64::VirtAddr;
 use x86_64::structures::paging::mapper::TranslateResult::*;
 use x86_64::structures::paging::*;
-use x86_64::VirtAddr;
 
 use crate::proc::PageTableContext;
 

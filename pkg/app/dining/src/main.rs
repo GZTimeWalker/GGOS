@@ -62,7 +62,7 @@ fn philosopher(id: usize) -> ! {
 }
 
 #[inline(never)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 fn delay() {
     for _ in 0..100 {
         core::hint::spin_loop();

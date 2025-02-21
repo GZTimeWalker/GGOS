@@ -11,13 +11,13 @@ use ggos_boot::allocator::*;
 use ggos_boot::fs::*;
 use ggos_boot::*;
 use uefi::mem::memory_map::MemoryMap;
-use uefi::{entry, Status};
+use uefi::{Status, entry};
+use x86_64::VirtAddr;
 use x86_64::registers::control::*;
 use x86_64::structures::paging::page::PageRangeInclusive;
 use x86_64::structures::paging::*;
-use x86_64::VirtAddr;
-use xmas_elf::program::ProgramHeader;
 use xmas_elf::ElfFile;
+use xmas_elf::program::ProgramHeader;
 
 mod config;
 
@@ -133,9 +133,7 @@ fn main() -> Status {
     // align stack to 8 bytes
     let stacktop = config.kernel_stack_address + config.kernel_stack_size * 0x1000 - 8;
 
-    unsafe {
-        jump_to_entry(&bootinfo, stacktop);
-    }
+    jump_to_entry(&bootinfo, stacktop);
 }
 
 /// Get current page table from CR3
@@ -180,7 +178,9 @@ static mut ENTRY: usize = 0;
 
 /// Jump to ELF entry according to global variable `ENTRY`
 #[allow(clippy::empty_loop)]
-unsafe fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
-    asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
+fn jump_to_entry(bootinfo: *const BootInfo, stacktop: u64) -> ! {
+    unsafe {
+        asm!("mov rsp, {}; call {}", in(reg) stacktop, in(reg) ENTRY, in("rdi") bootinfo);
+    }
     loop {}
 }

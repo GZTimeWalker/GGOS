@@ -1,4 +1,4 @@
-use chrono::{naive::*, DateTime};
+use chrono::{DateTime, naive::*};
 
 pub fn now() -> NaiveDateTime {
     let time = match uefi::runtime::get_time() {

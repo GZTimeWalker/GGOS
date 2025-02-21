@@ -27,46 +27,50 @@ fn try_spin() {
     let pid = sys_fork();
 
     if pid == 0 {
-        unsafe { boy_spin() };
+        boy_spin();
     } else {
-        unsafe { mother_spin() };
+        mother_spin();
         sys_wait_pid(pid);
     }
 }
 
-unsafe fn mother_spin() {
-    LOCK.acquire();
-    let burger_ptr = &raw mut BURGER;
+fn mother_spin() {
+    unsafe {
+        LOCK.acquire();
+        let burger_ptr = &raw mut BURGER;
 
-    println!(
-        "Mother - SPIN : Start to make cheese burger, there are {} cheese burger now",
-        *burger_ptr
-    );
+        println!(
+            "Mother - SPIN : Start to make cheese burger, there are {} cheese burger now",
+            *burger_ptr
+        );
 
-    *burger_ptr += 10;
+        *burger_ptr += 10;
 
-    println!("Mother - SPIN : Oh, I have to hang clothes out.");
+        println!("Mother - SPIN : Oh, I have to hang clothes out.");
 
-    sleep(1500);
+        sleep(1500);
 
-    println!(
-        "Mother - SPIN : Oh, Jesus! There are {} cheese burgers",
-        *burger_ptr
-    );
+        println!(
+            "Mother - SPIN : Oh, Jesus! There are {} cheese burgers",
+            *burger_ptr
+        );
 
-    LOCK.release();
+        LOCK.release();
+    }
 }
 
-unsafe fn boy_spin() {
-    sleep(200);
-    let burger_ptr = &raw mut BURGER;
+fn boy_spin() {
+    unsafe {
+        sleep(200);
+        let burger_ptr = &raw mut BURGER;
 
-    LOCK.acquire();
+        LOCK.acquire();
 
-    println!("Boy    - SPIN : Look what I found!");
-    *burger_ptr -= 10;
+        println!("Boy    - SPIN : Look what I found!");
+        *burger_ptr -= 10;
 
-    LOCK.release();
+        LOCK.release();
+    }
 }
 
 fn try_semaphore() {
@@ -75,47 +79,51 @@ fn try_semaphore() {
     let pid = sys_fork();
 
     if pid == 0 {
-        unsafe { boy_semaphore() };
+        boy_semaphore();
     } else {
-        unsafe { mother_semaphore() };
+        mother_semaphore();
         sys_wait_pid(pid);
         MUTEX.free();
     }
 }
 
-unsafe fn mother_semaphore() {
-    MUTEX.wait();
-    let burger_ptr = &raw mut BURGER_SEM;
+fn mother_semaphore() {
+    unsafe {
+        MUTEX.wait();
+        let burger_ptr = &raw mut BURGER_SEM;
 
-    println!(
-        "Mother - SEMA : Start to make cheese burger, there are {} cheese burger now",
-        *burger_ptr
-    );
+        println!(
+            "Mother - SEMA : Start to make cheese burger, there are {} cheese burger now",
+            *burger_ptr
+        );
 
-    *burger_ptr += 10;
+        *burger_ptr += 10;
 
-    println!("Mother - SEMA : Oh, I have to hang clothes out.");
+        println!("Mother - SEMA : Oh, I have to hang clothes out.");
 
-    sleep(1500);
+        sleep(1500);
 
-    println!(
-        "Mother - SEMA : Oh, Jesus! There are {} cheese burgers",
-        *burger_ptr
-    );
+        println!(
+            "Mother - SEMA : Oh, Jesus! There are {} cheese burgers",
+            *burger_ptr
+        );
 
-    MUTEX.signal();
+        MUTEX.signal();
+    }
 }
 
-unsafe fn boy_semaphore() {
-    sleep(200);
-    let burger_ptr = &raw mut BURGER_SEM;
+fn boy_semaphore() {
+    unsafe {
+        sleep(200);
+        let burger_ptr = &raw mut BURGER_SEM;
 
-    MUTEX.wait();
+        MUTEX.wait();
 
-    println!("Boy    - SEMA : Look what I found!");
-    *burger_ptr -= 10;
+        println!("Boy    - SEMA : Look what I found!");
+        *burger_ptr -= 10;
 
-    MUTEX.signal();
+        MUTEX.signal();
+    }
 }
 
 entry!(main);
