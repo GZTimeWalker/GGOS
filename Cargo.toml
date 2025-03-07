@@ -18,8 +18,8 @@ authors = ["GZTime <Time.GZ@outlook.com>"]
 
 [workspace.dependencies]
 bit_field = "0.10"
-bitflags = "2.8"
-hex-literal = "0.4"
+bitflags = "2.9"
+hex-literal = "1.0"
 libm = "0.2"
 linked_list_allocator = "0.10"
 log = "0.4"
