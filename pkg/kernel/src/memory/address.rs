@@ -22,7 +22,7 @@ pub fn physical_to_virtual(addr: u64) -> u64 {
         .expect("PHYSICAL_OFFSET not initialized")
 }
 
-pub fn is_user_accessable(addr: usize) -> bool {
+pub fn is_user_accessible(addr: usize) -> bool {
     let mapper = &mut PageTableContext::new().mapper();
     match mapper.translate(VirtAddr::new_truncate(addr as u64)) {
         Mapped {
@@ -45,7 +45,7 @@ pub fn as_user_str(ptr: usize, len: usize) -> Option<&'static str> {
 }
 
 pub fn as_user_slice<'a>(ptr: usize, len: usize) -> Option<&'a [u8]> {
-    if !is_user_accessable(ptr) {
+    if !is_user_accessible(ptr) {
         warn!("syscall: invalid access to {:#x}", ptr);
         return None;
     }
@@ -54,7 +54,7 @@ pub fn as_user_slice<'a>(ptr: usize, len: usize) -> Option<&'a [u8]> {
 }
 
 pub fn as_user_slice_mut<'a>(ptr: usize, len: usize) -> Option<&'a mut [u8]> {
-    if !is_user_accessable(ptr) {
+    if !is_user_accessible(ptr) {
         warn!("syscall: invalid access to {:#x}", ptr);
         return None;
     }

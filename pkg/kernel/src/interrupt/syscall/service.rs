@@ -42,7 +42,7 @@ pub fn sys_allocate(args: &SyscallArgs) -> usize {
 
 macro_rules! check_access {
     ($addr:expr, $fmt:expr) => {
-        if !is_user_accessable($addr) {
+        if !is_user_accessible($addr) {
             warn!($fmt, $addr);
             return;
         }

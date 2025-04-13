@@ -1,4 +1,4 @@
-use alloc::{collections::BTreeMap, string::String};
+use alloc::{collections::BTreeMap, string::String, vec::Vec};
 use pc_keyboard::DecodedKey;
 use spin::Mutex;
 use storage::{Device, FileHandle, random::Random};
@@ -15,12 +15,14 @@ pub enum StdIO {
 #[derive(Debug)]
 pub struct ResourceSet {
     pub handles: BTreeMap<u8, Mutex<Resource>>,
+    recycled: Vec<u8>,
 }
 
 impl Default for ResourceSet {
     fn default() -> Self {
         let mut res = Self {
             handles: BTreeMap::new(),
+            recycled: Vec::new(),
         };
 
         res.open(Resource::Console(StdIO::Stdin));
@@ -33,13 +35,24 @@ impl Default for ResourceSet {
 
 impl ResourceSet {
     pub fn open(&mut self, res: Resource) -> u8 {
-        let fd = self.handles.len() as u8;
+        let fd = self.recycled.pop().unwrap_or_else(|| {
+            let fd = self.handles.len();
+            if fd >= 255 {
+                panic!("Too many resource opened.");
+            }
+            fd as u8
+        });
+
         self.handles.insert(fd, Mutex::new(res));
         fd
     }
 
     pub fn close(&mut self, fd: u8) -> bool {
-        self.handles.remove(&fd).is_some()
+        let success = self.handles.remove(&fd).is_some();
+        if success {
+            self.recycled.push(fd);
+        }
+        success
     }
 
     pub fn read(&self, fd: u8, buf: &mut [u8]) -> isize {
